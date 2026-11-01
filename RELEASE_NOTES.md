@@ -6,9 +6,9 @@
 
 | Thông số | Giá trị |
 | :--- | :--- |
-| **Phiên bản (Version Name)** | **19.0** |
-| **Mã bản dựng (Version Code)** | **19** |
-| **Tên gói ứng dụng (Package Name)** | `com.hiepnguyen.tripfinance` |
+| **Phiên bản (Version Name)** | **20.0** |
+| **Mã bản dựng (Version Code)** | **20** |
+| **Tên gói ứng dụng (Package Name)** | `com.hiepnguyen.tripfinance.oddnis` |
 | **Target SDK** | **Android 15+ (API Level 36)** |
 | **Minimum SDK** | Android 7.0 (API Level 24) |
 | **Kiến trúc cơ sở dữ liệu** | Room SQLite + SQLCipher AES-256 (`net.zetetic:sqlcipher-android:4.6.1`) |
@@ -20,7 +20,7 @@
 
 ### 🇻🇳 Tiếng Việt (`vi-VN`) — Tối đa 500 ký tự:
 ```text
-TripFinance v19.0 - Bản cập nhật lớn:
+TripFinance v20.0:
 • Hỗ trợ toàn diện Android 15+ và bộ nhớ trang 16 KB với SQLCipher 4.6.1 mới nhất.
 • Bảo mật đa lớp: Kiểm tra tính hợp lệ thành viên đa đoàn, loại bỏ sai lệch dữ liệu.
 • Thuật toán quyết toán phi trạng thái, tính toán nợ tối ưu an toàn đa luồng.
