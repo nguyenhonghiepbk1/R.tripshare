@@ -1,0 +1,1 @@
+Quản lý tài chính đoàn, chia tiền nhóm, theo dõi quỹ chung và quyết toán nợ.

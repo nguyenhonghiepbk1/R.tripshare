@@ -1,0 +1,6 @@
+TripFinance v19.0 - Major Release:
+• Full 16 KB page-size compatibility on Android 15+ with modern SQLCipher 4.6.1.
+• Cross-trip data integrity: Multi-layer validation for members and expense splits.
+• Thread-safe & stateless settlement engine for flawless zero-discrepancy balancing.
+• Privacy-first AI insights: Explicit user consent dialog & 100% offline local engine.
+• Cleaned unused code, optimized ProGuard/R8 shrinking, and improved startup speed.

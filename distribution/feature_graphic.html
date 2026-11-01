@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TripFinance - Feature Graphic Mockup (1024x500 px)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --emerald-primary: #0D9488;
+            --emerald-light: #14B8A6;
+            --emerald-container: #CCFBF1;
+            --emerald-on-container: #115E59;
+            
+            --indigo-secondary: #4F46E5;
+            --indigo-light: #6366F1;
+            --indigo-container: #E0E7FF;
+            --indigo-on-container: #3730A3;
+            
+            --amber-tertiary: #D97706;
+            --amber-light: #F59E0B;
+            --amber-container: #FEF3C7;
+            --amber-on-container: #92400E;
+            
+            --neutral-dark-bg: #0F172A;
+            --neutral-dark-surface: #1E293B;
+            --neutral-dark-card: #334155;
+            --neutral-border: #E2E8F0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #050811;
+            color: #F8FAFC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 40px 20px;
+        }
+
+        .controls-panel {
+            max-width: 1024px;
+            width: 100%;
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px 24px;
+        }
+
+        .controls-info h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .controls-info p {
+            font-size: 13px;
+            color: #94A3B8;
+            margin-top: 4px;
+        }
+
+        .controls-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--emerald-primary), #059669);
+            color: #FFFFFF;
+            box-shadow: 0 4px 14px rgba(13, 148, 136, 0.35);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0F766E, #047857);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(13, 148, 136, 0.45);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: #E2E8F0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.14);
+            color: #FFFFFF;
+        }
+
+        /* 1024x500 CANONICAL CONTAINER */
+        .graphic-wrapper {
+            position: relative;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            overflow: hidden;
+            width: 1024px;
+            height: 500px;
+            flex-shrink: 0;
+            background: var(--neutral-dark-bg);
+        }
+
+        /* Safe zone overlay (hidden by default) */
+        .safe-zone-overlay {
+            position: absolute;
+            inset: 35px 50px 45px 50px;
+            border: 2px dashed rgba(245, 158, 11, 0.5);
+            border-radius: 8px;
+            pointer-events: none;
+            display: none;
+            z-index: 50;
+        }
+        .safe-zone-overlay::after {
+            content: "Vùng an toàn hiển thị Google Play (Safe Area ~15%)";
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 11px;
+            color: #FBBF24;
+            background: rgba(0, 0, 0, 0.75);
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .show-safe-zone .safe-zone-overlay {
+            display: block;
+        }
+
+        /* MAIN FEATURE GRAPHIC CANVAS */
+        .feature-graphic {
+            width: 1024px;
+            height: 500px;
+            position: relative;
+            background: radial-gradient(circle at 18% 25%, rgba(13, 148, 136, 0.32) 0%, transparent 45%),
+                        radial-gradient(circle at 85% 75%, rgba(79, 70, 229, 0.3) 0%, transparent 48%),
+                        radial-gradient(circle at 55% 15%, rgba(217, 119, 6, 0.16) 0%, transparent 35%),
+                        linear-gradient(135deg, #090D16 0%, #0F172A 50%, #131A2E 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 44px 56px;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        /* Ambient background decorations */
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+            pointer-events: none;
+        }
+
+        .bg-travel-route {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.28;
+        }
+
+        /* LEFT COLUMN: BRANDING & HEADLINE */
+        .brand-col {
+            position: relative;
+            z-index: 10;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tag-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(13, 148, 136, 0.15);
+            border: 1px solid rgba(20, 184, 166, 0.4);
+            border-radius: 9999px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            color: #2DD4BF;
+            text-transform: uppercase;
+            width: fit-content;
+            backdrop-filter: blur(8px);
+        }
+
+        .tag-pill .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #2DD4BF;
+            box-shadow: 0 0 10px #2DD4BF;
+        }
+
+        .brand-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .app-logo-badge {
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, var(--emerald-primary) 100%);
+            border: 1.5px solid rgba(45, 212, 191, 0.5);
+            box-shadow: 0 8px 24px rgba(13, 148, 136, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .app-title {
+            font-size: 46px;
+            font-weight: 800;
+            line-height: 1.05;
+            letter-spacing: -1.2px;
+            background: linear-gradient(135deg, #FFFFFF 30%, #5EEAD4 75%, #38BDF8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-tagline {
+            font-size: 19px;
+            font-weight: 600;
+            line-height: 1.4;
+            color: #E2E8F0;
+            letter-spacing: -0.2px;
+        }
+
+        .brand-tagline span {
+            color: #FBBF24;
+            font-weight: 700;
+        }
+
+        .feature-bullets {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .bullet-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: #CBD5E1;
+        }
+
+        .bullet-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .icon-emerald {
+            background: rgba(13, 148, 136, 0.25);
+            border: 1px solid rgba(20, 184, 166, 0.5);
+            color: #5EEAD4;
+        }
+
+        .icon-indigo {
+            background: rgba(79, 70, 229, 0.25);
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            color: #A5B4FC;
+        }
+
+        .icon-amber {
+            background: rgba(217, 119, 6, 0.25);
+            border: 1px solid rgba(245, 158, 11, 0.5);
+            color: #FDE68A;
+        }
+
+        /* RIGHT COLUMN: APP CARD PREVIEW & METRICS */
+        .preview-col {
+            position: relative;
+            z-index: 10;
+            width: 410px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* Floating main card */
+        .preview-card {
+            background: rgba(30, 41, 59, 0.72);
+            backdrop-filter: blur(16px);
+            border: 1.5px solid rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            position: relative;
+        }
+
+        /* Subtle glowing border top accent */
+        .preview-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--emerald-light), var(--indigo-light), transparent);
+            border-radius: 2px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .trip-title-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trip-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--emerald-primary), var(--indigo-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .trip-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+
+        .trip-meta {
+            font-size: 11px;
+            color: #94A3B8;
+        }
+
+        .trip-status-badge {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34D399;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 9999px;
+        }
+
+        /* 2-column metrics row */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .metric-box {
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .metric-box.emerald {
+            background: rgba(13, 148, 136, 0.12);
+            border: 1px solid rgba(13, 148, 136, 0.3);
+        }
+
+        .metric-box.amber {
+            background: rgba(217, 119, 6, 0.12);
+            border: 1px solid rgba(217, 119, 6, 0.3);
+        }
+
+        .metric-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #94A3B8;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+
+        .metric-box.emerald .metric-value {
+            color: #5EEAD4;
+        }
+
+        .metric-box.amber .metric-value {
+            color: #FCD34D;
+        }
+
+        /* Settlement preview item */
+        .settlement-card-snippet {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .settle-flow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #F1F5F9;
+        }
+
+        .settle-arrow {
+            color: #818CF8;
+            font-weight: 700;
+        }
+
+        .settle-amount {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: #34D399;
+            background: rgba(16, 185, 129, 0.15);
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        /* Floating trust badge */
+        .trust-banner {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(79, 70, 229, 0.35);
+            border-radius: 12px;
+            padding: 9px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            color: #E0E7FF;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+        }
+
+        .trust-banner .trust-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trust-banner .shield-icon {
+            color: #818CF8;
+            font-size: 14px;
+        }
+
+        .trust-banner .pill-free {
+            background: rgba(79, 70, 229, 0.25);
+            color: #C7D2FE;
+            padding: 2px 7px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* FOOTER SPECS BAR */
+        .specs-panel {
+            max-width: 1024px;
+            width: 100%;
+            margin-top: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .spec-box {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 14px 18px;
+        }
+
+        .spec-box-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94A3B8;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .spec-box-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #FFFFFF;
+        }
+
+        .color-dots {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+            align-items: center;
+        }
+
+        .color-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Hidden canvas for PNG export */
+        #renderCanvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOOLBAR / CONTROLS -->
+    <div class="controls-panel">
+        <div class="controls-info">
+            <h1>
+                <span>🎨</span> TripFinance - Feature Graphic (Đồ họa nổi bật Google Play)
+            </h1>
+            <p>Kích thước chuẩn: <strong>1024 x 500 px</strong> | Tỷ lệ: <strong>2.048 : 1</strong> | Định dạng: PNG hoặc JPEG</p>
+        </div>
+        <div class="controls-actions">
+            <button class="btn btn-secondary" id="toggleSafeZoneBtn" onclick="toggleSafeZone()">
+                <span>📐</span> Hiện vùng an toàn (15%)
+            </button>
+            <button class="btn btn-primary" id="downloadPngBtn" onclick="generateAndDownloadPng()">
+                <span>⬇️</span> Tải ảnh PNG (1024x500)
+            </button>
+        </div>
+    </div>
+
+    <!-- 1024x500 GRAPHIC FRAME -->
+    <div class="graphic-wrapper" id="graphicWrapper">
+        <div class="safe-zone-overlay"></div>
+
+        <div class="feature-graphic" id="featureGraphic">
+            <!-- Grid pattern background -->
+            <div class="bg-grid"></div>
+
+            <!-- Stylized travel route line (SVG) -->
+            <svg class="bg-travel-route" viewBox="0 0 1024 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M-50,380 C120,380 200,240 380,260 C560,280 620,130 820,160 C920,175 990,90 1080,100" 
+                      stroke="url(#routeGradient)" stroke-width="3" stroke-dasharray="8 8" />
+                <circle cx="380" cy="260" r="5" fill="#14B8A6" />
+                <circle cx="820" cy="160" r="5" fill="#818CF8" />
+                <defs>
+                    <linearGradient id="routeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#0D9488" stop-opacity="0.2"/>
+                        <stop offset="50%" stop-color="#4F46E5" stop-opacity="0.8"/>
+                        <stop offset="100%" stop-color="#D97706" stop-opacity="0.6"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+
+            <!-- LEFT BRANDING COLUMN -->
+            <div class="brand-col">
+                <div class="tag-pill">
+                    <span class="dot"></span>
+                    <span>Tài chính du lịch thông minh</span>
+                </div>
+
+                <div class="brand-title-wrap">
+                    <!-- App Icon Vector Shield -->
+                    <div class="app-logo-badge">
+                        <svg width="38" height="38" viewBox="0 0 108 108" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <g transform="translate(18.9, 18.9) scale(0.65)">
+                                <!-- Shield Base -->
+                                <path d="M54,16 L24,28 L24,54 C24,72.5 36.8,89.5 54,94 C71.2,89.5 84,72.5 84,54 L84,28 Z" fill="#14B8A6" />
+                                <!-- Inner Highlight -->
+                                <path d="M54,20 L54,90 C69,85.5 80,70 80,54 L80,31 Z" fill="#0D9488" />
+                                <!-- Split Bars -->
+                                <path d="M38,44 L70,44 L70,48 L38,48 Z M38,54 L70,54 L70,58 L38,58 Z" fill="#FFFFFF" />
+                                <!-- Coin -->
+                                <circle cx="54" cy="70" r="6" fill="#FEF08A" />
+                            </g>
+                        </svg>
+                    </div>
+
+                    <h1 class="app-title">TripFinance</h1>
+                </div>
+
+                <p class="brand-tagline">
+                    Quản lý chi tiêu chuyến đi & <span>Chia tiền nhóm minh bạch</span>
+                </p>
+
+                <div class="feature-bullets">
+                    <div class="bullet-item">
+                        <div class="bullet-icon icon-emerald">⚖️</div>
+                        <span>Quyết toán nợ tối ưu — Rút gọn tối đa số giao dịch</span>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon icon-amber">💰</div>
+                        <span>Theo dõi quỹ chung & chia đều/chia tỷ lệ linh hoạt</span>
+                    </div>
+                    <div class="bullet-item">
+                        <div class="bullet-icon icon-indigo">🔒</div>
+                        <span>100% Offline & Bảo mật mã hóa CSDL SQLCipher AES-256</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT UI PREVIEW COLUMN -->
+            <div class="preview-col">
+                <!-- Main Glass Card -->
+                <div class="preview-card">
+                    <div class="card-header">
+                        <div class="trip-title-group">
+                            <div class="trip-avatar">✈️</div>
+                            <div>
+                                <div class="trip-name">Đà Lạt Rực Rỡ 4N3Đ</div>
+                                <div class="trip-meta">8 thành viên • VND</div>
+                            </div>
+                        </div>
+                        <div class="trip-status-badge">Đang đi</div>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <div class="metric-box emerald">
+                            <span class="metric-label">Tổng chi đoàn</span>
+                            <span class="metric-value">14.850.000 ₫</span>
+                        </div>
+                        <div class="metric-box amber">
+                            <span class="metric-label">Số dư quỹ chung</span>
+                            <span class="metric-value">+2.150.000 ₫</span>
+                        </div>
+                    </div>
+
+                    <div class="settlement-card-snippet">
+                        <div class="settle-flow">
+                            <span>Hoàng Nam</span>
+                            <span class="settle-arrow">➔</span>
+                            <span>Minh Đức</span>
+                        </div>
+                        <div class="settle-amount">485.000 ₫</div>
+                    </div>
+                </div>
+
+                <!-- Trust / Privacy Banner -->
+                <div class="trust-banner">
+                    <div class="trust-left">
+                        <span class="shield-icon">🛡️</span>
+                        <span>Không chia sẻ dữ liệu với bên thứ ba</span>
+                    </div>
+                    <div class="pill-free">An Toàn Tuyệt Đối</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TECHNICAL SPECS PANEL -->
+    <div class="specs-panel">
+        <div class="spec-box">
+            <div class="spec-box-title">Độ phân giải Play Console</div>
+            <div class="spec-box-value">1024 × 500 px (Đạt chuẩn 100%)</div>
+        </div>
+        <div class="spec-box">
+            <div class="spec-box-title">Màu chủ đạo (Color.kt)</div>
+            <div class="spec-box-value">Emerald, Indigo, Amber</div>
+            <div class="color-dots">
+                <span class="color-dot" style="background:#0D9488" title="EmeraldPrimary #0D9488"></span>
+                <span class="color-dot" style="background:#4F46E5" title="IndigoSecondary #4F46E5"></span>
+                <span class="color-dot" style="background:#D97706" title="AmberTertiary #D97706"></span>
+                <span class="color-dot" style="background:#0F172A" title="NeutralDarkBg #0F172A"></span>
+            </div>
+        </div>
+        <div class="spec-box">
+            <div class="spec-box-title">Vùng an toàn (Safe Area)</div>
+            <div class="spec-box-value">Cách mép ≥ 35px (Không bị che)</div>
+        </div>
+        <div class="spec-box">
+            <div class="spec-box-title">Tên ứng dụng & Gói</div>
+            <div class="spec-box-value">TripFinance (v19.0)</div>
+        </div>
+    </div>
+
+    <!-- Canvas để xuất PNG chuẩn xác -->
+    <canvas id="renderCanvas" width="1024" height="500"></canvas>
+
+    <script>
+        function toggleSafeZone() {
+            const wrapper = document.getElementById('graphicWrapper');
+            const btn = document.getElementById('toggleSafeZoneBtn');
+            wrapper.classList.toggle('show-safe-zone');
+            if (wrapper.classList.contains('show-safe-zone')) {
+                btn.innerHTML = '<span>📐</span> Ẩn vùng an toàn';
+            } else {
+                btn.innerHTML = '<span>📐</span> Hiện vùng an toàn (15%)';
+            }
+        }
+
+        // Vẽ và xuất file PNG 1024x500 px chính xác
+        function generateAndDownloadPng() {
+            const canvas = document.getElementById('renderCanvas');
+            const ctx = canvas.getContext('2d');
+            const width = 1024;
+            const height = 500;
+
+            // 1. Nền Gradient đa lớp
+            const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+            bgGrad.addColorStop(0, '#090D16');
+            bgGrad.addColorStop(0.5, '#0F172A');
+            bgGrad.addColorStop(1, '#131A2E');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, width, height);
+
+            // Ambient Emerald Glow
+            const rad1 = ctx.createRadialGradient(200, 140, 10, 200, 140, 320);
+            rad1.addColorStop(0, 'rgba(13, 148, 136, 0.35)');
+            rad1.addColorStop(1, 'transparent');
+            ctx.fillStyle = rad1;
+            ctx.fillRect(0, 0, width, height);
+
+            // Ambient Indigo Glow
+            const rad2 = ctx.createRadialGradient(850, 360, 10, 850, 360, 350);
+            rad2.addColorStop(0, 'rgba(79, 70, 229, 0.32)');
+            rad2.addColorStop(1, 'transparent');
+            ctx.fillStyle = rad2;
+            ctx.fillRect(0, 0, width, height);
+
+            // Grid pattern
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.025)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < width; x += 32) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < height; y += 32) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+
+            // Travel route curve
+            ctx.save();
+            ctx.setLineDash([8, 8]);
+            ctx.lineWidth = 2.5;
+            const routeGrad = ctx.createLinearGradient(0, 380, width, 100);
+            routeGrad.addColorStop(0, 'rgba(13, 148, 136, 0.2)');
+            routeGrad.addColorStop(0.5, 'rgba(79, 70, 229, 0.7)');
+            routeGrad.addColorStop(1, 'rgba(217, 119, 6, 0.5)');
+            ctx.strokeStyle = routeGrad;
+            ctx.beginPath();
+            ctx.moveTo(-50, 380);
+            ctx.bezierCurveTo(120, 380, 200, 240, 380, 260);
+            ctx.bezierCurveTo(560, 280, 620, 130, 820, 160);
+            ctx.bezierCurveTo(920, 175, 990, 90, 1080, 100);
+            ctx.stroke();
+            ctx.restore();
+
+            // --- CỘT TRÁI: LOGO & BRANDING ---
+            const startX = 60;
+
+            // Tag pill
+            drawRoundRect(ctx, startX, 58, 225, 28, 14, 'rgba(13, 148, 136, 0.16)', 'rgba(20, 184, 166, 0.45)');
+            // Dot
+            ctx.fillStyle = '#2DD4BF';
+            ctx.beginPath();
+            ctx.arc(startX + 16, 72, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            // Tag text
+            ctx.fillStyle = '#2DD4BF';
+            ctx.font = 'bold 11.5px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('TÀI CHÍNH DU LỊCH THÔNG MINH', startX + 28, 76);
+
+            // Logo Icon Box
+            drawRoundRect(ctx, startX, 105, 56, 56, 16, '#0F172A', 'rgba(45, 212, 191, 0.6)');
+            // Draw Shield Vector inside
+            ctx.save();
+            ctx.translate(startX + 7, 112);
+            ctx.scale(0.39, 0.39);
+            // Shield Base
+            ctx.fillStyle = '#14B8A6';
+            ctx.beginPath();
+            ctx.moveTo(54, 16);
+            ctx.lineTo(24, 28);
+            ctx.lineTo(24, 54);
+            ctx.bezierCurveTo(24, 72.5, 36.8, 89.5, 54, 94);
+            ctx.bezierCurveTo(71.2, 89.5, 84, 72.5, 84, 54);
+            ctx.lineTo(84, 28);
+            ctx.closePath();
+            ctx.fill();
+            // Shield Inner Highlight
+            ctx.fillStyle = '#0D9488';
+            ctx.beginPath();
+            ctx.moveTo(54, 20);
+            ctx.lineTo(54, 90);
+            ctx.bezierCurveTo(69, 85.5, 80, 70, 80, 54);
+            ctx.lineTo(80, 31);
+            ctx.closePath();
+            ctx.fill();
+            // Bars
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(38, 44, 32, 4);
+            ctx.fillRect(38, 54, 32, 4);
+            // Coin
+            ctx.fillStyle = '#FEF08A';
+            ctx.beginPath();
+            ctx.arc(54, 70, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // App Name "TripFinance"
+            const nameGrad = ctx.createLinearGradient(startX + 70, 110, startX + 380, 160);
+            nameGrad.addColorStop(0, '#FFFFFF');
+            nameGrad.addColorStop(0.65, '#5EEAD4');
+            nameGrad.addColorStop(1, '#38BDF8');
+            ctx.fillStyle = nameGrad;
+            ctx.font = '800 46px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('TripFinance', startX + 70, 150);
+
+            // Tagline
+            ctx.fillStyle = '#F1F5F9';
+            ctx.font = '600 18.5px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('Quản lý chi tiêu chuyến đi & ', startX, 200);
+            ctx.fillStyle = '#FBBF24';
+            ctx.font = '700 18.5px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('Chia tiền nhóm minh bạch', startX + 258, 200);
+
+            // Bullets
+            const bulletY = 245;
+            drawBulletItem(ctx, startX, bulletY, '⚖️', 'Quyết toán nợ tối ưu — Rút gọn tối đa số giao dịch', 'rgba(13, 148, 136, 0.25)', '#5EEAD4');
+            drawBulletItem(ctx, startX, bulletY + 45, '💰', 'Theo dõi quỹ chung & chia đều/chia tỷ lệ linh hoạt', 'rgba(217, 119, 6, 0.25)', '#FDE68A');
+            drawBulletItem(ctx, startX, bulletY + 90, '🔒', '100% Offline & Bảo mật mã hóa CSDL SQLCipher AES-256', 'rgba(79, 70, 229, 0.25)', '#A5B4FC');
+
+            // --- CỘT PHẢI: MOCKUP CARD ---
+            const cardX = 560;
+            const cardY = 70;
+            const cardW = 404;
+            const cardH = 295;
+
+            // Glassmorphism card container
+            drawRoundRect(ctx, cardX, cardY, cardW, cardH, 20, 'rgba(30, 41, 59, 0.78)', 'rgba(255, 255, 255, 0.14)');
+            
+            // Accent gradient bar on top of card
+            const topBarGrad = ctx.createLinearGradient(cardX + 20, cardY, cardX + cardW - 20, cardY);
+            topBarGrad.addColorStop(0, 'transparent');
+            topBarGrad.addColorStop(0.3, '#14B8A6');
+            topBarGrad.addColorStop(0.7, '#6366F1');
+            topBarGrad.addColorStop(1, 'transparent');
+            ctx.fillStyle = topBarGrad;
+            ctx.fillRect(cardX + 20, cardY, cardW - 40, 2);
+
+            // Card Header
+            drawRoundRect(ctx, cardX + 18, cardY + 18, 36, 36, 10, '#0D9488');
+            ctx.font = '18px sans-serif';
+            ctx.fillText('✈️', cardX + 26, cardY + 43);
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '700 16px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('Đà Lạt Rực Rỡ 4N3Đ', cardX + 64, cardY + 34);
+
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '500 12px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('8 thành viên • Tiền tệ VND', cardX + 64, cardY + 50);
+
+            // Status Badge
+            drawRoundRect(ctx, cardX + cardW - 90, cardY + 22, 72, 24, 12, 'rgba(16, 185, 129, 0.2)', 'rgba(16, 185, 129, 0.5)');
+            ctx.fillStyle = '#34D399';
+            ctx.font = '700 11.5px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('Đang đi', cardX + cardW - 74, cardY + 38);
+
+            // 2 Metric boxes
+            const boxW = 178;
+            const boxH = 65;
+            // Metric Box 1: Emerald
+            drawRoundRect(ctx, cardX + 18, cardY + 74, boxW, boxH, 12, 'rgba(13, 148, 136, 0.15)', 'rgba(13, 148, 136, 0.35)');
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('TỔNG CHI ĐOÀN', cardX + 30, cardY + 94);
+            ctx.fillStyle = '#5EEAD4';
+            ctx.font = '700 16.5px "JetBrains Mono", monospace';
+            ctx.fillText('14.850.000 ₫', cardX + 30, cardY + 122);
+
+            // Metric Box 2: Amber
+            drawRoundRect(ctx, cardX + 208, cardY + 74, boxW, boxH, 12, 'rgba(217, 119, 6, 0.15)', 'rgba(217, 119, 6, 0.35)');
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('DƯ QUỸ CHUNG', cardX + 220, cardY + 94);
+            ctx.fillStyle = '#FCD34D';
+            ctx.font = '700 16.5px "JetBrains Mono", monospace';
+            ctx.fillText('+2.150.000 ₫', cardX + 220, cardY + 122);
+
+            // Settlement snippet
+            drawRoundRect(ctx, cardX + 18, cardY + 155, cardW - 36, 52, 12, 'rgba(15, 23, 42, 0.85)', 'rgba(255, 255, 255, 0.1)');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '600 13.5px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('Hoàng Nam', cardX + 32, cardY + 186);
+            ctx.fillStyle = '#818CF8';
+            ctx.font = '700 15px sans-serif';
+            ctx.fillText('➔', cardX + 115, cardY + 186);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '600 13.5px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('Minh Đức', cardX + 138, cardY + 186);
+
+            // Amount pill
+            drawRoundRect(ctx, cardX + cardW - 130, cardY + 165, 96, 30, 8, 'rgba(16, 185, 129, 0.15)', 'rgba(16, 185, 129, 0.35)');
+            ctx.fillStyle = '#34D399';
+            ctx.font = '700 13.5px "JetBrains Mono", monospace';
+            ctx.fillText('485.000 ₫', cardX + cardW - 120, cardY + 185);
+
+            // Insight tip bottom inside card
+            ctx.fillStyle = '#94A3B8';
+            ctx.font = '500 11.5px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('💡 Thuật toán tự động giảm 8 giao dịch xuống còn 3', cardX + 30, cardY + 232);
+
+            // Trust banner below card
+            drawRoundRect(ctx, cardX, 390, cardW, 44, 12, 'rgba(15, 23, 42, 0.9)', 'rgba(79, 70, 229, 0.45)');
+            ctx.font = '15px sans-serif';
+            ctx.fillText('🛡️', cardX + 16, 417);
+            ctx.fillStyle = '#E0E7FF';
+            ctx.font = '600 12.5px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('Không chia sẻ dữ liệu với bên thứ ba', cardX + 42, 417);
+
+            drawRoundRect(ctx, cardX + cardW - 125, 400, 110, 24, 6, 'rgba(79, 70, 229, 0.25)');
+            ctx.fillStyle = '#C7D2FE';
+            ctx.font = '700 10.5px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText('AN TOÀN TUYỆT ĐỐI', cardX + cardW - 118, 416);
+
+            // TRIGGER DOWNLOAD
+            const link = document.createElement('a');
+            link.download = 'tripfinance_feature_graphic_1024x500.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function drawRoundRect(ctx, x, y, width, height, radius, fillStyle, strokeStyle) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            if (fillStyle) {
+                ctx.fillStyle = fillStyle;
+                ctx.fill();
+            }
+            if (strokeStyle) {
+                ctx.strokeStyle = strokeStyle;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+
+        function drawBulletItem(ctx, x, y, icon, text, iconBg, iconBorder) {
+            drawRoundRect(ctx, x, y - 16, 26, 26, 8, iconBg, iconBorder);
+            ctx.font = '13px sans-serif';
+            ctx.fillText(icon, x + 5, y + 2);
+            ctx.fillStyle = '#CBD5E1';
+            ctx.font = '500 13px "Plus Jakarta Sans", sans-serif';
+            ctx.fillText(text, x + 36, y + 1);
+        }
+    </script>
+</body>
+</html>

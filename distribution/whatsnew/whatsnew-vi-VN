@@ -1,0 +1,6 @@
+TripFinance v19.0 - Bản cập nhật lớn:
+• Hỗ trợ toàn diện Android 15+ và bộ nhớ trang 16 KB với SQLCipher 4.6.1 mới nhất.
+• Bảo mật đa lớp: Kiểm tra tính hợp lệ thành viên đa đoàn, loại bỏ sai lệch dữ liệu.
+• Thuật toán quyết toán phi trạng thái, tính toán nợ tối ưu an toàn đa luồng.
+• Cố vấn chi tiêu bảo mật: Minh bạch xin ý kiến người dùng, phân tích cục bộ ngoại tuyến 100%.
+• Tinh gọn mã nguồn, tối ưu hóa hiệu năng và tăng tốc độ khởi chạy ứng dụng.
