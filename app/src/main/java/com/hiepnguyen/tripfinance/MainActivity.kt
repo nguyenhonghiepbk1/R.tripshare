@@ -82,7 +82,6 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val aiInsight by viewModel.aiInsight.collectAsStateWithLifecycle()
     val isLoadingAi by viewModel.isLoadingAi.collectAsStateWithLifecycle()
-    val showAiConsentDialog by viewModel.showAiConsentDialog.collectAsStateWithLifecycle()
     val lang = uiState.language
     var currentTab by remember { mutableStateOf(NavigationTab.DASHBOARD) }
 
@@ -462,13 +461,7 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
         }
     }
 
-    if (com.hiepnguyen.tripfinance.domain.ai.GeminiSpendingAdvisor.ENABLE_CLOUD_BACKEND_FEATURE && showAiConsentDialog) {
-        com.hiepnguyen.tripfinance.ui.components.AiConsentDialog(
-            onConfirmCloudAi = { viewModel.onUserConfirmAiCloudConsent() },
-            onChooseOfflineOnly = { viewModel.onUserChooseOfflineAiInsight() },
-            onDismiss = { viewModel.dismissAiConsentDialog() }
-        )
-    }
+
 
     if (aiInsight != null || isLoadingAi) {
         com.hiepnguyen.tripfinance.ui.components.AiSpendingAdvisorDialog(

@@ -24,9 +24,6 @@ interface TripDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertTrip(trip: TripEntity)
 
-    @Insert(onConflict = OnConflictStrategy.ABORT)
-    suspend fun insertTrips(trips: List<TripEntity>)
-
     @Update
     suspend fun updateTrip(trip: TripEntity)
 
@@ -57,9 +54,6 @@ interface TripMemberDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMember(member: TripMemberEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertMembers(members: List<TripMemberEntity>)
-
     @Update
     suspend fun updateMember(member: TripMemberEntity)
 
@@ -89,9 +83,6 @@ interface ExpenseDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExpense(expense: ExpenseEntity)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertExpenses(expenses: List<ExpenseEntity>)
 
     @Update
     suspend fun updateExpense(expense: ExpenseEntity)
@@ -176,9 +167,6 @@ interface FundDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFundContribution(contribution: FundContributionEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertFundContributions(contributions: List<FundContributionEntity>)
-
     @Query("DELETE FROM fund_contributions WHERE id = :id")
     suspend fun deleteFundContribution(id: String)
 
@@ -196,9 +184,6 @@ interface ExchangeRateDao {
 
     @Query("SELECT * FROM exchange_rates WHERE tripId = :tripId")
     fun getExchangeRates(tripId: String): Flow<List<ExchangeRateEntity>>
-
-    @Query("SELECT * FROM exchange_rates WHERE tripId = :tripId")
-    suspend fun getExchangeRatesOnce(tripId: String): List<ExchangeRateEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExchangeRates(rates: List<ExchangeRateEntity>)
@@ -224,12 +209,6 @@ interface SettlementDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertSnapshot(snapshot: SettlementSnapshotEntity)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSnapshots(snapshots: List<SettlementSnapshotEntity>)
-
-    @Query("DELETE FROM settlement_snapshots WHERE id = :snapshotId")
-    suspend fun deleteSnapshot(snapshotId: String)
-
     @Query("DELETE FROM settlement_snapshots WHERE tripId = :tripId")
     suspend fun deleteSnapshotsByTrip(tripId: String)
 }
@@ -247,9 +226,6 @@ interface AuditLogDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLog(log: AuditLogEntity)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertLogs(logs: List<AuditLogEntity>)
 
     @Query("DELETE FROM audit_logs WHERE tripId = :tripId")
     suspend fun deleteAuditLogsByTrip(tripId: String)

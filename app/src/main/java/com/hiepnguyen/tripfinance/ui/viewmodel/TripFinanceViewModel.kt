@@ -69,10 +69,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
     private val _successMessage = MutableStateFlow<String?>(null)
     private val _aiInsight = MutableStateFlow<String?>(null)
     private val _isLoadingAi = MutableStateFlow(false)
-    private val _showAiConsentDialog = MutableStateFlow(false)
     val aiInsight: StateFlow<String?> = _aiInsight.asStateFlow()
     val isLoadingAi: StateFlow<Boolean> = _isLoadingAi.asStateFlow()
-    val showAiConsentDialog: StateFlow<Boolean> = _showAiConsentDialog.asStateFlow()
     private val _language = MutableStateFlow(
         if (sharedPrefs.getString("app_language", "vi") == "en") AppLanguage.EN else AppLanguage.VI
     )
@@ -375,52 +373,18 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         _successMessage.value = msg
     }
 
-    fun hasUserConsentedToAiCloud(): Boolean {
-        return sharedPrefs.getBoolean("user_consented_ai_cloud", false)
-    }
-
-    fun requestAiSpendingInsight() {
-        if (com.hiepnguyen.tripfinance.domain.ai.GeminiSpendingAdvisor.ENABLE_CLOUD_BACKEND_FEATURE) {
-            if (!hasUserConsentedToAiCloud()) {
-                _showAiConsentDialog.value = true
-            } else {
-                executeAiAnalysis(userHasConsented = true)
-            }
-        } else {
-            // v19.0: Cloud Backend bị vô hiệu hóa qua feature flag -> Chạy trực tiếp động cơ phân tích cục bộ
-            // Không mở AiConsentDialog, đảm bảo 100% on-device offline
-            executeAiAnalysis(userHasConsented = false)
-        }
-    }
-
-    fun onUserConfirmAiCloudConsent() {
-        sharedPrefs.edit().putBoolean("user_consented_ai_cloud", true).apply()
-        _showAiConsentDialog.value = false
-        executeAiAnalysis(userHasConsented = true)
-    }
-
-    fun onUserChooseOfflineAiInsight() {
-        _showAiConsentDialog.value = false
-        executeAiAnalysis(userHasConsented = false)
-    }
-
-    fun dismissAiConsentDialog() {
-        _showAiConsentDialog.value = false
-    }
-
-    private fun executeAiAnalysis(userHasConsented: Boolean) {
+    fun requestSpendingInsight() {
         val state = uiState.value
         val currentTrip = state.currentTrip ?: return
         viewModelScope.launch {
             _isLoadingAi.value = true
             try {
-                val insight = com.hiepnguyen.tripfinance.domain.ai.GeminiSpendingAdvisor.analyzeTripFinances(
+                val insight = com.hiepnguyen.tripfinance.domain.ai.LocalSpendingAdvisor.generateLocalInsight(
                     tripTitle = currentTrip.title,
-                    financialSummary = state.financialSummary,
+                    summary = state.financialSummary,
                     categories = state.categoryBreakdowns,
                     members = state.memberStatuses,
-                    languageCode = state.language.code,
-                    userHasConsented = userHasConsented
+                    lang = state.language.code
                 )
                 _aiInsight.value = insight
             } catch (e: Exception) {
@@ -430,6 +394,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             }
         }
     }
+
+    fun requestAiSpendingInsight() = requestSpendingInsight()
 
     fun clearAiInsight() {
         _aiInsight.value = null

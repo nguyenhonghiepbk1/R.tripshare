@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -47,7 +46,7 @@ fun AiSpendingAdvisorDialog(
                     .fillMaxSize()
                     .padding(20.dp)
             ) {
-                // Header with AI Gradient & Icon
+                // Header with Insight Icon
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -58,15 +57,11 @@ fun AiSpendingAdvisorDialog(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFEC4899))
-                                    )
-                                ),
+                                .background(EmeraldPrimary),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                Icons.Filled.AutoAwesome,
+                                Icons.Filled.Insights,
                                 contentDescription = null,
                                 tint = Color.White,
                                 modifier = Modifier.size(22.dp)
@@ -75,15 +70,15 @@ fun AiSpendingAdvisorDialog(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "AI Cố Vấn Chi Tiêu",
+                                text = "Gợi ý chi tiêu",
                                 fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Powered by Google Gemini",
+                                text = "Phân tích cục bộ 100% ngoại tuyến",
                                 fontSize = 11.sp,
-                                color = Color(0xFF6366F1),
+                                color = EmeraldPrimary,
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
@@ -106,12 +101,12 @@ fun AiSpendingAdvisorDialog(
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator(
-                                color = Color(0xFF6366F1),
+                                color = EmeraldPrimary,
                                 modifier = Modifier.size(36.dp)
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
-                                text = "Gemini đang phân tích dữ liệu tài chính đoàn...",
+                                text = "Đang phân tích dữ liệu tài chính đoàn...",
                                 fontSize = 13.sp,
                                 color = Color(0xFF64748B),
                                 fontWeight = FontWeight.Medium
@@ -136,11 +131,11 @@ fun AiSpendingAdvisorDialog(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // AI Disclaimer Note (Google Play Policy & User Safety)
+                // Safety & Privacy Note
                 Surface(
-                    color = Color(0xFFFEF3C7),
+                    color = Color(0xFFECFDF5),
                     shape = RoundedCornerShape(10.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFDE68A)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA7F3D0)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -148,16 +143,16 @@ fun AiSpendingAdvisorDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            Icons.Filled.Info,
+                            Icons.Filled.Security,
                             contentDescription = null,
-                            tint = Color(0xFFD97706),
+                            tint = EmeraldPrimary,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Khuyến nghị do AI tạo ra chỉ mang tính tham khảo. Trưởng đoàn và Thủ quỹ cần đối soát lại sổ sách thực tế.",
+                            text = "Gợi ý chi tiêu được xử lý cục bộ 100% trên thiết bị của bạn nhằm hỗ trợ quản lý tài chính đoàn minh bạch, không gửi dữ liệu ra mạng.",
                             fontSize = 11.sp,
-                            color = Color(0xFF92400E),
+                            color = Color(0xFF065F46),
                             lineHeight = 15.sp,
                             fontWeight = FontWeight.Medium
                         )

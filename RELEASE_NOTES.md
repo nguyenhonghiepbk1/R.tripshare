@@ -58,10 +58,9 @@ TripFinance v19.0 - Major Release:
 - **Thiết kế bất biến (Immutable Result):** Kết quả đối soát và thông tin sai số (nếu có) được đóng gói độc lập trong `SettlementCalculationResult`, loại trừ rủi ro tương tranh (race conditions) khi chạy đa luồng.
 - **Dung sai đối soát bằng không (Zero Discrepancy Tolerance):** Thuật toán chia tiền phân bổ chính xác đến từng 1 đồng VND, đảm bảo tổng chênh lệch thu chi luôn cân bằng tuyệt đối.
 
-### 4. Bảo Mật AI & Tôn Trọng Quyền Riêng Tư (Privacy-First Architecture)
-- **Không nhúng API Key trong APK:** Loại bỏ hoàn toàn `GEMINI_API_KEY` khỏi ứng dụng client và `BuildConfig`, ngăn chặn triệt để nguy cơ trích xuất khóa qua dịch ngược tệp APK.
-- **Hộp thoại xin ý kiến minh bạch (`AiConsentDialog`):** Ứng dụng luôn hiển thị hộp thoại xin phép rõ ràng trước khi gửi bất kỳ dữ liệu tổng hợp nào ra bên ngoài.
-- **Động cơ phân tích cục bộ 100% ngoại tuyến (Offline Local Insight):** Người dùng có thể nhận phân tích tài chính chi tiêu chuyên sâu hoàn toàn ngoại tuyến mà không cần kết nối mạng hay gửi dữ liệu lên máy chủ.
+### 4. Gợi Ý Chi Tiêu & Bảo Mật Quyền Riêng Tư (100% Offline Local Engine)
+- **Không nhúng API Key trong APK & Không cần quyền INTERNET:** Loại bỏ hoàn toàn mã kết nối AI Cloud và quyền INTERNET trong AndroidManifest, ngăn chặn triệt để mọi rủi ro về an toàn mạng.
+- **Động cơ phân tích cục bộ 100% ngoại tuyến (`LocalSpendingAdvisor`):** Người dùng nhận phân tích tài chính chi tiêu chuyên sâu hoàn toàn ngoại tuyến ngay trên thiết bị, không cần mạng hay gửi dữ liệu ra máy chủ.
 
 ### 5. Tinh Gọn Mã Nguồn & Loại Bỏ Mã Chết (Dead Code Elimination)
 - Loại bỏ hoàn toàn phương thức `joinTripByCode` và `deleteMemberDirect` không còn sử dụng.

@@ -21,16 +21,12 @@ TripFinance được xây dựng trên triết lý **"Privacy-by-Design" (Bảo 
 - **Cách xử lý:** Toàn bộ dữ liệu này được lưu trữ **trực tiếp và duy nhất trên bộ nhớ thiết bị của bạn** trong cơ sở dữ liệu SQLite đã được mã hóa toàn bộ cấp độ trang (Full Database Encryption at Rest) bằng công nghệ **SQLCipher (tiêu chuẩn AES-256)** với khóa bảo mật phần cứng **Android KeyStore**.
 - **Chúng tôi KHÔNG:** Chúng tôi không lưu trữ, không sao lưu và không có quyền truy cập vào dữ liệu tài chính này của bạn trên bất kỳ máy chủ bên ngoài nào.
 
-### 2.2. Dữ liệu phân tích chi tiêu & Trí tuệ nhân tạo (AI Spending Advisor)
-- **Mặc định ngoại tuyến:** Ứng dụng tích hợp công cụ phân tích cục bộ hoạt động hoàn toàn trên thiết bị (Offline Local Engine), không gửi bất kỳ dữ liệu nào ra mạng Internet.
-- **Tính năng phân tích nâng cao (Nếu sử dụng):** Nếu bạn kích hoạt tính năng cố vấn trực tuyến qua máy chủ:
-  - Ứng dụng **bắt buộc phải hiển thị hộp thoại xin ý kiến minh bạch (`AiConsentDialog`)** để bạn xác nhận đồng ý trước mỗi lần thực hiện.
-  - Dữ liệu gửi đi **chỉ là các con số tổng hợp ẩn danh** (ví dụ: tổng chi tiêu, tỷ lệ phần trăm theo danh mục).
-  - **Tuyệt đối KHÔNG gửi:** Tên thành viên, số tài khoản ngân hàng, thông tin cá nhân định danh hoặc nhật ký kiểm toán.
-  - Bạn có toàn quyền từ chối và ứng dụng vẫn hoạt động bình thường với công cụ phân tích ngoại tuyến.
+### 2.2. Phân tích & Gợi ý chi tiêu ngoại tuyến (Local-First Spending Insights)
+- **100% Cục bộ trên thiết bị:** Ứng dụng tích hợp công cụ phân tích cục bộ hoạt động hoàn toàn trên thiết bị (`LocalSpendingAdvisor`), chạy ngoại tuyến 100%, không sử dụng kết nối mạng Internet và không gửi bất kỳ dữ liệu nào ra bên ngoài.
+- **Bảo mật tuyệt đối:** Toàn bộ việc đối soát số liệu, cơ cấu chi tiêu và sức khỏe quỹ đoàn được tính toán trực tiếp trên máy bằng thuật toán nội bộ.
 
 ### 2.3. Thông tin kỹ thuật & Quyền thiết bị
-- **Quyền INTERNET:** Ứng dụng chỉ sử dụng quyền truy cập mạng để cập nhật tỷ giá ngoại tệ tham khảo hoặc kết nối dịch vụ phân tích bảo mật khi bạn cho phép.
+- **Không yêu cầu quyền INTERNET:** Ứng dụng hoạt động hoàn toàn ngoại tuyến (Zero-Internet Permission).
 - **Quyền bộ nhớ:** Ứng dụng **hoàn toàn không yêu cầu** các quyền truy cập bộ nhớ diện rộng (`READ_EXTERNAL_STORAGE` / `WRITE_EXTERNAL_STORAGE`). Khi bạn xuất báo cáo (PDF, Excel, hình ảnh), ứng dụng sử dụng cơ chế chia sẻ an toàn tiêu chuẩn của hệ điều hành Android (`FileProvider`).
 
 ---
@@ -82,15 +78,12 @@ TripFinance is engineered with a strict **Privacy-by-Design and Offline-First** 
 - **Storage & Encryption:** All information is stored **locally on your device** inside a SQLite database encrypted at rest using **SQLCipher (AES-256)** backed by the hardware-protected **Android KeyStore**.
 - **No Remote Harvesting:** We do not transmit, copy, or maintain your financial records on external cloud servers.
 
-### 2.2. AI Spending Insights & Privacy Safeguards
-- **Local Engine by Default:** TripFinance features an on-device local analytical engine that requires zero internet connection and sends zero data off your phone.
-- **Optional Cloud Analysis:** If you choose to enable online spending advice:
-  - An explicit consent dialog (`AiConsentDialog`) is displayed prior to any transmission.
-  - Only anonymized, aggregated budget totals (e.g., category percentage breakdown, general totals) are transmitted.
-  - **NEVER Shared:** Personal identities, member names, bank account numbers, or transaction audit logs are strictly excluded from transmission.
+### 2.2. Offline Spending Insights & Privacy Safeguards
+- **100% On-Device Engine:** TripFinance features an on-device local analytical engine (`LocalSpendingAdvisor`) that operates 100% offline, requires zero Internet connection, and transmits zero data off your phone.
+- **Zero Remote Harvesting:** Personal identities, member names, bank account numbers, and transaction logs are never transmitted to external services.
 
 ### 2.3. System Permissions
-- **INTERNET:** Utilized solely for fetching live currency exchange rates and connecting to secure AI analytical backends upon your explicit request.
+- **Zero-Internet Permission:** The application does not declare or request the `INTERNET` permission. All processing and storage are entirely local.
 - **Zero Broad Storage Permissions:** We do not request `READ_EXTERNAL_STORAGE` or `WRITE_EXTERNAL_STORAGE`. Reports (PDF, Excel, images) are shared using Android's secure `FileProvider` sandboxing.
 
 ---

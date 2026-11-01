@@ -25,8 +25,6 @@ class TripFinanceRepository(private val db: AppDatabase) {
     // Trips
     val allTrips: Flow<List<TripEntity>> = db.tripDao().getAllTrips()
 
-    fun getTrip(tripId: String): Flow<TripEntity?> = db.tripDao().getTripById(tripId)
-
     suspend fun createTrip(
         title: String,
         description: String,

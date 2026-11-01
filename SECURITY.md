@@ -18,17 +18,16 @@ Dự án **TripFinance** cam kết bảo vệ an toàn thông tin tài chính c�
 
 ---
 
-## 2. Bảo Mật AI & Quyền Riêng Tư (Zero Secrets in Client & User Consent)
+## 2. Bảo Mật Dữ Liệu & Phân Tích Ngoại Tuyến (100% On-Device Local Engine)
 
-- **Tuyệt Đối Không Chứa GEMINI_API_KEY trong APK:**
-  - Để ngăn chặn nguy cơ trích xuất khóa bí mật qua dịch ngược (de-compilation) tệp APK client, ứng dụng **hoàn toàn không nhúng bất kỳ API key nào** trong mã nguồn hoặc `BuildConfig`.
-  - Mọi yêu cầu phân tích nâng cao qua Cloud AI phải được định tuyến qua máy chủ Backend trung gian bảo mật (Cloud Run / Cloud Functions) được cấu hình qua biến `AI_BACKEND_URL`.
-  - Máy chủ Backend xác thực tính toàn vẹn của ứng dụng thông qua **Firebase App Check** (Header `X-Firebase-AppCheck`), bảo vệ dịch vụ khỏi các yêu cầu trái phép.
-- **Cơ Chế Xin Ý Kiến Minh Bạch (Explicit User Consent):**
-  - Trước khi gửi dữ liệu phân tích chi tiêu ra ngoài thiết bị, ứng dụng bắt buộc phải hiển thị hộp thoại `AiConsentDialog` để người dùng xác nhận lựa chọn.
-  - Dữ liệu gửi đi (nếu người dùng đồng ý) chỉ là các con số tổng hợp ẩn danh (tổng chi, tỷ lệ danh mục, số dư). **Tuyệt đối không bao giờ gửi số tài khoản ngân hàng, thông tin cá nhân hay nhật ký kiểm toán**.
-- **Động Cơ Cố Vấn Cục Bộ Ngoại Tuyến (Offline Local Insight Engine):**
-  - Khi không có mạng, không có Backend URL, hoặc người dùng từ chối gửi dữ liệu lên đám mây, ứng dụng sử dụng giải thuật phân tích tài chính cục bộ chạy 100% nội bộ trên thiết bị, bảo đảm quyền riêng tư tuyệt đối mà không phát sinh bất kỳ yêu cầu mạng nào.
+- **Hoàn Toàn Ngoại Tuyến - Không Quyền INTERNET:**
+  - Ứng dụng **hoàn toàn không khai báo quyền `INTERNET`** trong `AndroidManifest.xml`.
+  - Không nhúng bất kỳ API key nào, loại bỏ hoàn toàn các yêu cầu kết nối mạng hay máy chủ đám mây bên ngoài.
+- **Động Cơ Gợi Ý Chi Tiêu Cục Bộ (`LocalSpendingAdvisor`):**
+  - Mọi phân tích cơ cấu chi tiêu, số dư và sức khỏe quỹ đoàn được thực hiện 100% nội bộ bằng giải thuật đối soát cục bộ trên thiết bị (`LocalSpendingAdvisor.generateLocalInsight`).
+  - Dữ liệu tài chính, thành viên, và các khoản chi tuyệt đối không bao giờ rời khỏi thiết bị.
+- **Bảo Vệ Số Tài Khoản Ngân Hàng:**
+  - Thông tin số tài khoản và ngân hàng chỉ dùng để tạo mã chuyển khoản VietQR nội bộ trên máy, hoàn toàn không được truyền đi hay chia sẻ.
 
 ---
 

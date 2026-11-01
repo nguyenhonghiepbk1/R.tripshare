@@ -273,13 +273,13 @@ fun DashboardScreen(
                                     .clip(CircleShape)
                                     .background(
                                         androidx.compose.ui.graphics.Brush.linearGradient(
-                                            listOf(Color(0xFF6366F1), Color(0xFF8B5CF6))
+                                            listOf(Color(0xFF059669), Color(0xFF10B981))
                                         )
                                     ),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    Icons.Filled.AutoAwesome,
+                                    Icons.Filled.Insights,
                                     contentDescription = null,
                                     tint = Color.White,
                                     modifier = Modifier.size(20.dp)
@@ -288,15 +288,15 @@ fun DashboardScreen(
                             Spacer(modifier = Modifier.width(10.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = if (lang == AppLanguage.VI) "AI Cố Vấn Chi Tiêu (Gemini)" else "Gemini Financial Advisor",
+                                    text = if (lang == AppLanguage.VI) "Gợi ý chi tiêu" else "Spending Insights",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF4C1D95)
+                                    color = Color(0xFF065F46)
                                 )
                                 Text(
-                                    text = if (lang == AppLanguage.VI) "Phân tích ngân sách, cơ cấu chi tiêu và sức khỏe quỹ" else "Analyze budget, category split & fund health",
+                                    text = if (lang == AppLanguage.VI) "Phân tích ngân sách, cơ cấu chi tiêu và sức khỏe quỹ ngoại tuyến" else "Analyze budget, category split & fund health offline",
                                     fontSize = 11.sp,
-                                    color = Color(0xFF6D28D9)
+                                    color = Color(0xFF047857)
                                 )
                             }
                         }
@@ -305,7 +305,7 @@ fun DashboardScreen(
 
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = Color(0xFF7C3AED)
+                            color = com.hiepnguyen.tripfinance.ui.theme.EmeraldPrimary
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),

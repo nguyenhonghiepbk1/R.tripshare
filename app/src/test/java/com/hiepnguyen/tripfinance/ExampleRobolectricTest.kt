@@ -17,6 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.File
 import java.util.UUID
 import kotlin.math.round
 
@@ -334,7 +335,7 @@ class ExampleRobolectricTest {
         }
 
         // Kiểm tra toàn vẹn: Đoàn 1 và chi tiêu của nó vẫn nguyên vẹn 100%
-        val trip1 = repository.getTrip(trip1Id).first()
+        val trip1 = db.tripDao().getTripByIdOnce(trip1Id)
         assertNotNull(trip1)
         assertEquals("Đoàn gốc 1", trip1?.title)
         val expList = repository.getExpenses(trip1Id).first()
@@ -355,11 +356,11 @@ class ExampleRobolectricTest {
             adminBankAccount = null,
             adminBankHolder = null
         )
-        val originalTrip = repository.getTrip(tripId).first()!!
+        val originalTrip = db.tripDao().getTripByIdOnce(tripId)!!
 
         // Khóa sổ đoàn
         db.tripDao().updateTrip(originalTrip.copy(isSettled = true, settledAt = 1700000000000L))
-        val settledTrip = repository.getTrip(tripId).first()!!
+        val settledTrip = db.tripDao().getTripByIdOnce(tripId)!!
         assertTrue(settledTrip.isSettled)
 
         // Tạo bản backup cũ trong đó đoàn chưa khóa sổ (isSettled = false)
@@ -378,7 +379,7 @@ class ExampleRobolectricTest {
         assertTrue(result.isSuccess)
 
         // Xác nhận trạng thái niêm phong: Đoàn VẪN PHẢI LÀ isSettled = true, không được mở niêm phong
-        val afterRestoreTrip = repository.getTrip(tripId).first()!!
+        val afterRestoreTrip = db.tripDao().getTripByIdOnce(tripId)!!
         assertTrue("Đoàn đã quyết toán không được phép bị mở niêm phong khi restore bản cũ!", afterRestoreTrip.isSettled)
         assertEquals(1700000000000L, afterRestoreTrip.settledAt)
     }
@@ -1472,25 +1473,213 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun `test AI spending advisor operates offline locally when user consent is false`(): Unit = runBlocking {
+    fun `test LocalSpendingAdvisor operates offline locally with generateLocalInsight`() {
         val summary = com.hiepnguyen.tripfinance.domain.model.FinancialSummary(
             totalExpenses = 200000L,
             remainingFund = 50000L,
             isBalanced = true,
             balanceDiscrepancy = 0L
         )
-        val result = com.hiepnguyen.tripfinance.domain.ai.GeminiSpendingAdvisor.analyzeTripFinances(
+        val result = com.hiepnguyen.tripfinance.domain.ai.LocalSpendingAdvisor.generateLocalInsight(
             tripTitle = "Hà Giang Tour",
-            financialSummary = summary,
+            summary = summary,
             categories = emptyList(),
             members = emptyList(),
-            languageCode = "vi",
-            userHasConsented = false // Người dùng không đồng ý gửi ra ngoài
+            lang = "vi"
         )
         assertNotNull(result)
         assertTrue("Kết quả cục bộ phải chứa tiêu đề đoàn", result.contains("Hà Giang Tour"))
         assertTrue("Kết quả phải chứa phân tích tài chính", result.contains("PHÂN TÍCH TÀI CHÍNH ĐOÀN"))
     }
+
+    @Test
+    fun `test insertTrip uses OnConflictStrategy ABORT and throws SQLiteConstraintException on primary key or joinCode collision`(): Unit = runBlocking {
+        val trip1 = TripEntity(
+            id = "trip-abort-test-1",
+            title = "Đoàn Ban Đầu",
+            description = "Mô tả ban đầu",
+            joinCode = "ABORT-CODE-01",
+            startDate = 1000L,
+            endDate = 2000L
+        )
+
+        // 1. Chèn thành công lần đầu
+        db.tripDao().insertTrip(trip1)
+        val saved = db.tripDao().getTripByIdOnce("trip-abort-test-1")
+        assertNotNull(saved)
+        assertEquals("Đoàn Ban Đầu", saved?.title)
+
+        // 2. Chèn lại với cùng primary key 'id' -> OnConflictStrategy.ABORT phải ném SQLiteConstraintException
+        val duplicateIdTrip = trip1.copy(title = "Đoàn Ghi Đè Trái Phép")
+        assertThrows(android.database.sqlite.SQLiteConstraintException::class.java) {
+            runBlocking {
+                db.tripDao().insertTrip(duplicateIdTrip)
+            }
+        }
+
+        // Xác nhận dữ liệu gốc không bị ghi đè (không bị REPLACE)
+        val afterAttempt = db.tripDao().getTripByIdOnce("trip-abort-test-1")
+        assertEquals("Đoàn Ban Đầu", afterAttempt?.title)
+
+        // 3. Chèn chuyến đi khác id nhưng trùng UNIQUE index 'joinCode' -> OnConflictStrategy.ABORT phải ném SQLiteConstraintException
+        val duplicateCodeTrip = TripEntity(
+            id = "trip-abort-test-2",
+            title = "Đoàn Trùng JoinCode",
+            description = "Mô tả",
+            joinCode = "ABORT-CODE-01", // Trùng joinCode với trip1
+            startDate = 3000L,
+            endDate = 4000L
+        )
+        assertThrows(android.database.sqlite.SQLiteConstraintException::class.java) {
+            runBlocking {
+                db.tripDao().insertTrip(duplicateCodeTrip)
+            }
+        }
+    }
+
+    @Test
+    fun `test backup computeChecksum is deterministic and detects data tampering`(): Unit = runBlocking {
+        val tripsArray = org.json.JSONArray().apply {
+            put(org.json.JSONObject().apply {
+                put("id", "trip-1")
+                put("title", "Đoàn Test Checksum")
+            })
+        }
+        val membersArray = org.json.JSONArray().apply {
+            put(org.json.JSONObject().apply {
+                put("id", "mem-1")
+                put("name", "Nguyễn Văn A")
+            })
+        }
+        val expensesArray = org.json.JSONArray().apply {
+            put(org.json.JSONObject().apply {
+                put("id", "exp-1")
+                put("amount", 500000L)
+            })
+        }
+        val splitsArray = org.json.JSONArray()
+        val fundsArray = org.json.JSONArray()
+
+        // 1. Tính toán checksum lần 1
+        val checksum1 = com.hiepnguyen.tripfinance.data.backup.BackupRestoreManager.computeChecksum(
+            tripsArray, membersArray, expensesArray, splitsArray, fundsArray
+        )
+        assertNotNull(checksum1)
+        assertEquals("SHA-256 hex string phải có độ dài 64 ký tự", 64, checksum1.length)
+
+        // 2. Tính toán lần 2 với cùng dữ liệu -> Phải ra cùng giá trị (Deterministic)
+        val checksum2 = com.hiepnguyen.tripfinance.data.backup.BackupRestoreManager.computeChecksum(
+            tripsArray, membersArray, expensesArray, splitsArray, fundsArray
+        )
+        assertEquals(checksum1, checksum2)
+
+        // 3. Sửa một con số trong expenses (500000L -> 500001L) -> Checksum thay đổi hoàn toàn
+        val tamperedExpenses = org.json.JSONArray().apply {
+            put(org.json.JSONObject().apply {
+                put("id", "exp-1")
+                put("amount", 500001L)
+            })
+        }
+        val tamperedChecksum = com.hiepnguyen.tripfinance.data.backup.BackupRestoreManager.computeChecksum(
+            tripsArray, membersArray, tamperedExpenses, splitsArray, fundsArray
+        )
+        assertNotEquals("Checksum phải phát hiện bất kỳ sự thay đổi dữ liệu nào", checksum1, tamperedChecksum)
+
+        // 4. Kiểm tra exportBackupToJson tự động gắn dataChecksum vào metadata
+        val exportedJson = com.hiepnguyen.tripfinance.data.backup.BackupRestoreManager.exportBackupToJson(db)
+        val root = org.json.JSONObject(exportedJson)
+        val meta = root.getJSONObject("metadata")
+        assertTrue("Metadata của bản xuất sao lưu phải có dataChecksum", meta.has("dataChecksum"))
+        val exportedChecksum = meta.getString("dataChecksum")
+        assertEquals(64, exportedChecksum.length)
+    }
+
+    @Test
+    fun `test restoreFromFileStreaming preserves settled state and never unseals trip`(): Unit = runBlocking {
+        // Tạo đoàn đã quyết toán trên thiết bị
+        val tripId = repository.createTrip(
+            title = "Đoàn Đã Khóa Streaming Test",
+            description = "Test streaming restore không hạ isSettled",
+            joinCode = "STREAM-SETTLE",
+            startDate = 1000L,
+            endDate = 2000L,
+            adminName = "Admin Settle",
+            adminBankName = null,
+            adminBankAccount = null,
+            adminBankHolder = null
+        )
+        val originalTrip = db.tripDao().getTripByIdOnce(tripId)!!
+        val settledTimestamp = 1710000000000L
+        db.tripDao().updateTrip(originalTrip.copy(isSettled = true, settledAt = settledTimestamp))
+
+        val currentTrip = db.tripDao().getTripByIdOnce(tripId)!!
+        assertTrue(currentTrip.isSettled)
+        assertEquals(settledTimestamp, currentTrip.settledAt)
+
+        // Tạo tệp backup JSON giả lập trong đó đoàn chưa quyết toán (isSettled = false)
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val backupDir = File(context.filesDir, "backups").apply { if (!exists()) mkdirs() }
+        val testBackupFile = File(backupDir, "unsettled_trip_backup.json")
+
+        val unSettledBackupJson = """
+        {
+          "metadata": {
+            "appName": "TripFinance",
+            "backupVersion": 1,
+            "schemaVersion": 4,
+            "createdAt": 1700000000000,
+            "totalTrips": 1,
+            "totalMembers": 0,
+            "totalExpenses": 0,
+            "totalSplits": 0,
+            "totalFunds": 0,
+            "totalRates": 0,
+            "totalSnapshots": 0,
+            "totalLogs": 0
+          },
+          "trips": [
+            {
+              "id": "$tripId",
+              "title": "Đoàn Bản Backup Cũ",
+              "description": "Bản cũ chưa khóa sổ",
+              "joinCode": "STREAM-SETTLE",
+              "startDate": 1000,
+              "endDate": 2000,
+              "baseCurrency": "VND",
+              "isSettled": false,
+              "settledAt": null,
+              "createdAt": 1000,
+              "version": 1
+            }
+          ],
+          "members": [],
+          "expenses": [],
+          "splits": [],
+          "fundContributions": [],
+          "exchangeRates": [],
+          "settlementSnapshots": [],
+          "auditLogs": []
+        }
+        """.trimIndent()
+        testBackupFile.writeText(unSettledBackupJson, Charsets.UTF_8)
+
+        // Phục hồi qua restoreFromFileStreaming (clearExisting = false)
+        val restoreResult = com.hiepnguyen.tripfinance.data.backup.BackupRestoreManager.restoreFromFileStreaming(
+            db = db,
+            file = testBackupFile,
+            clearExisting = false,
+            password = null
+        )
+        assertTrue(restoreResult.isSuccess)
+
+        // Kiểm chứng tính bất biến: Đoàn trên máy PHẢI GIỮ NGUYÊN isSettled = true và settledAt
+        val tripAfterStreaming = db.tripDao().getTripByIdOnce(tripId)!!
+        assertTrue("restoreFromFileStreaming tuyệt đối không được hạ isSettled về false!", tripAfterStreaming.isSettled)
+        assertEquals(settledTimestamp, tripAfterStreaming.settledAt)
+
+        testBackupFile.delete()
+    }
 }
+
 
 

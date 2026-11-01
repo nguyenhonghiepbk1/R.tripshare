@@ -394,7 +394,7 @@ fun MembersAndSettingsScreen(
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = if (lang == AppLanguage.VI) "Bảo vệ thông tin tài chính & AI theo chuẩn Google Play" else "Financial data & AI security per Google Play policies",
+                                text = if (lang == AppLanguage.VI) "Bảo vệ thông tin tài chính ngoại tuyến theo chuẩn Google Play" else "Offline financial data security per Google Play policies",
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B)
                             )
@@ -1337,16 +1337,16 @@ fun PrivacyPolicyDialog(
 
                 item {
                     Text(
-                        text = if (lang == AppLanguage.VI) "3. Tính năng Cố Vấn Tài Chính Gemini AI" else "3. Gemini AI Financial Advisor Feature",
+                        text = if (lang == AppLanguage.VI) "3. Tính năng Gợi Ý Chi Tiêu Ngoại Tuyến (Local-First)" else "3. Offline Spending Insights Feature",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
                         text = if (lang == AppLanguage.VI)
-                            "Khi bạn sử dụng tính năng 'Cố vấn chi tiêu AI', hệ thống chỉ gửi dữ liệu số học tổng hợp ẩn danh (tổng chi, danh mục chi, số dư tương đối) qua kết nối HTTPS bảo mật đến Google Gemini API. Dữ liệu gửi đi TUYỆT ĐỐI KHÔNG chứa số tài khoản ngân hàng hay thông tin định danh nhạy cảm. Khuyến nghị AI chỉ mang tính tham khảo."
+                            "Tính năng 'Gợi ý chi tiêu' được phân tích hoàn toàn nội bộ và cục bộ 100% trên thiết bị của bạn bằng thuật toán đối soát tài chính trên máy. Ứng dụng không sử dụng mạng Internet, không gửi dữ liệu ra bên ngoài thiết bị. Mọi dữ liệu tài chính của đoàn luôn được bảo mật tuyệt đối."
                         else
-                            "When using the 'AI Spending Advisor', only aggregated, anonymized financial metrics (total spend, categories, relative balances) are securely sent over HTTPS to the Google Gemini API. Bank account numbers and personal identities are NEVER sent to the AI service. AI insights are advisory only.",
+                            "The 'Spending Insights' feature is computed 100% locally on your device using on-device financial algorithms. The app requires no Internet connection and transmits no data externally. Your group financial records remain completely private.",
                         fontSize = 12.sp,
                         color = Color(0xFF475569),
                         lineHeight = 17.sp
