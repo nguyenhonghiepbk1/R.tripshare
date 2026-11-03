@@ -1,5 +1,6 @@
 package com.hiepnguyen.tripfinance.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -57,6 +58,8 @@ fun CreateTripDialog(
         keyboardController?.hide()
         onDismiss()
     }
+
+    BackHandler { safeDismiss() }
 
     val isValid = title.isNotBlank() && adminName.isNotBlank()
 
@@ -189,7 +192,7 @@ fun CreateTripDialog(
                 OutlinedTextField(
                     value = adminBankName,
                     onValueChange = { adminBankName = it },
-                    label = { Text("Ngân hàng nhận tiền quyết toán") },
+                    label = { Text("Ngân hàng (Tùy chọn)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     modifier = Modifier.fillMaxWidth()
@@ -198,7 +201,7 @@ fun CreateTripDialog(
                 OutlinedTextField(
                     value = adminBankAccount,
                     onValueChange = { adminBankAccount = it },
-                    label = { Text("Số tài khoản nhận tiền") },
+                    label = { Text("Số tài khoản (Tùy chọn)") },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = {
@@ -262,6 +265,8 @@ fun EditTripDialog(
         keyboardController?.hide()
         onDismiss()
     }
+
+    BackHandler { safeDismiss() }
 
     val isValid = title.isNotBlank()
 
@@ -392,6 +397,8 @@ fun DeleteTripDialog(
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
+    BackHandler { onDismiss() }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {

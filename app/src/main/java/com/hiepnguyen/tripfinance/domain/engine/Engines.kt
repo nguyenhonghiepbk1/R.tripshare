@@ -117,7 +117,7 @@ object SettlementEngine {
     /**
      * Thuật toán Tham Lam (Greedy Algorithm) Tối Ưu Hóa Dòng Tiền:
      * - Ý tưởng cốt lõi: Luôn ưu tiên lấy bên nợ nhiều nhất (Max Debtor) trả cho bên đang được hệ thống nợ nhiều nhất (Max Creditor).
-     * - Bằng cách triệt tiêu các khoản lớn trước, rút gọn đáng kể số lượng giao dịch chuyển khoản qua lại.
+     * - Bằng cách triệt tiêu các khoản lớn trước, rút gọn đáng kể số lượng giao dịch bù trừ qua lại.
      * - Khi đoàn có Quỹ chung còn dư (remainingFund > 0) hoặc bị chi vượt (remainingFund < 0):
      *   Quỹ đoàn đóng vai trò là một bên tham gia quyết toán với số dư = -remainingFund.
      * - Trả về đối tượng kết quả SettlementCalculationResult(transfers, reconciliationError) phi trạng thái,
@@ -139,7 +139,7 @@ object SettlementEngine {
         // Không cho phép bất kỳ dung sai cố định 5 VND nào để chống thất thoát và lệch nhỏ tích lũy
         val discrepancy = totalMemberBalance - remainingFund
         if (discrepancy != 0L) {
-            val errorMsg = "Phát hiện chênh lệch đối soát ($discrepancy VND). Chưa thể tạo kế hoạch chuyển khoản do các khoản thu chi chưa cân bằng tuyệt đối."
+            val errorMsg = "Phát hiện chênh lệch đối soát ($discrepancy VND). Chưa thể tạo kế hoạch bù trừ công nợ do các khoản thu chi chưa cân bằng tuyệt đối."
             return SettlementCalculationResult(
                 transfers = emptyList(),
                 reconciliationError = errorMsg

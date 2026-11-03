@@ -127,17 +127,16 @@ object AppStrings {
     // Settlement Screen
     fun settlementTitle(lang: AppLanguage) = if (lang == AppLanguage.VI) "Quyết Toán Đoàn Tối Ưu" else "Optimized Group Settlement"
     fun settlementSubtitle(lang: AppLanguage) = if (lang == AppLanguage.VI) 
-        "Thuật toán tính toán bù trừ thông minh giúp tối thiểu hóa số lượt chuyển khoản giữa các thành viên."
+        "Thuật toán tính toán bù trừ thông minh giúp tối thiểu hóa số lượt bù trừ giữa các thành viên."
     else
-        "Smart debt netting algorithm minimizes the total number of peer-to-peer bank transfers."
+        "Smart debt netting algorithm minimizes the total number of peer-to-peer settlement transactions."
     fun allBalancedTitle(lang: AppLanguage) = if (lang == AppLanguage.VI) "Đoàn Đã Cân Bằng Tài Chính! 🎉" else "All Members Are Settled! 🎉"
     fun allBalancedDesc(lang: AppLanguage) = if (lang == AppLanguage.VI) 
         "Tất cả các thành viên hiện không có nợ nần hoặc các khoản chi đã được thanh toán đầy đủ."
     else
         "All debts have been cleared and everyone is financially balanced."
-    fun transfersNeeded(count: Int, lang: AppLanguage) = if (lang == AppLanguage.VI) "Danh Sách Chuyển Khoản Cần Thực Hiện ($count lượt)" else "Required Bank Transfers ($count transfers)"
-    fun transferTo(name: String, lang: AppLanguage) = if (lang == AppLanguage.VI) "Chuyển cho $name" else "Transfer to $name"
-    fun scanVietQr(lang: AppLanguage) = if (lang == AppLanguage.VI) "Quét VietQR" else "Scan VietQR"
+    fun transfersNeeded(count: Int, lang: AppLanguage) = if (lang == AppLanguage.VI) "Kế Hoạch Bù Trừ Công Nợ ($count lượt)" else "Required Debt Settlements ($count settlements)"
+    fun transferTo(name: String, lang: AppLanguage) = if (lang == AppLanguage.VI) "Bù trừ cho $name" else "Settle with $name"
     fun snapshotSettlement(lang: AppLanguage) = if (lang == AppLanguage.VI) "Lưu Ảnh Quyết Toán" else "Snapshot Settlement"
     fun snapshotHistory(count: Int, lang: AppLanguage) = if (lang == AppLanguage.VI) "Lịch Sử Chụp Quyết Toán ($count)" else "Settlement Snapshots ($count)"
 

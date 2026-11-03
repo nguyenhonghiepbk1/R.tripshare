@@ -1,5 +1,6 @@
 package com.hiepnguyen.tripfinance.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -34,7 +35,6 @@ import com.hiepnguyen.tripfinance.domain.model.SettlementTransfer
 import com.hiepnguyen.tripfinance.ui.components.BalanceChip
 import com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils
 import com.hiepnguyen.tripfinance.ui.components.RoleBadge
-import com.hiepnguyen.tripfinance.ui.components.VietQrTransferDialog
 import com.hiepnguyen.tripfinance.ui.theme.*
 import com.hiepnguyen.tripfinance.ui.viewmodel.UiState
 import java.text.SimpleDateFormat
@@ -48,7 +48,6 @@ fun SettlementScreen(
     onReopenSettlement: () -> Unit = {},
     onOpenExportReport: () -> Unit
 ) {
-    var selectedTransferForQr by remember { mutableStateOf<SettlementTransfer?>(null) }
     var showFinalizeDialog by remember { mutableStateOf(false) }
     var showReopenDialog by remember { mutableStateOf(false) }
     var selectedSnapshotForView by remember { mutableStateOf<SettlementSnapshotEntity?>(null) }
@@ -101,7 +100,7 @@ fun SettlementScreen(
 
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "tối ưu hóa chuyển khoản giữa các thành viên đoàn.",
+                        text = "tối ưu hóa bù trừ công nợ giữa các thành viên đoàn.",
                         fontSize = 11.sp,
                         color = Color(0xEEFFFFFF)
                     )
@@ -231,8 +230,8 @@ fun SettlementScreen(
             item {
                 Card(
                     shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF2F2)),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFCA5A5)),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.extendedColorScheme.dangerContainer),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.extendedColorScheme.cardBorder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("reconciliation_error_banner")
@@ -243,8 +242,8 @@ fun SettlementScreen(
                     ) {
                         Icon(
                             Icons.Filled.Warning,
-                            contentDescription = null,
-                            tint = Color(0xFFDC2626),
+                            contentDescription = "Cảnh báo lệch đối soát",
+                            tint = MaterialTheme.extendedColorScheme.danger,
                             modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(12.dp))
@@ -252,14 +251,14 @@ fun SettlementScreen(
                             Text(
                                 text = "Lệch Đối Soát Quyết Toán",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 13.5.sp,
-                                color = Color(0xFF991B1B)
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.extendedColorScheme.onDangerContainer
                             )
                             Spacer(modifier = Modifier.height(3.dp))
                             Text(
                                 text = uiState.reconciliationError!!,
-                                fontSize = 12.sp,
-                                color = Color(0xFFB91C1C),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.extendedColorScheme.onDangerContainer,
                                 lineHeight = 16.sp
                             )
                         }
@@ -276,16 +275,16 @@ fun SettlementScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Kế Hoạch Chuyển Khoản Chi Tiết",
-                    fontSize = 16.sp,
+                    text = "Kế Hoạch Bù Trừ Công Nợ",
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 if (copiedNotice != null) {
                     Text(
                         text = copiedNotice!!,
-                        fontSize = 11.sp,
-                        color = Color(0xFF16A34A),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.extendedColorScheme.success,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -306,43 +305,43 @@ fun SettlementScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         if (uiState.reconciliationError != null) {
-                            Icon(Icons.Filled.Warning, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(40.dp))
+                            Icon(Icons.Filled.Warning, contentDescription = "Cảnh báo", tint = MaterialTheme.extendedColorScheme.danger, modifier = Modifier.size(40.dp))
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
                                 text = uiState.reconciliationError!!,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFFEF4444),
+                                color = MaterialTheme.extendedColorScheme.danger,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 "Chênh lệch đối soát: ${NumberFormatUtils.formatCurrency(uiState.financialSummary.balanceDiscrepancy, tripCurrency)}. Vui lòng kiểm tra lại các khoản chi để phân bổ đủ tiền cho các thành viên.",
-                                fontSize = 11.sp,
-                                color = Color(0xFF64748B),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.extendedColorScheme.textMuted,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         } else if (!isBalanced) {
-                            Icon(Icons.Filled.Warning, contentDescription = null, tint = Color(0xFFEF4444), modifier = Modifier.size(40.dp))
+                            Icon(Icons.Filled.Warning, contentDescription = "Cảnh báo", tint = MaterialTheme.extendedColorScheme.danger, modifier = Modifier.size(40.dp))
                             Spacer(modifier = Modifier.height(6.dp))
-                            Text("Chưa thể tạo quyết toán!", fontWeight = FontWeight.Bold, color = Color(0xFFEF4444))
+                            Text("Chưa thể tạo quyết toán!", fontWeight = FontWeight.Bold, color = MaterialTheme.extendedColorScheme.danger)
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 "Phát hiện chênh lệch đối soát (${NumberFormatUtils.formatCurrency(uiState.financialSummary.balanceDiscrepancy, tripCurrency)}). Vui lòng kiểm tra lại các khoản chi chưa phân bổ đủ.",
-                                fontSize = 11.sp,
-                                color = Color(0xFF64748B),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.extendedColorScheme.textMuted,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         } else {
-                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(40.dp))
+                            Icon(Icons.Filled.CheckCircle, contentDescription = "Đã cân bằng", tint = EmeraldPrimary, modifier = Modifier.size(40.dp))
                             Spacer(modifier = Modifier.height(6.dp))
                             Text("Tất cả thành viên đã cân bằng!", fontWeight = FontWeight.Bold, color = EmeraldPrimary)
-                            Text("Không cần chuyển khoản bổ sung thêm", fontSize = 11.sp, color = Color(0xFF64748B))
+                            Text("Tất cả thành viên đã cân bằng công nợ", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.extendedColorScheme.textMuted)
                         }
                     }
                 }
             }
         } else {
-            itemsIndexed(uiState.settlementTransfers) { index, transfer ->
+            itemsIndexed(uiState.settlementTransfers, key = { _, transfer -> transfer.id }) { index, transfer ->
                 Card(
                     shape = RoundedCornerShape(14.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -420,49 +419,34 @@ fun SettlementScreen(
                         }
 
                         Spacer(modifier = Modifier.height(10.dp))
-                        HorizontalDivider(color = Color(0xFFF1F5F9))
+                        HorizontalDivider(color = MaterialTheme.extendedColorScheme.cardBorder)
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Bank Details & Actions
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
+                        // Note & Copy Action
+                        if (transfer.transferNote.isNotBlank()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
                                 Text(
-                                    text = "STK: ${transfer.toMember.bankAccount ?: "Chưa có"} (${transfer.toMember.bankName ?: "Chưa rõ ngân hàng"})",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF475569),
-                                    fontWeight = FontWeight.Medium
+                                    text = "Nội dung: ${transfer.transferNote}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.weight(1f)
                                 )
-                            }
-
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 OutlinedButton(
                                     onClick = {
                                         clipboardManager.setText(AnnotatedString(transfer.transferNote))
-                                        copiedNotice = "Đã chép nội dung CK!"
+                                        copiedNotice = "Đã chép nội dung!"
                                     },
                                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                                     shape = RoundedCornerShape(8.dp),
                                     modifier = Modifier.height(30.dp)
                                 ) {
-                                    Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(12.dp))
+                                    Icon(Icons.Filled.ContentCopy, contentDescription = "Chép", modifier = Modifier.size(12.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Chép ND", fontSize = 10.sp)
-                                }
-
-                                Button(
-                                    onClick = { selectedTransferForQr = transfer },
-                                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
-                                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                                    shape = RoundedCornerShape(8.dp),
-                                    modifier = Modifier.height(30.dp)
-                                ) {
-                                    Icon(Icons.Filled.QrCode, contentDescription = null, modifier = Modifier.size(12.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("VietQR", fontSize = 10.sp)
+                                    Text("Chép", style = MaterialTheme.typography.labelSmall)
                                 }
                             }
                         }
@@ -527,7 +511,7 @@ fun SettlementScreen(
                 )
             }
 
-            items(uiState.snapshots) { snap ->
+            items(uiState.snapshots, key = { it.id }) { snap ->
                 val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
                 Card(
                     shape = RoundedCornerShape(12.dp),
@@ -560,11 +544,6 @@ fun SettlementScreen(
         }
     }
 
-    // QR Dialog
-    selectedTransferForQr?.let { tr ->
-        VietQrTransferDialog(transfer = tr, onDismiss = { selectedTransferForQr = null }, baseCurrency = tripCurrency)
-    }
-
     // Finalize Confirmation Dialog
     if (showFinalizeDialog) {
         var snapshotTitle by remember { mutableStateOf("Quyết toán kết thúc chuyến đi ${uiState.currentTrip?.title}") }
@@ -575,6 +554,8 @@ fun SettlementScreen(
             keyboardController?.hide()
             showFinalizeDialog = false
         }
+
+        BackHandler { safeDismiss() }
 
         AlertDialog(
             onDismissRequest = safeDismiss,
@@ -629,6 +610,7 @@ fun SettlementScreen(
 
     // Reopen Settlement Dialog
     if (showReopenDialog) {
+        BackHandler { showReopenDialog = false }
         AlertDialog(
             onDismissRequest = { showReopenDialog = false },
             icon = { Icon(Icons.Filled.LockOpen, contentDescription = null, tint = IndigoSecondary) },
@@ -657,6 +639,7 @@ fun SettlementScreen(
 
     // Snapshot View Dialog
     selectedSnapshotForView?.let { snap ->
+        BackHandler { selectedSnapshotForView = null }
         val parsedJson = remember(snap.settlementJson) {
             try {
                 org.json.JSONObject(snap.settlementJson)
@@ -705,7 +688,7 @@ fun SettlementScreen(
                             item {
                                 Text("SỐ DƯ TỪNG THÀNH VIÊN", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF1E293B))
                             }
-                            items(membersArray.length()) { idx ->
+                            items(membersArray.length(), key = { idx -> "snap_mem_$idx" }) { idx ->
                                 val memObj = membersArray.getJSONObject(idx)
                                 val name = memObj.optString("name", "TV")
                                 val role = memObj.optString("role", "MEMBER")
@@ -731,9 +714,9 @@ fun SettlementScreen(
                         val transfersArray = parsedJson.optJSONArray("transfers")
                         if (transfersArray != null && transfersArray.length() > 0) {
                             item {
-                                Text("KẾ HOẠCH CHUYỂN KHOẢN QUYẾT TOÁN", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFF1E293B))
+                                Text("KẾ HOẠCH BÙ TRỪ QUYẾT TOÁN", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface)
                             }
-                            items(transfersArray.length()) { idx ->
+                            items(transfersArray.length(), key = { idx -> "snap_transfer_$idx" }) { idx ->
                                 val trObj = transfersArray.getJSONObject(idx)
                                 val from = trObj.optString("fromMemberName")
                                 val to = trObj.optString("toMemberName")

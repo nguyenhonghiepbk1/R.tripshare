@@ -19,6 +19,8 @@ import com.hiepnguyen.tripfinance.domain.model.MemberFinancialStatus
 import com.hiepnguyen.tripfinance.domain.model.SettlementTransfer
 import com.hiepnguyen.tripfinance.domain.model.sumOfSafe
 import com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -29,6 +31,25 @@ object PdfReportExporter {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("vi", "VN"))
     private val dateOnlyFormat = SimpleDateFormat("dd/MM/yyyy", Locale("vi", "VN"))
+
+    /**
+     * Dọn dẹp các tệp PDF báo cáo cũ hơn 24 giờ trong thư mục cache/reports khi ứng dụng khởi động
+     */
+    fun cleanOldReports(context: Context) {
+        try {
+            val reportsDir = File(context.cacheDir, "reports")
+            if (reportsDir.exists() && reportsDir.isDirectory) {
+                val cutoff = System.currentTimeMillis() - 24 * 60 * 60 * 1000L
+                reportsDir.listFiles()?.forEach { file ->
+                    if (file.isFile && file.lastModified() < cutoff) {
+                        file.delete()
+                    }
+                }
+            }
+        } catch (e: Throwable) {
+            android.util.Log.w("PdfReportExporter", "Không thể dọn dẹp file PDF cũ: ${e.message}")
+        }
+    }
 
     /**
      * Chia một đoạn văn bản thành các dòng không vượt quá maxAvailableWidth
@@ -58,7 +79,7 @@ object PdfReportExporter {
         return lines
     }
 
-    fun exportAndSharePdf(
+    suspend fun exportAndSharePdf(
         context: Context,
         trip: TripEntity?,
         members: List<TripMemberEntity>,
@@ -69,9 +90,10 @@ object PdfReportExporter {
         funds: List<FundContributionEntity>,
         splits: List<ExpenseSplitEntity> = emptyList(),
         creatorName: String
-    ): File? {
+    ): File? = withContext(Dispatchers.IO) {
+        var pdfDocument: PdfDocument? = null
         try {
-            val pdfDocument = PdfDocument()
+            pdfDocument = PdfDocument()
             val pageWidth = 595 // Standard A4 width in PostScript points (72 dpi)
             val pageHeight = 842 // Standard A4 height in PostScript points
 
@@ -237,7 +259,7 @@ object PdfReportExporter {
             currentY += 14f
 
             // =========================================================================
-            // Section 3: KẾ HOẠCH QUYẾT TOÁN TỐI ƯU CHUYỂN KHOẢN GIỮA CÁC THÀNH VIÊN
+            // Section 3: KẾ HOẠCH BÙ TRỪ CÔNG NỢ TỐI ƯU GIỮA CÁC THÀNH VIÊN
             // =========================================================================
             val totalTransferAmount = settlementTransfers.sumOfSafe { it.amount }
             checkPageBreak(50f + if (settlementTransfers.isEmpty()) 40f else (settlementTransfers.size * 22f + 30f))
@@ -246,16 +268,16 @@ object PdfReportExporter {
             paint.color = Color.parseColor("#0F172A")
             paint.style = Paint.Style.FILL
             paint.textSize = 10.5f
-            canvas.drawText("III. KẾ HOẠCH QUYẾT TOÁN TỐI ƯU CHUYỂN KHOẢN GIỮA CÁC THÀNH VIÊN", margin, currentY, paint)
+            canvas.drawText("III. KẾ HOẠCH BÙ TRỪ CÔNG NỢ TỐI ƯU GIỮA CÁC THÀNH VIÊN", margin, currentY, paint)
             currentY += 13f
 
             paint.typeface = Typeface.DEFAULT
             paint.textSize = 8f
             paint.color = Color.parseColor("#475569")
             val settleDesc = if (settlementTransfers.isNotEmpty()) {
-                "Thuật toán tham lam đã tối ưu hóa, rút gọn còn ${settlementTransfers.size} giao dịch chuyển khoản trực tiếp (Tổng số tiền luân chuyển: ${NumberFormatUtils.formatVnd(totalTransferAmount)}):"
+                "Thuật toán tham lam đã tối ưu hóa, rút gọn còn ${settlementTransfers.size} giao dịch bù trừ trực tiếp (Tổng số tiền luân chuyển: ${NumberFormatUtils.formatVnd(totalTransferAmount)}):"
             } else {
-                "Tất cả các thành viên đã cân bằng tài chính hoặc số dư = 0 đ. Không phát sinh lệnh chuyển khoản bù trừ nào."
+                "Tất cả các thành viên đã cân bằng tài chính hoặc số dư = 0 đ. Không phát sinh giao dịch bù trừ nào."
             }
             canvas.drawText(settleDesc, margin, currentY, paint)
             currentY += 10f
@@ -277,7 +299,7 @@ object PdfReportExporter {
                 canvas.drawText("✓ Toàn bộ các thành viên trong đoàn đã cân bằng số dư (0 đ). Quyết toán hoàn tất thành công!", margin + 12f, currentY + 18f, paint)
                 currentY += 36f
             } else {
-                // Bảng chuyển khoản tối ưu
+                // Bảng bù trừ tối ưu
                 paint.color = Color.parseColor("#4338CA") // Indigo 700
                 paint.style = Paint.Style.FILL
                 canvas.drawRect(margin, currentY, margin + contentWidth, currentY + 20f, paint)
@@ -285,11 +307,10 @@ object PdfReportExporter {
                 paint.color = Color.WHITE
                 paint.textSize = 8.5f
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                canvas.drawText("Người chuyển (Nộp)", margin + 6f, currentY + 13f, paint)
-                canvas.drawText("Người nhận (Hưởng)", margin + 115f, currentY + 13f, paint)
-                canvas.drawText("Số tiền (VND)", margin + 225f, currentY + 13f, paint)
-                canvas.drawText("Ngân hàng & STK Nhận", margin + 305f, currentY + 13f, paint)
-                canvas.drawText("Nội dung CK", margin + 435f, currentY + 13f, paint)
+                canvas.drawText("Người nộp bù", margin + 6f, currentY + 13f, paint)
+                canvas.drawText("Người nhận", margin + 125f, currentY + 13f, paint)
+                canvas.drawText("Số tiền (VND)", margin + 245f, currentY + 13f, paint)
+                canvas.drawText("Nội dung đối soát", margin + 345f, currentY + 13f, paint)
                 currentY += 20f
 
                 paint.typeface = Typeface.DEFAULT
@@ -306,17 +327,15 @@ object PdfReportExporter {
                     val fromName = if (tr.fromMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else tr.fromMember.name
                     val toName = if (tr.toMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else tr.toMember.name
                     canvas.drawText(fromName.take(20), margin + 6f, currentY + 13f, paint)
-                    canvas.drawText(toName.take(20), margin + 115f, currentY + 13f, paint)
+                    canvas.drawText(toName.take(20), margin + 125f, currentY + 13f, paint)
 
                     paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                     paint.color = Color.parseColor("#4338CA")
-                    canvas.drawText(NumberFormatUtils.formatVnd(tr.amount), margin + 225f, currentY + 13f, paint)
+                    canvas.drawText(NumberFormatUtils.formatVnd(tr.amount), margin + 245f, currentY + 13f, paint)
 
                     paint.typeface = Typeface.DEFAULT
                     paint.color = Color.parseColor("#1E293B")
-                    val bankInfo = "${tr.toMember.bankName ?: ""}: ${tr.toMember.bankAccount ?: "---"}"
-                    canvas.drawText(bankInfo.take(24), margin + 305f, currentY + 13f, paint)
-                    canvas.drawText(tr.transferNote.take(22), margin + 435f, currentY + 13f, paint)
+                    canvas.drawText(tr.transferNote.take(35), margin + 345f, currentY + 13f, paint)
 
                     paint.color = Color.parseColor("#E0E7FF")
                     paint.style = Paint.Style.STROKE
@@ -633,19 +652,27 @@ object PdfReportExporter {
             val reportsDir = File(context.cacheDir, "reports").apply { if (!exists()) mkdirs() }
             val sanitizeTripTitle = (trip?.title ?: "Trip").replace("[^a-zA-Z0-9]".toRegex(), "_")
             val pdfFile = File(reportsDir, "BaoCaoQuyetToan_${sanitizeTripTitle}_${System.currentTimeMillis()}.pdf")
-            val fos = FileOutputStream(pdfFile)
-            pdfDocument.writeTo(fos)
-            fos.flush()
-            fos.close()
-            pdfDocument.close()
+            
+            FileOutputStream(pdfFile).use { fos ->
+                pdfDocument.writeTo(fos)
+                fos.flush()
+            }
 
-            // Open Share Intent for PDF
-            sharePdfFile(context, pdfFile, tripTitle)
-            return pdfFile
+            // Open Share Intent for PDF on Main thread
+            withContext(Dispatchers.Main) {
+                sharePdfFile(context, pdfFile, tripTitle)
+            }
+            pdfFile
         } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(context, "Lỗi xuất file PDF: ${e.message}", Toast.LENGTH_LONG).show()
-            return null
+            android.util.Log.e("PdfReportExporter", "Lỗi xuất file PDF: ${e.javaClass.simpleName}")
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Không thể xuất file PDF báo cáo. Vui lòng thử lại sau.", Toast.LENGTH_LONG).show()
+            }
+            null
+        } finally {
+            try {
+                pdfDocument?.close()
+            } catch (_: Throwable) {}
         }
     }
 

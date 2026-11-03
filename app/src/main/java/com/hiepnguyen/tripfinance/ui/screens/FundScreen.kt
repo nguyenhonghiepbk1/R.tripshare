@@ -1,5 +1,6 @@
 package com.hiepnguyen.tripfinance.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -249,7 +250,7 @@ fun FundScreen(
                     }
                 }
             } else {
-                items(uiState.fundContributions) { item ->
+                items(uiState.fundContributions, key = { it.id }) { item ->
                     val contributor = uiState.members.find { it.id == item.memberId }
                     val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
@@ -348,6 +349,8 @@ fun AddFundContributionDialog(
         keyboardController?.hide()
         onDismiss()
     }
+
+    BackHandler { safeDismiss() }
 
     AlertDialog(
         onDismissRequest = safeDismiss,

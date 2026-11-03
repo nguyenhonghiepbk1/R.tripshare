@@ -1,6 +1,10 @@
 # Bộ Thông Tin & Mô Tả Ứng Dụng Đăng Tải Google Play (Store Listing) - TripFinance
 
-Tài liệu này cung cấp đầy đủ nội dung theo chuẩn quy định mới nhất của **Google Play Console**, bao gồm Tiếng Việt (Ngôn ngữ chính) và Tiếng Anh (Ngôn ngữ phụ), sẵn sàng để copy và paste trực tiếp vào trang **Main Store Listing (Trang thông tin chính trên Cửa hàng)**.
+Tài liệu này cung cấp đầy đủ nội dung theo chuẩn quy định mới nhất của **Google Play Console**, bao gồm Tiếng Việt (Ngôn ngữ chính) và Tiếng Anh (Ngôn ngữ phụ), sẵn sàng để sao chép trực tiếp vào trang **Main Store Listing (Trang thông tin chính trên Cửa hàng)**.
+
+- **Mã gói ứng dụng (Application ID):** `com.hiepnguyen.tripfinance.oddnis`
+- **Phiên bản (Version):** `20.0` (VersionCode: `20`)
+- **Quyền mạng (Permissions):** Không có quyền INTERNET (`Zero-Internet Permission`), hoạt động 100% ngoại tuyến.
 
 ---
 
@@ -20,9 +24,9 @@ TripFinance - Chia tiền đoàn
 > *Quy định Google Play: Tối đa 80 ký tự, nêu bật giá trị cốt lõi của ứng dụng.*
 
 ```text
-Quản lý tài chính đoàn, chia tiền nhóm, theo dõi quỹ chung và quyết toán nợ.
+Quản lý tài chính đoàn, chia tiền nhóm, theo dõi quỹ chung và bù trừ công nợ.
 ```
-*(Độ dài: 76/80 ký tự)*
+*(Độ dài: 79/80 ký tự)*
 
 ---
 
@@ -30,45 +34,49 @@ Quản lý tài chính đoàn, chia tiền nhóm, theo dõi quỹ chung và quy�
 > *Quy định Google Play: Tối đa 4000 ký tự.*
 
 ```text
-TripFinance là giải pháp quản lý tài chính chuyên nghiệp và bảo mật dành cho các chuyến du lịch nhóm, đoàn công tác, sự kiện gia đình hoặc hội bạn bè. Ứng dụng giúp bạn xóa bỏ mọi phiền toái khi ghi chép sổ sách thủ công, chia tiền phức tạp và tranh cãi sau mỗi chuyến đi.
+TripFinance là ứng dụng quản lý tài chính ngoại tuyến dành cho các chuyến du lịch nhóm, đoàn công tác, sự kiện gia đình hoặc hội bạn bè. Ứng dụng giúp bạn xóa bỏ phiền toái khi ghi chép sổ sách thủ công, chia tiền phức tạp và tranh cãi sau mỗi chuyến đi.
 
-TẠI SAO NÊN CHỌN TRIPFINANCE?
+TÍNH NĂNG NỔI BẬT:
 
 1. CHIA TIỀN LINH HOẠT & CÔNG BẰNG
-• Chia đều cho tất cả mọi người hoặc chỉ những thành viên tham gia khoản chi.
-• Chia theo số tiền cụ thể hoặc tỷ lệ phần trăm tùy chỉnh.
-• Hỗ trợ tạm ứng, người này chi thay người khác một cách minh bạch.
+• Chia đều cho tất cả mọi người hoặc chỉ những người cùng tham gia khoản chi.
+• Chia theo số tiền cụ thể hoặc theo tỷ lệ phần trăm tùy chỉnh.
+• Hỗ trợ một người chi hộ nhiều người hoặc chi trực tiếp từ Quỹ đoàn một cách rõ ràng.
 
 2. QUẢN LÝ QUỸ CHUNG CHẶT CHẼ
-• Theo dõi chi tiết các lượt đóng quỹ từ từng thành viên.
-• Chi tiêu trực tiếp từ quỹ đoàn với tính năng kiểm tra số dư tức thời.
-• Tự động hoàn lại tiền quỹ còn dư cho thành viên khi chuyến đi kết thúc.
+• Theo dõi chi tiết từng đợt đóng quỹ của các thành viên.
+• Chi tiêu trực tiếp từ quỹ đoàn với tính năng kiểm tra số dư khả dụng tức thời.
+• Tự động tính toán phần quỹ còn dư để hoàn lại công bằng khi chốt chuyến đi.
 
-3. THUẬT TOÁN QUYẾT TOÁN TỐI ƯU (TỐI THIỂU HÓA GIAO DỊCH)
-• Thuật toán thông minh tự động tính toán bù trừ nợ qua lại, rút gọn số lượng giao dịch chuyển khoản xuống mức ít nhất có thể.
-• Tạo mã QR VietQR / thông tin tài khoản ngân hàng của người nhận để chuyển khoản trong vài giây.
-• Đối soát tài chính chính xác tới từng đồng (dung sai sai số bằng 0).
+3. THUẬT TOÁN BÙ TRỪ CÔNG NỢ TỐI ƯU (MIN-TRANSFERS)
+• Thuật toán tối ưu hóa tự động tính toán bù trừ công nợ giữa các thành viên, rút gọn số lượt giao dịch thanh toán xuống mức tối thiểu.
+• Hiển thị rõ người nộp bù, người nhận, số tiền và nội dung đối soát chuẩn.
+• Hỗ trợ sao chép nhanh thông tin thanh toán bù trừ để gửi cho các thành viên.
 
-4. BẢO MẬT DỮ LIỆU CẤP CAO & HOẠT ĐỘNG NGOẠI TUYẾN 100%
-• Toàn bộ cơ sở dữ liệu được mã hóa bằng chuẩn SQLCipher AES-256 kết hợp vùng bảo mật phần cứng Android KeyStore.
-• Tương thích hoàn toàn với kiến trúc bộ nhớ trang 16 KB trên Android 15+.
-• Hoạt động 100% ngoại tuyến: Không cần kết nối Internet khi nhập liệu, không lo mất mạng khi đi du lịch vùng xa.
+4. HỖ TRỢ NGOẠI TỆ & TỶ GIÁ TÙY CHỈNH
+• Nhập chi tiêu bằng nhiều loại tiền tệ (USD, EUR, JPY, KRW, THB, SGD...).
+• Tự động quy đổi ra VND theo tỷ giá tham khảo hoặc tỷ giá người dùng tự thiết lập.
 
-5. BÁO CÁO MINH BẠCH & XUẤT DỮ LIỆU NHANH CHÓNG
-• Biểu đồ phân bổ chi phí trực quan theo từng hạng mục (ăn uống, khách sạn, di chuyển, vé tham quan...).
-• Xuất báo cáo quyết toán chi tiết để dễ dàng gửi qua Zalo, Messenger, Telegram hoặc Email.
-• Nhật ký kiểm toán (Audit Trail) ghi lại mọi thay đổi giúp trưởng đoàn hoàn toàn yên tâm.
+5. BẢO MẬT DỮ LIỆU & HOẠT ĐỘNG NGOẠI TUYẾN 100%
+• Không cần kết nối Internet: Ứng dụng không yêu cầu quyền INTERNET, hoạt động trơn tru trên máy bay hoặc vùng không có sóng di động.
+• Cơ sở dữ liệu SQLite được mã hóa cục bộ bằng SQLCipher (AES-256) kết hợp Android KeyStore.
+• Tính năng xuất/nhập sao lưu mã hóa bằng mật khẩu (sử dụng thuật toán AES-GCM và PBKDF2).
 
-6. CỐ VẤN CHI TIÊU THÔNG MINH
-• Đưa ra các gợi ý và phân tích thói quen chi tiêu trong đoàn.
-• Tuyệt đối tôn trọng quyền riêng tư: Ứng dụng luôn hỏi ý kiến minh bạch trước khi phân tích và hỗ trợ chế độ phân tích cục bộ an toàn trên thiết bị.
+6. XUẤT BÁO CÁO TÀI CHÍNH ĐA DẠNG
+• Báo cáo tóm tắt văn bản dễ dàng sao chép và gửi qua tin nhắn.
+• Bảng kê chi tiết định dạng CSV (Excel) chuẩn mã hóa UTF-8 BOM hiển thị tiếng Việt hoàn hảo.
+• Xuất tệp báo cáo PDF chuẩn A4 đầy đủ bảng biểu thu chi và phân bổ nợ.
 
-Tải TripFinance ngay hôm nay để mọi chuyến đi đều ngập tràn niềm vui và tài chính luôn sòng phẳng, rõ ràng!
+7. CỐ VẤN CHI TIÊU NGOẠI TUYẾN
+• Phân tích cơ cấu chi tiêu theo danh mục (ăn uống, đi lại, lưu trú, vé tham quan...).
+• Tính toán trực tiếp trên thiết bị, bảo đảm quyền riêng tư tuyệt đối cho dữ liệu của bạn.
+
+Tải TripFinance ngay hôm nay để mọi chuyến đi đều ngập tràn niềm vui và tài chính luôn minh bạch, rõ ràng!
 ```
 
 ---
 
-## 2. Phiên Bản Tiếng Anh (`en-US`) - Secondary / Global Listing
+## 2. Phiên Bản Tiếng Anh (`en-US`) - Secondary Listing
 
 ### 🏷 App Name
 > *Max 30 characters:*
@@ -94,49 +102,53 @@ Track group expenses, split bills easily, manage shared funds, and settle debts.
 > *Max 4000 characters:*
 
 ```text
-TripFinance is an advanced, secure financial manager designed for group travel, business trips, social outings, and roommates. Eliminate awkward money conversations and tedious spreadsheets with effortless expense tracking and optimal debt settlement.
+TripFinance is an offline financial manager designed for group travel, business trips, shared events, and friends. Eliminate manual spreadsheets and awkward debt calculations with effortless expense tracking and smart debt netting.
 
 KEY FEATURES:
 
 1. FAIR & FLEXIBLE EXPENSE SPLITTING
-• Split equally or selectively among specific members.
-• Split by exact amounts or custom percentages.
-• Track who paid, who benefited, and multi-payer scenarios with complete transparency.
+• Split equally among everyone or selectively among specific participants.
+• Split by exact amounts or custom percentage ratios.
+• Support personal out-of-pocket payments as well as direct payments from the group fund.
 
 2. SHARED GROUP FUND MANAGEMENT
 • Track fund contributions from each member.
-• Pay directly from group funds with real-time balance checks.
-• Automatically calculate remaining fund refunds upon trip closing.
+• Pay directly from group funds with real-time balance tracking.
+• Automatically calculate remaining fund refunds upon closing the trip.
 
-3. OPTIMIZED SETTLEMENT ALGORITHM
-• Minimizes total transfer transactions using a smart settlement balancing algorithm.
-• Integrated banking transfer information for instant settlement.
-• Zero-discrepancy reconciliation ensures accounts balance down to the last penny.
+3. OPTIMIZED DEBT NETTING ALGORITHM
+• Minimizes total settlement transactions across the group using an efficient debt-netting algorithm.
+• Clear overview of who owes whom, exact amounts, and standardized payment memos.
+• One-tap copy for sharing settlement breakdowns with members.
 
-4. MILITARY-GRADE SECURITY & 100% OFFLINE CAPABILITY
-• Full database encryption at rest using AES-256 SQLCipher protected by Android KeyStore.
-• Certified compatibility with 16 KB memory pages on Android 15+.
-• 100% offline functionality: Log expenses anywhere without an internet connection.
+4. MULTI-CURRENCY WITH CUSTOM EXCHANGE RATES
+• Log expenses in various foreign currencies (USD, EUR, JPY, KRW, THB, SGD...).
+• Automatic conversion to VND using configurable exchange rates.
 
-5. TRANSPARENT REPORTS & AUDIT LOGS
-• Visual expenditure breakdowns by categories (food, lodging, transit, activities).
-• Export clean, formatted settlement summaries to share via messaging apps.
-• Comprehensive audit logs prevent unauthorized changes or data disputes.
+5. DATA PRIVACY & 100% OFFLINE CAPABILITY
+• Zero-Internet permission: Functions completely offline anywhere, including flights and remote areas.
+• Local SQLite database encrypted at rest with SQLCipher (AES-256) backed by Android KeyStore.
+• Passphrase-protected encrypted backup export and import (AES-GCM with PBKDF2).
 
-6. PRIVACY-FIRST SPENDING INSIGHTS
-• Smart analysis and actionable budget recommendations.
-• Strict privacy policy: Explicit consent dialog and an on-device local engine ensuring zero data leakage.
+6. COMPREHENSIVE REPORT EXPORTS
+• Summary text report ready to copy and share via messaging apps.
+• Detailed CSV spreadsheet export with UTF-8 BOM encoding for seamless Excel viewing.
+• Formatted standard A4 PDF report export with complete expense ledgers and balance tables.
 
-Travel together, spend peacefully, and settle easily with TripFinance!
+7. OFFLINE SPENDING ADVISOR
+• Breakdown of spending across categories (dining, lodging, transit, activities).
+• Computed entirely on your device with complete privacy.
+
+Travel together, track expenses easily, and settle balances transparently with TripFinance!
 ```
 
 ---
 
-## 3. Cấu Hình Phân Loại & Thông Tin Cửa Hàng (Store Settings)
+## 3. Cấu Hình Phân Loại & Cài Đặt Cửa Hàng (Store Settings)
 
 Khi điền thông tin trong **Cài đặt cửa hàng (Store settings)** trên Google Play Console:
 
-| Mục thiết lập | Giá trị khuyến nghị |
+| Mục thiết lập | Giá trị cấu hình |
 | :--- | :--- |
 | **Loại ứng dụng (App category)** | **Ứng dụng (Apps)** |
 | **Danh mục (Category)** | **Tài chính (Finance)** *(hoặc Năng suất / Productivity)* |
@@ -150,13 +162,13 @@ Khi điền thông tin trong **Cài đặt cửa hàng (Store settings)** trên 
 
 ## 4. Tóm Tắt Khai Báo An Toàn Dữ Liệu (Data Safety Declaration)
 
-Google Play yêu cầu hoàn thành biểu mẫu **An toàn dữ liệu (Data Safety)**:
+Biểu mẫu **An toàn dữ liệu (Data Safety)** trên Google Play Console:
 
 1. **Thu thập dữ liệu (Data collection):**
-   - Chọn **Không thu thập dữ liệu cá nhân nào** (No personal data is collected).
-   - Cơ sở dữ liệu tài chính được lưu trữ cục bộ (local on-device) trên máy của người dùng.
+   - Chọn **Không (No)** — Ứng dụng không thu thập bất kỳ dữ liệu người dùng nào.
+   - Toàn bộ dữ liệu được lưu trữ cục bộ (local on-device) trong bộ nhớ ứng dụng.
 2. **Chia sẻ dữ liệu (Data sharing):**
-   - Chọn **Không chia sẻ dữ liệu với bên thứ ba** (No data shared with third parties).
+   - Chọn **Không (No)** — Không có bất kỳ dữ liệu nào được chia sẻ với bên thứ ba hoặc gửi lên máy chủ ngoài.
 3. **Thực hành bảo mật (Security practices):**
-   - **Dữ liệu được mã hóa khi lưu trữ:** Đánh dấu **CÓ (Yes)** (Mã hóa CSDL SQLCipher AES-256).
-   - **Cơ chế xóa dữ liệu:** Đánh dấu **CÓ (Yes)** (Người dùng có thể xóa chuyến đi hoặc dữ liệu bất kỳ lúc nào trong ứng dụng hoặc khi gỡ cài đặt ứng dụng).
+   - **Dữ liệu được mã hóa khi lưu trữ (Data is encrypted at rest):** Đánh dấu **CÓ (Yes)** (Mã hóa CSDL SQLCipher AES-256).
+   - **Cơ chế xóa dữ liệu (Data deletion mechanism):** Đánh dấu **CÓ (Yes)** (Người dùng có thể chủ động sửa/xóa từng bản ghi, xóa chuyến đi trong ứng dụng hoặc gỡ cài đặt ứng dụng để xóa toàn bộ dữ liệu).

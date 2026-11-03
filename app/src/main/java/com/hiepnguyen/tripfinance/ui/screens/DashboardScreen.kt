@@ -85,7 +85,7 @@ fun DashboardScreen(
                 Card(
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
+                    border = BorderStroke(1.dp, MaterialTheme.extendedColorScheme.cardBorder),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -104,14 +104,14 @@ fun DashboardScreen(
                         Text(
                             text = "Chưa Có Đoàn Công Tác Nào",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = Color(0xFF1E293B)
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
                             text = "Ứng dụng sạch sẽ và sẵn sàng sử dụng. Bắt đầu bằng cách tạo đoàn công tác mới để quản lý chi tiêu và chia tiền.",
-                            fontSize = 13.sp,
-                            color = Color(0xFF64748B),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.extendedColorScheme.textMuted,
                             textAlign = TextAlign.Center
                         )
                         Spacer(modifier = Modifier.height(16.dp))
@@ -132,27 +132,32 @@ fun DashboardScreen(
             item {
                 Surface(
                     shape = RoundedCornerShape(14.dp),
-                    color = Color(0xFFF1F5F9),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFCBD5E1)),
+                    color = MaterialTheme.extendedColorScheme.cardBackground,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.extendedColorScheme.cardBorder),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Filled.Lock, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(18.dp))
+                        Icon(
+                            Icons.Filled.Lock,
+                            contentDescription = "Đã khóa",
+                            tint = MaterialTheme.extendedColorScheme.textMuted,
+                            modifier = Modifier.size(18.dp)
+                        )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
                                 text = "Sổ Chuyến Đi Đã Được Khóa Quyết Toán",
-                                fontSize = 12.sp,
+                                style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF334155)
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Mọi khoản chi tiêu và nộp quỹ đã được niêm phong an toàn để đối soát và chuyển khoản.",
-                                fontSize = 11.sp,
-                                color = Color(0xFF64748B)
+                                text = "Mọi khoản chi tiêu và nộp quỹ đã được niêm phong an toàn để đối soát và bù trừ công nợ.",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.extendedColorScheme.textMuted
                             )
                         }
                     }
@@ -164,8 +169,8 @@ fun DashboardScreen(
         item {
             Surface(
                 shape = RoundedCornerShape(14.dp),
-                color = Color(0xFFEFF6FF),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFBFDBFE)),
+                color = MaterialTheme.colorScheme.primaryContainer,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.extendedColorScheme.cardBorder),
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
@@ -187,13 +192,13 @@ fun DashboardScreen(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFF3B82F6)),
+                                .background(MaterialTheme.colorScheme.primary),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 Icons.Filled.MenuBook,
-                                contentDescription = null,
-                                tint = Color.White,
+                                contentDescription = if (lang == AppLanguage.VI) "Hướng dẫn sử dụng" else "User Guide",
+                                tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -201,17 +206,17 @@ fun DashboardScreen(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text = if (lang == AppLanguage.VI) "Cẩm Nang Hướng Dẫn Sử Dụng" else "User Guide & Handbook",
-                                fontSize = 13.sp,
+                                style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E3A8A)
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
                                 text = if (lang == AppLanguage.VI)
-                                    "Xem quy trình 4 bước, cách chia tiền, quét VietQR & ngoại tệ"
+                                    "Xem quy trình 4 bước, cách chia tiền, bù trừ công nợ & ngoại tệ"
                                 else
-                                    "Learn workflows, split methods, VietQR & currency rates",
-                                fontSize = 11.sp,
-                                color = Color(0xFF3B82F6),
+                                    "Learn workflows, split methods, debt netting & currency rates",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -220,7 +225,7 @@ fun DashboardScreen(
 
                     Surface(
                         shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFF3B82F6)
+                        color = MaterialTheme.colorScheme.primary
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -228,14 +233,14 @@ fun DashboardScreen(
                         ) {
                             Text(
                                 text = if (lang == AppLanguage.VI) "Xem ngay" else "Read",
-                                fontSize = 11.sp,
+                                style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowForward,
                                 contentDescription = null,
-                                tint = Color.White,
+                                tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(14.dp)
                             )
                         }
@@ -512,7 +517,7 @@ fun DashboardScreen(
                 // Card 3: Single Source of Truth Reconciliation Badge (SRS Section 2.4)
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = if (uiState.financialSummary.isBalanced) Color(0xFFECFDF5) else Color(0xFFFEF2F2),
+                    color = if (uiState.financialSummary.isBalanced) MaterialTheme.extendedColorScheme.successContainer else MaterialTheme.extendedColorScheme.dangerContainer,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -526,8 +531,8 @@ fun DashboardScreen(
                         ) {
                             Icon(
                                 imageVector = if (uiState.financialSummary.isBalanced) Icons.Filled.CheckCircle else Icons.Filled.Warning,
-                                contentDescription = null,
-                                tint = if (uiState.financialSummary.isBalanced) Color(0xFF059669) else Color(0xFFDC2626),
+                                contentDescription = if (uiState.financialSummary.isBalanced) "Cân bằng" else "Chênh lệch",
+                                tint = if (uiState.financialSummary.isBalanced) MaterialTheme.extendedColorScheme.success else MaterialTheme.extendedColorScheme.danger,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -538,14 +543,14 @@ fun DashboardScreen(
                                     } else {
                                         "Cảnh báo: Chênh lệch ${NumberFormatUtils.formatCurrency(uiState.financialSummary.balanceDiscrepancy, tripCurrency)}"
                                     },
-                                    fontSize = 12.sp,
+                                    style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (uiState.financialSummary.isBalanced) Color(0xFF065F46) else Color(0xFF991B1B)
+                                    color = if (uiState.financialSummary.isBalanced) MaterialTheme.extendedColorScheme.onSuccessContainer else MaterialTheme.extendedColorScheme.onDangerContainer
                                 )
                                 Text(
                                     text = "Thuật toán kiểm tra liên tục đảm bảo không thất thoát",
-                                    fontSize = 10.sp,
-                                    color = if (uiState.financialSummary.isBalanced) Color(0xFF047857) else Color(0xFFB91C1C)
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (uiState.financialSummary.isBalanced) MaterialTheme.extendedColorScheme.onSuccessContainer else MaterialTheme.extendedColorScheme.onDangerContainer
                                 )
                             }
                         }
@@ -557,9 +562,9 @@ fun DashboardScreen(
                         ) {
                             Text(
                                 "Quyết toán",
-                                fontSize = 11.sp,
+                                style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
-                                color = if (uiState.financialSummary.isBalanced) Color(0xFF059669) else Color(0xFFDC2626)
+                                color = if (uiState.financialSummary.isBalanced) MaterialTheme.extendedColorScheme.success else MaterialTheme.extendedColorScheme.danger
                             )
                         }
                     }

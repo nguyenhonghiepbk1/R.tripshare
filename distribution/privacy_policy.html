@@ -6,58 +6,75 @@
     <title>Privacy Policy - TripFinance</title>
     <style>
         :root {
-            --primary: #0D9488;
-            --text: #1F2937;
-            --bg: #F9FAFB;
+            --primary: #059669;
+            --primary-dark: #047857;
+            --text: #1E293B;
+            --text-muted: #64748B;
+            --bg: #F8FAFC;
             --card: #FFFFFF;
-            --border: #E5E7EB;
+            --border: #E2E8F0;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text);
-            line-height: 1.6;
+            line-height: 1.65;
             margin: 0;
-            padding: 20px;
+            padding: 24px 16px;
         }
         .container {
-            max-width: 800px;
+            max-width: 820px;
             margin: 0 auto;
             background: var(--card);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 36px;
+            border-radius: 14px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
         }
-        h1 { color: var(--primary); font-size: 26px; border-bottom: 2px solid var(--border); padding-bottom: 12px; }
-        h2 { color: #111827; font-size: 20px; margin-top: 28px; }
-        h3 { color: #374151; font-size: 16px; margin-top: 18px; }
-        p, li { font-size: 15px; color: #4B5563; }
-        ul { padding-left: 20px; }
+        h1 { color: var(--primary); font-size: 24px; border-bottom: 2px solid var(--border); padding-bottom: 12px; margin-top: 0; }
+        h2 { color: #0F172A; font-size: 18px; margin-top: 26px; margin-bottom: 8px; }
+        h3 { color: #334155; font-size: 15px; margin-top: 16px; margin-bottom: 6px; }
+        p, li { font-size: 14.5px; color: #334155; }
+        ul { padding-left: 20px; margin-top: 6px; }
+        li { margin-bottom: 6px; }
+        code { background-color: #F1F5F9; padding: 2px 6px; border-radius: 4px; font-size: 13.5px; color: #0F172A; }
         .highlight {
-            background-color: #F0FDFA;
+            background-color: #ECFDF5;
             border-left: 4px solid var(--primary);
             padding: 12px 16px;
-            margin: 16px 0;
-            border-radius: 4px;
+            margin: 18px 0;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #065F46;
         }
         .lang-switch {
             text-align: right;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            font-size: 14px;
         }
         .lang-switch a {
             color: var(--primary);
             font-weight: 600;
             text-decoration: none;
-            margin-left: 12px;
+            margin-left: 10px;
         }
         .lang-switch a:hover { text-decoration: underline; }
+        .meta-tag {
+            display: inline-block;
+            background: #F1F5F9;
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
         .footer {
-            margin-top: 40px;
+            margin-top: 36px;
             padding-top: 20px;
             border-top: 1px solid var(--border);
             text-align: center;
-            font-size: 14px;
-            color: #9CA3AF;
+            font-size: 13.5px;
+            color: var(--text-muted);
         }
     </style>
 </head>
@@ -68,62 +85,92 @@
         <a href="#vi">Tiếng Việt</a> | <a href="#en">English</a>
     </div>
 
+    <!-- PHẦN TIẾNG VIỆT -->
     <section id="vi">
         <h1>Chính Sách Quyền Riêng Tư — TripFinance</h1>
-        <p><strong>Ngày có hiệu lực:</strong> 01/10/2026 | <strong>Mã gói ứng dụng:</strong> <code>com.hiepnguyen.tripfinance</code></p>
+        <div class="meta-tag">
+            Phiên bản: 20.0 | Ngày có hiệu lực: 02/11/2026 | Mã gói ứng dụng: <code>com.hiepnguyen.tripfinance.oddnis</code>
+        </div>
 
         <div class="highlight">
-            <strong>Cam kết cốt lõi:</strong> TripFinance được xây dựng theo triết lý bảo vệ quyền riêng tư ngay từ thiết kế (Privacy-by-Design). Ứng dụng lưu trữ dữ liệu 100% cục bộ trên thiết bị của bạn, mã hóa cấp cao bằng AES-256 (SQLCipher) và KHÔNG thu thập dữ liệu cá nhân hay tài chính của bạn để kinh doanh, quảng cáo.
+            <strong>Cam kết cốt lõi:</strong> TripFinance được xây dựng trên triết lý bảo vệ quyền riêng tư ngay từ thiết kế (Privacy-by-Design). Ứng dụng hoạt động 100% ngoại tuyến (offline-only), lưu trữ dữ liệu tại chỗ trong cơ sở dữ liệu mã hóa AES-256 (SQLCipher) và KHÔNG thu thập, không theo dõi, không chia sẻ bất kỳ dữ liệu cá nhân hay tài chính nào của người dùng.
         </div>
 
         <h2>1. Dữ Liệu Được Xử Lý & Lưu Trữ Cục Bộ</h2>
         <ul>
-            <li><strong>Dữ liệu chuyến đi và chi tiêu:</strong> Tên đoàn, danh sách thành viên, các khoản chi tiêu, phân chia nợ, đóng góp quỹ chung và thông tin số tài khoản nhận tiền chuyển khoản.</li>
-            <li><strong>Lưu trữ trên máy:</strong> Toàn bộ dữ liệu được lưu trên chính điện thoại của bạn, mã hóa chuẩn AES-256 bằng SQLCipher kết hợp bảo vệ phần cứng Android KeyStore. Chúng tôi không lưu trữ dữ liệu của bạn trên máy chủ bên ngoài.</li>
+            <li><strong>Dữ liệu chuyến đi và chi tiêu:</strong> Tên đoàn, danh sách thành viên, các khoản chi tiêu, số tiền, ngày giờ, phân bổ nợ, lịch sử đóng góp quỹ đoàn, số tài khoản ngân hàng của thành viên (nếu người dùng tự nguyện nhập để đối soát) và tỷ giá quy đổi ngoại tệ.</li>
+            <li><strong>Lưu trữ an toàn trên thiết bị:</strong> Toàn bộ dữ liệu được lưu trữ trực tiếp và duy nhất trong bộ nhớ ứng dụng (App Sandbox) trên thiết bị của bạn trong cơ sở dữ liệu SQLite mã hóa toàn bộ dữ liệu lưu trữ bằng <strong>SQLCipher (chuẩn AES-256)</strong> với khóa quản lý qua <strong>Android KeyStore</strong>.</li>
+            <li><strong>Không gửi dữ liệu ra ngoài:</strong> Ứng dụng không có máy chủ trung gian, không tải dữ liệu lên đám mây và nhà phát triển hoàn toàn không thể tiếp cận hay thu thập dữ liệu của bạn.</li>
         </ul>
 
-        <h2>2. Quyền Thiết Bị & Tính Năng Trí Tuệ Nhân Tạo (AI)</h2>
+        <h2>2. Quyền Thiết Bị & Khai Báo Hệ Thống</h2>
         <ul>
-            <li><strong>Quyền mạng (INTERNET):</strong> Chỉ dùng để cập nhật tỷ giá tiền tệ và kết nối dịch vụ phân tích khi người dùng chủ động yêu cầu.</li>
-            <li><strong>Cố vấn chi tiêu AI:</strong> Mặc định phân tích cục bộ ngoại tuyến 100%. Nếu sử dụng phân tích trực tuyến, ứng dụng luôn hỏi ý kiến minh bạch trước và chỉ gửi dữ liệu số học ẩn danh (tuyệt đối không gửi họ tên, số tài khoản, thông tin nhạy cảm).</li>
-            <li><strong>Quyền bộ nhớ:</strong> Ứng dụng không yêu cầu các quyền đọc/ghi thẻ nhớ diện rộng. Báo cáo tài chính được chia sẻ qua cơ chế bảo mật sandbox của Android.</li>
+            <li><strong>Không có quyền INTERNET:</strong> Ứng dụng hoàn toàn không khai báo và không yêu cầu quyền <code>android.permission.INTERNET</code> trong tệp <code>AndroidManifest.xml</code>. Ứng dụng không thể kết nối mạng dưới bất kỳ hình thức nào.</li>
+            <li><strong>Cố vấn chi tiêu ngoại tuyến (Local Spending Advisor):</strong> Tính năng phân tích và gợi ý chi tiêu hoạt động hoàn toàn bằng thuật toán nội bộ trên thiết bị, chạy 100% ngoại tuyến và không truyền bất kỳ dữ liệu nào ra bên ngoài.</li>
+            <li><strong>Không yêu cầu quyền đọc/ghi bộ nhớ diện rộng:</strong> Ứng dụng không yêu cầu <code>READ_EXTERNAL_STORAGE</code> hoặc <code>WRITE_EXTERNAL_STORAGE</code>. Báo cáo tài chính (PDF, CSV, văn bản) được chia sẻ qua cơ chế an toàn tiêu chuẩn của hệ điều hành Android (<code>FileProvider</code>).</li>
         </ul>
 
-        <h2>3. Quyền Kiểm Soát & Xóa Dữ Liệu</h2>
-        <p>Bạn có toàn quyền thêm, sửa hoặc xóa bất kỳ dữ liệu nào trực tiếp trong ứng dụng. Khi bạn gỡ cài đặt ứng dụng, toàn bộ dữ liệu mã hóa trên máy sẽ được xóa vĩnh viễn.</p>
+        <h2>3. Sao Lưu Mã Hóa & Toàn Vẹn Dữ Liệu</h2>
+        <ul>
+            <li><strong>Sao lưu mã hóa (Encrypted Backup):</strong> Tính năng xuất tệp sao lưu dữ liệu chuyến đi sử dụng thuật toán AES-GCM với khóa dẫn xuất từ mật khẩu người dùng thông qua hàm PBKDF2 (600.000 vòng lặp). Tệp sao lưu chỉ có thể giải mã khi có đúng mật khẩu do bạn đặt.</li>
+            <li><strong>Không tự động sao lưu đám mây:</strong> Cấu hình <code>android:allowBackup="false"</code> ngăn chặn hệ thống tự động đưa tệp cơ sở dữ liệu lên các dịch vụ đám mây chưa được kiểm soát.</li>
+        </ul>
 
-        <h2>4. Liên Hệ</h2>
-        <p>Mọi thắc mắc về quyền riêng tư, vui lòng liên hệ:</p>
-        <p>Email: <a href="mailto:nguyenhonghiepbk1@gmail.com">nguyenhonghiepbk1@gmail.com</a><br>Nhà phát triển: Hiệp Nguyễn</p>
+        <h2>4. Quyền Kiểm Soát & Xóa Dữ Liệu</h2>
+        <p>Bạn có toàn quyền thêm, sửa hoặc xóa bất kỳ dữ liệu nào trực tiếp trong ứng dụng. Khi bạn gỡ cài đặt ứng dụng, toàn bộ dữ liệu và khóa mã hóa trên máy sẽ được hệ điều hành Android xóa vĩnh viễn và không thể khôi phục.</p>
+
+        <h2>5. Thông Tin Liên Hệ</h2>
+        <p>Mọi thắc mắc về chính sách quyền riêng tư của TripFinance, vui lòng liên hệ:</p>
+        <p>
+            Nhà phát triển: Hiệp Nguyễn<br>
+            Email: <a href="mailto:nguyenhonghiepbk1@gmail.com">nguyenhonghiepbk1@gmail.com</a><br>
+            Mã gói: <code>com.hiepnguyen.tripfinance.oddnis</code>
+        </p>
     </section>
 
-    <hr style="margin: 40px 0; border: none; border-top: 2px dashed var(--border);">
+    <hr style="margin: 36px 0; border: none; border-top: 1px dashed var(--border);">
 
+    <!-- PHẦN TIẾNG ANH -->
     <section id="en">
         <h1>Privacy Policy — TripFinance</h1>
-        <p><strong>Effective Date:</strong> October 1, 2026 | <strong>Package Name:</strong> <code>com.hiepnguyen.tripfinance</code></p>
-
-        <div class="highlight">
-            <strong>Core Principle:</strong> TripFinance is engineered with an offline-first, privacy-by-design architecture. Your financial records are encrypted with military-grade AES-256 (SQLCipher) locally on your device. We do NOT harvest, monetize, or track your personal information.
+        <div class="meta-tag">
+            Version: 20.0 | Effective Date: November 2, 2026 | Application Package: <code>com.hiepnguyen.tripfinance.oddnis</code>
         </div>
 
-        <h2>1. Data Handled & On-Device Storage</h2>
+        <div class="highlight">
+            <strong>Core Principle:</strong> TripFinance is built upon a strict Privacy-by-Design architecture. It operates 100% offline (offline-only), stores data exclusively on your device inside an encrypted SQLite database using AES-256 (SQLCipher), and does NOT collect, track, or share any personal or financial information.
+        </div>
+
+        <h2>1. Handled Information & Local On-Device Storage</h2>
         <ul>
-            <li><strong>Financial records:</strong> Trip information, member names, expenses, debt allocations, group funds, and optional bank accounts for transfer QR generation.</li>
-            <li><strong>Local Encryption:</strong> All data is stored exclusively on your device inside an encrypted SQLite database using hardware-backed Android KeyStore protection.</li>
+            <li><strong>Trip & Financial Records:</strong> Trip titles, member rosters, logged expenses, amounts, timestamps, debt allocations, group fund history, member bank details (optionally entered for internal reconciliation), and custom exchange rates.</li>
+            <li><strong>Local On-Device Storage:</strong> All data is stored directly and exclusively within the application sandbox on your device inside a SQLite database encrypted at rest with <strong>SQLCipher (AES-256 standard)</strong> and managed via <strong>Android KeyStore</strong>.</li>
+            <li><strong>Zero External Transmission:</strong> The app operates without remote servers or cloud databases; the developer has zero access to your financial records.</li>
         </ul>
 
-        <h2>2. Permissions & AI Insights</h2>
+        <h2>2. System Permissions & Architectural Declarations</h2>
         <ul>
-            <li><strong>INTERNET:</strong> Exclusively for currency exchange rates and optional cloud analytical services.</li>
-            <li><strong>AI Spending Advisor:</strong> Defaults to a 100% offline local engine. Cloud analysis is strictly opt-in via an explicit consent dialog and transmits only anonymized numerical aggregations.</li>
+            <li><strong>No INTERNET Permission:</strong> The app does not declare or request the <code>android.permission.INTERNET</code> permission in its <code>AndroidManifest.xml</code>. It is technically incapable of network connectivity.</li>
+            <li><strong>Offline Spending Advisor:</strong> Financial insights and budget calculations are performed strictly on-device using local analytical algorithms, operating 100% offline.</li>
+            <li><strong>No Broad Storage Permissions:</strong> The app does not require <code>READ_EXTERNAL_STORAGE</code> or <code>WRITE_EXTERNAL_STORAGE</code>. Financial reports (PDF, CSV, text) are shared securely via Android's native <code>FileProvider</code> mechanism.</li>
         </ul>
 
-        <h2>3. Data Deletion & User Rights</h2>
-        <p>You have full ownership of your data. You may delete records anytime in the app. Uninstalling the app permanently purges all local data and cryptographic keys.</p>
+        <h2>3. Encrypted Backups & Security Practices</h2>
+        <ul>
+            <li><strong>Passphrase-Protected Encrypted Backups:</strong> Trip backup files are encrypted using AES-GCM with keys derived from your passphrase via PBKDF2 (600,000 iterations). Backups can only be decrypted with the user's passphrase.</li>
+            <li><strong>Disabled OS Cloud Backups:</strong> The setting <code>android:allowBackup="false"</code> prevents unencrypted database snapshots from being uploaded to uncontrolled cloud backup services.</li>
+        </ul>
 
-        <h2>4. Contact Us</h2>
-        <p>Developer: Hiep Nguyen<br>Email: <a href="mailto:nguyenhonghiepbk1@gmail.com">nguyenhonghiepbk1@gmail.com</a></p>
+        <h2>4. User Control & Data Deletion</h2>
+        <p>You have full authority to modify or delete any record at any time. When you uninstall TripFinance from your device, Android permanently purges the local database and cryptographic keys. No residual data remains.</p>
+
+        <h2>5. Contact Us</h2>
+        <p>For inquiries regarding this Privacy Policy:</p>
+        <p>
+            Developer: Hiep Nguyen<br>
+            Email: <a href="mailto:nguyenhonghiepbk1@gmail.com">nguyenhonghiepbk1@gmail.com</a><br>
+            Package ID: <code>com.hiepnguyen.tripfinance.oddnis</code>
+        </p>
     </section>
 
     <div class="footer">

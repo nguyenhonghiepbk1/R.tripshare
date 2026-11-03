@@ -1,5 +1,6 @@
 package com.hiepnguyen.tripfinance.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -65,6 +66,10 @@ fun ExpensesScreen(
     var selectedExpenseForDetail by remember { mutableStateOf<ExpenseEntity?>(null) }
     var expenseToEdit by remember { mutableStateOf<ExpenseEntity?>(null) }
     var expenseToDelete by remember { mutableStateOf<ExpenseEntity?>(null) }
+
+    val splitsByExpense = remember(uiState.allSplits) {
+        uiState.allSplits.groupBy { it.expenseId }
+    }
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -215,7 +220,7 @@ fun ExpensesScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     contentPadding = PaddingValues(bottom = 90.dp)
                 ) {
-                    items(uiState.expenses) { expense ->
+                    items(uiState.expenses, key = { it.id }) { expense ->
                         ExpenseItemCard(
                             expense = expense,
                             members = uiState.members,
@@ -234,7 +239,7 @@ fun ExpensesScreen(
 
     // Expense Detail Dialog
     selectedExpenseForDetail?.let { exp ->
-        val splitsForExp = uiState.allSplits.filter { it.expenseId == exp.id }
+        val splitsForExp = splitsByExpense[exp.id] ?: emptyList()
         ExpenseDetailDialog(
             expense = exp,
             members = uiState.members,
@@ -256,7 +261,7 @@ fun ExpensesScreen(
 
     // Edit Expense Dialog
     expenseToEdit?.let { exp ->
-        val splitsForExp = uiState.allSplits.filter { it.expenseId == exp.id }
+        val splitsForExp = splitsByExpense[exp.id] ?: emptyList()
         AddExpenseDialog(
             members = uiState.members,
             exchangeRates = uiState.exchangeRates,
@@ -491,6 +496,8 @@ fun ExpenseDetailDialog(
         "CUSTOM_AMOUNT" -> "Tùy nhập số tiền từng người"
         else -> expense.splitType
     }
+
+    BackHandler { onDismiss() }
 
     AlertDialog(
         onDismissRequest = onDismiss,

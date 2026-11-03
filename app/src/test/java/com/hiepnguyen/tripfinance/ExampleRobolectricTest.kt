@@ -30,6 +30,8 @@ class ExampleRobolectricTest {
 
     @Before
     fun setup() {
+        com.hiepnguyen.tripfinance.data.security.DatabaseKeyManager.keyProvider =
+            com.hiepnguyen.tripfinance.data.security.InMemoryKeyProvider()
         val context = ApplicationProvider.getApplicationContext<Context>()
         db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .allowMainThreadQueries()
@@ -56,6 +58,7 @@ class ExampleRobolectricTest {
     @After
     fun tearDown() {
         db.close()
+        com.hiepnguyen.tripfinance.data.security.DatabaseKeyManager.resetKeyProvider()
     }
 
     @Test
@@ -262,7 +265,11 @@ class ExampleRobolectricTest {
         val sampleJson = """{"version":1,"appName":"TripFinance","data":"secret_account_number_123456"}"""
         val password = "SuperSecretPassword#2026"
 
-        val encrypted = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.encryptBackup(sampleJson, password)
+        val encrypted = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.encryptBackup(
+            sampleJson,
+            password,
+            iterations = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.TEST_ITERATIONS
+        )
         assertTrue(com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.isEncryptedBackup(encrypted))
         assertTrue(com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.isEncryptedBackupSnippet(encrypted.take(500)))
 
@@ -576,6 +583,20 @@ class ExampleRobolectricTest {
     }
 
     @Test
+    fun `test AndroidKeyStoreKeyProvider enforces fail-closed when KeyStore unavailable`() {
+        val prodProvider = com.hiepnguyen.tripfinance.data.security.AndroidKeyStoreKeyProvider()
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val exception = assertThrows(com.hiepnguyen.tripfinance.data.security.DatabaseSecurityException::class.java) {
+            prodProvider.getOrCreateDatabasePassphrase(context)
+        }
+        assertTrue(
+            "Fail-closed phải ném lỗi bảo mật khi KeyStore không khả dụng",
+            exception.errorType == com.hiepnguyen.tripfinance.data.security.DatabaseSecurityErrorType.KEYSTORE_UNAVAILABLE ||
+            exception.errorType == com.hiepnguyen.tripfinance.data.security.DatabaseSecurityErrorType.KEYSTORE_INIT_FAILED
+        )
+    }
+
+    @Test
     fun `migration from legacy v2 with old settlement_snapshots converts data cleanly to v4`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val dbFile = context.getDatabasePath("test_legacy_snapshot.db")
@@ -818,11 +839,19 @@ class ExampleRobolectricTest {
     fun `test BackupCryptoUtils password requirements and iteration bounds`() {
         // 1. Mật khẩu ngắn dưới 6 ký tự phải bị từ chối
         assertThrows(IllegalArgumentException::class.java) {
-            com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.encryptBackup("{}", "12345")
+            com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.encryptBackup(
+                "{}",
+                "12345",
+                iterations = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.TEST_ITERATIONS
+            )
         }
 
         // 2. Mật khẩu 6 ký tự hợp lệ
-        val encrypted = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.encryptBackup("{\"hello\":\"world\"}", "123456")
+        val encrypted = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.encryptBackup(
+            "{\"hello\":\"world\"}",
+            "123456",
+            iterations = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.TEST_ITERATIONS
+        )
         assertTrue(com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.isEncryptedBackup(encrypted))
 
         // 3. Giải mã sai mật khẩu phải trả về failure
@@ -833,11 +862,23 @@ class ExampleRobolectricTest {
         val okDec = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.decryptBackup(encrypted, "123456")
         assertTrue(okDec.isSuccess)
         assertEquals("{\"hello\":\"world\"}", okDec.getOrThrow())
+
+        // 5. Số vòng lặp ngoài biên an toàn (dưới 1.000 hoặc trên 1.000.000) phải bị từ chối
+        assertThrows(IllegalArgumentException::class.java) {
+            com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.encryptBackup("{}", "123456", iterations = 500)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.encryptBackup("{}", "123456", iterations = 2_000_000)
+        }
     }
 
     @Test
     fun `test BackupCryptoUtils rejects malicious iterations to prevent CPU DoS`() {
-        val validEncrypted = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.encryptBackup("{\"data\":1}", "Password123")
+        val validEncrypted = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.encryptBackup(
+            "{\"data\":1}",
+            "Password123",
+            iterations = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.TEST_ITERATIONS
+        )
         val root = org.json.JSONObject(validEncrypted)
 
         // Phép thử 1: Tệp độc hại đặt iterations = 50_000_000 (tấn công DoS CPU treo máy)

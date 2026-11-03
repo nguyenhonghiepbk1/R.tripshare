@@ -1,5 +1,6 @@
 package com.hiepnguyen.tripfinance.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -290,6 +291,8 @@ fun AddExpenseDialog(
         keyboardController?.hide()
         onDismiss()
     }
+
+    BackHandler { safeDismiss() }
 
     AlertDialog(
         onDismissRequest = safeDismiss,

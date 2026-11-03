@@ -1,5 +1,6 @@
 package com.hiepnguyen.tripfinance.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -133,9 +134,9 @@ fun MembersAndSettingsScreen(
                             )
                             Text(
                                 text = if (lang == AppLanguage.VI)
-                                    "Cẩm nang chi tiết: tạo đoàn, chia tiền, quỹ, quyết toán VietQR, ngoại tệ"
+                                    "Cẩm nang chi tiết: tạo đoàn, chia tiền, quỹ, bù trừ công nợ, ngoại tệ"
                                 else
-                                    "Detailed handbook: trip setup, expense split, fund, VietQR, multi-currency",
+                                    "Detailed handbook: trip setup, expense split, fund, debt netting, multi-currency",
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B),
                                 maxLines = 1,
@@ -555,7 +556,7 @@ fun MembersAndSettingsScreen(
         }
 
         // Member Cards List
-        items(uiState.members) { member ->
+        items(uiState.members, key = { it.id }) { member ->
             var expandedRoleMenu by remember { mutableStateOf(false) }
 
             Card(
@@ -844,6 +845,8 @@ fun AddMemberDialog(
         onDismiss()
     }
 
+    BackHandler { safeDismiss() }
+
     AlertDialog(
         onDismissRequest = safeDismiss,
         properties = DialogProperties(decorFitsSystemWindows = true),
@@ -965,6 +968,8 @@ fun ExchangeRatesDialog(
         keyboardController?.hide()
         onDismiss()
     }
+
+    BackHandler { safeDismiss() }
 
     AlertDialog(
         onDismissRequest = safeDismiss,
@@ -1093,6 +1098,8 @@ fun AuditLogsDialog(
     val lang = LocalAppLanguage.current
     val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault())
 
+    BackHandler { onDismiss() }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(decorFitsSystemWindows = true),
@@ -1118,7 +1125,7 @@ fun AuditLogsDialog(
                     modifier = Modifier.heightIn(max = 400.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(logs) { log ->
+                    items(logs, key = { it.id }) { log ->
                         Card(
                             shape = RoundedCornerShape(8.dp),
                             colors = CardDefaults.cardColors(containerColor = NeutralLightSurfaceCard),
@@ -1170,6 +1177,8 @@ fun EditMemberDialog(
         keyboardController?.hide()
         onDismiss()
     }
+
+    BackHandler { safeDismiss() }
 
     AlertDialog(
         onDismissRequest = safeDismiss,
@@ -1274,6 +1283,8 @@ fun PrivacyPolicyDialog(
 ) {
     val lang = LocalAppLanguage.current
 
+    BackHandler { onDismiss() }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(decorFitsSystemWindows = true),
@@ -1326,9 +1337,9 @@ fun PrivacyPolicyDialog(
                     )
                     Text(
                         text = if (lang == AppLanguage.VI)
-                            "Thông tin số tài khoản và ngân hàng do người dùng nhập chỉ được sử dụng nội bộ nhằm tạo lệnh chuyển khoản quyết toán giữa các thành viên. Hệ thống cam kết không bao giờ thu thập, bán hay chia sẻ số tài khoản cho bất kỳ bên thứ ba hay mạng quảng cáo nào."
+                            "Thông tin số tài khoản và ngân hàng do người dùng nhập chỉ được lưu trữ cục bộ trên máy để hỗ trợ đối soát giữa các thành viên. Hệ thống cam kết không bao giờ thu thập, bán hay chia sẻ thông tin cho bất kỳ bên thứ ba hay mạng quảng cáo nào."
                         else
-                            "Bank account numbers and bank names entered by users are strictly used locally to generate peer-to-peer settlement transfer instructions. TripFinance never transmits, sells, or monetizes this financial info to third parties or ad networks.",
+                            "Bank account numbers and bank names entered by users are strictly stored locally to support bookkeeping among members. TripFinance never transmits, sells, or monetizes this financial info to third parties or ad networks.",
                         fontSize = 12.sp,
                         color = Color(0xFF475569),
                         lineHeight = 17.sp

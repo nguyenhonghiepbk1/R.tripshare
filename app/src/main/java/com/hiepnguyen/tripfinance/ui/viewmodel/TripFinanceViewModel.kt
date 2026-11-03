@@ -9,9 +9,12 @@ import com.hiepnguyen.tripfinance.data.repository.TripFinanceRepository
 import com.hiepnguyen.tripfinance.domain.engine.SettlementEngine
 import com.hiepnguyen.tripfinance.domain.engine.SplitCalculator
 import com.hiepnguyen.tripfinance.domain.model.*
+import com.hiepnguyen.tripfinance.domain.export.PdfReportExporter
 import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import android.content.Context
 import android.net.Uri
@@ -71,6 +74,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
     private val _isLoadingAi = MutableStateFlow(false)
     val aiInsight: StateFlow<String?> = _aiInsight.asStateFlow()
     val isLoadingAi: StateFlow<Boolean> = _isLoadingAi.asStateFlow()
+    private val _isExportingPdf = MutableStateFlow(false)
+    val isExportingPdf: StateFlow<Boolean> = _isExportingPdf.asStateFlow()
     private val _language = MutableStateFlow(
         if (sharedPrefs.getString("app_language", "vi") == "en") AppLanguage.EN else AppLanguage.VI
     )
@@ -243,17 +248,55 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                         successMessage = successMsg,
                         language = filters.language
                     )
-                }
+                }.flowOn(Dispatchers.Default)
             }
         }
     }
-}.stateIn(
+}.flowOn(Dispatchers.Default)
+.stateIn(
     scope = viewModelScope,
     started = SharingStarted.WhileSubscribed(5000),
     initialValue = UiState()
 )
 
+        // Dọn dẹp các tệp PDF báo cáo cũ hơn 24 giờ trong cache/reports khi khởi động
+        viewModelScope.launch(Dispatchers.IO) {
+            PdfReportExporter.cleanOldReports(application)
+        }
+
         initDatabase()
+    }
+
+    /**
+     * Xuất và chia sẻ báo cáo tài chính PDF chạy trên viewModelScope và Dispatchers.IO,
+     * đồng thời quản lý trạng thái loading để giao diện hiển thị biểu tượng tiến trình.
+     */
+    fun exportAndSharePdf(context: Context) {
+        val state = uiState.value
+        val trip = state.currentTrip ?: return
+        val creator = state.currentMember?.name ?: if (state.language == AppLanguage.VI) "Thành viên" else "Member"
+
+        viewModelScope.launch {
+            _isExportingPdf.value = true
+            try {
+                withContext(Dispatchers.IO) {
+                    PdfReportExporter.exportAndSharePdf(
+                        context = context,
+                        trip = trip,
+                        members = state.members,
+                        summary = state.financialSummary,
+                        statuses = state.memberStatuses,
+                        settlementTransfers = state.settlementTransfers,
+                        expenses = state.expenses,
+                        funds = state.fundContributions,
+                        splits = state.allSplits,
+                        creatorName = creator
+                    )
+                }
+            } finally {
+                _isExportingPdf.value = false
+            }
+        }
     }
 
     fun retryDatabaseInit() {

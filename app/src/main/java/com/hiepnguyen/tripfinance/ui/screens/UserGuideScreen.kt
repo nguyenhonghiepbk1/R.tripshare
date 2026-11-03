@@ -1,5 +1,6 @@
 package com.hiepnguyen.tripfinance.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -72,6 +73,7 @@ data class GuideItem(
 fun UserGuideScreen(
     onBack: () -> Unit
 ) {
+    BackHandler { onBack() }
     val lang = LocalAppLanguage.current
     val uriHandler = LocalUriHandler.current
     var selectedCategory by remember { mutableStateOf(GuideCategory.ALL) }
@@ -92,13 +94,13 @@ fun UserGuideScreen(
                     "Bước 1: Tạo đoàn công tác mới trên thiết bị của bạn.",
                     "Bước 2: Cài đặt danh sách thành viên, phân vai trò (Trưởng đoàn, Thủ quỹ, Thành viên) và thiết lập tài khoản nhận tiền.",
                     "Bước 3: Thu quỹ đoàn đầu chuyến (nếu có) và liên tục ghi lại mọi khoản chi tiêu phát sinh trong chuyến đi.",
-                    "Bước 4: Vào tab 'Quyết toán' vào cuối chuyến, hệ thống tự tính bù trừ tối ưu min-transfers và quét mã VietQR chuyển khoản là xong!"
+                    "Bước 4: Vào tab 'Quyết toán' vào cuối chuyến, hệ thống tự tính bù trừ tối ưu min-transfers và thanh toán bù trừ là xong!"
                 ),
                 stepsEn = listOf(
                     "Step 1: Create a new trip on your device.",
-                    "Step 2: Setup member roster, assign roles (Leader, Treasurer, Member), and configure bank details.",
+                    "Step 2: Setup member roster, assign roles (Leader, Treasurer, Member), and configure member details.",
                     "Step 3: Collect group fund up-front (if applicable) and log all trip expenses as they occur.",
-                    "Step 4: Navigate to 'Settlement' tab at the end of the trip to view optimal min-transfers & scan VietQR to clear all debts!"
+                    "Step 4: Navigate to 'Settlement' tab at the end of the trip to view optimal min-transfers & clear all debts!"
                 ),
                 tipsVi = "Mẹo: Mọi khoản chi tiêu đều có thể nhập ngoại tệ (USD, EUR, JPY...), ứng dụng tự động quy đổi VND theo tỷ giá đã cấu hình.",
                 tipsEn = "Tip: You can log expenses in foreign currencies (USD, EUR, JPY...); the app converts to VND automatically.",
@@ -114,13 +116,13 @@ fun UserGuideScreen(
                 stepsVi = listOf(
                     "Tại màn hình Tổng quan (Dashboard), bấm vào khung chọn đoàn xổ xuống và chọn '+ Tạo đoàn công tác mới'.",
                     "Điền Tên đoàn (VD: 'Công tác Đà Nẵng 2026'), Mô tả và thông tin Trưởng đoàn/Thủ quỹ.",
-                    "Nhập thông tin Ngân hàng + Số tài khoản nhận tiền quyết toán.",
+                    "Nhập thông tin Ngân hàng + Số tài khoản (tùy chọn).",
                     "Thêm danh sách các thành viên tham gia chuyến đi tại tab 'Thành viên'."
                 ),
                 stepsEn = listOf(
                     "On Dashboard, tap the trip dropdown selector and pick '+ Create New Trip'.",
                     "Fill in Trip Title (e.g. 'Da Nang Business Trip 2026'), Description, and Leader/Treasurer name.",
-                    "Enter Bank name + Account number for settlement receipts.",
+                    "Enter Bank name + Account number (optional).",
                     "Add participating members easily under the 'Members' tab."
                 ),
                 tipsVi = "Bạn có thể tạo và quản lý song song nhiều đoàn công tác khác nhau trực tiếp trên máy.",
@@ -205,29 +207,27 @@ fun UserGuideScreen(
             GuideItem(
                 id = "settlement_algorithm_guide",
                 category = GuideCategory.SETTLEMENT,
-                titleVi = "6. Quyết Toán Tối Ưu & Quét Mã VietQR",
-                titleEn = "6. Optimal Settlement & VietQR Scan",
-                summaryVi = "Thuật toán rút gọn số giao dịch (Min-Transfers) kèm mã QR chuyển khoản tích tắc.",
-                summaryEn = "Debt simplification algorithm with instant VietQR payment codes.",
+                titleVi = "6. Quyết Toán Bù Trừ Công Nợ Tối Ưu",
+                titleEn = "6. Optimal Debt Settlement",
+                summaryVi = "Thuật toán rút gọn số giao dịch (Min-Transfers) giúp thanh toán bù trừ công nợ nhanh chóng.",
+                summaryEn = "Debt simplification algorithm to settle group balances with minimal transactions.",
                 stepsVi = listOf(
                     "Khi kết thúc chuyến đi hoặc hết đợt công tác, mở tab 'Quyết toán'.",
                     "Hệ thống tự động phân tích: Ai chi nhiều hơn mức phải chịu sẽ 'Cần nhận lại', ai chi ít hơn sẽ 'Cần đóng thêm'.",
-                    "Thuật toán Tối Ưu Hóa Giao Dịch tự động tính toán số lệnh chuyển khoản ít nhất (Ví dụ 10 người chỉ cần 3-4 lệnh chuyển là xong nợ).",
-                    "Chạm vào từng lệnh chuyển tiền để xem chi tiết hoặc mở Mã QR Ngân Hàng (VietQR) tự điền đúng STK, Ngân hàng và Số tiền chính xác.",
-                    "Người nộp chỉ cần quét mã QR bằng App Ngân hàng bất kỳ (Vietcombank, MBBank, Techcombank, BIDV, VPBank...) để chuyển tiền trong 3 giây!",
-                    "Sau khi tất cả đã chuyển xong, bấm 'Chốt quyết toán đoàn' để lưu trữ lịch sử."
+                    "Thuật toán Tối Ưu Hóa Giao Dịch tự động tính toán số lượt bù trừ ít nhất (Ví dụ 10 người chỉ cần 3-4 giao dịch bù trừ là xong nợ).",
+                    "Chạm vào từng khoản bù trừ để xem chi tiết số tiền và nội dung thanh toán chuẩn đối soát.",
+                    "Sau khi tất cả thành viên hoàn tất thanh toán bù trừ, bấm 'Chốt quyết toán đoàn' để lưu trữ lịch sử."
                 ),
                 stepsEn = listOf(
                     "At the end of the trip, switch to 'Settlement' tab.",
                     "The app calculates net balances: who paid more receives refund, who paid less settles the difference.",
-                    "The Min-Transfers Algorithm condenses complex group debts into the minimal number of direct bank transfers.",
-                    "Tap any transfer item to view bank details and open the VietQR payment code pre-filled with exact amount and account.",
-                    "Members simply scan the QR code using any banking app to transfer in 3 seconds!",
+                    "The Min-Transfers Algorithm condenses complex group debts into the minimal number of direct settlements.",
+                    "Tap any settlement item to view amount and standardized memo details.",
                     "Tap 'Finalize Settlement' to archive the completed settlement cycle."
                 ),
-                tipsVi = "Mã VietQR tự động sinh theo chuẩn quốc gia NAPAS 247, chuyển khoản tức thì không sợ gõ nhầm số tài khoản hay số tiền.",
-                tipsEn = "VietQR is generated following NAPAS 247 standards, avoiding typos in bank account numbers or amounts.",
-                icon = Icons.Filled.QrCode2
+                tipsVi = "Thuật toán bù trừ triệt tiêu các khoản lớn trước, giúp cả đoàn giải quyết công nợ nhanh gọn, minh bạch.",
+                tipsEn = "The algorithm eliminates major debts first, ensuring transparent and minimal settlements for the group.",
+                icon = Icons.Filled.AccountBalance
             ),
             GuideItem(
                 id = "currency_rates_guide",
@@ -284,13 +284,13 @@ fun UserGuideScreen(
                 summaryEn = "100% Offline functionality backed by local SQLite Room database.",
                 stepsVi = listOf(
                     "Ứng dụng hoàn toàn không yêu cầu kết nối mạng hay đăng ký tài khoản.",
-                    "Khi bạn ở trên máy bay, vùng không có sóng hoặc công tác nước ngoài, toàn bộ tính năng thêm chi tiêu, nộp quỹ, đổi tỷ giá, quyết toán VietQR và xuất báo cáo hoạt động trơn tru 100%.",
+                    "Khi bạn ở trên máy bay, vùng không có sóng hoặc công tác nước ngoài, toàn bộ tính năng thêm chi tiêu, nộp quỹ, đổi tỷ giá, quyết toán bù trừ và xuất báo cáo hoạt động trơn tru 100%.",
                     "Tất cả dữ liệu thu chi được lưu an toàn tuyệt đối trong bộ nhớ máy của bạn.",
                     "Để chia sẻ báo cáo cho đoàn, bạn chỉ cần dùng chức năng Xuất báo cáo CSV/Excel hoặc sao chép văn bản gửi qua Zalo/Email."
                 ),
                 stepsEn = listOf(
                     "The app requires no internet connection or user accounts.",
-                    "On airplanes, remote areas, or overseas trips, all features including expense tracking, fund management, VietQR settlement, and reporting work 100% offline.",
+                    "On airplanes, remote areas, or overseas trips, all features including expense tracking, fund management, debt settlement, and reporting work 100% offline.",
                     "All financial data is securely stored locally on your device.",
                     "To share reports with your team, use the Export CSV/Excel or Copy Summary Report feature."
                 ),
@@ -307,17 +307,17 @@ fun UserGuideScreen(
                 summaryEn = "Google Play data safety compliance, local sandbox isolation, and legal disclaimers.",
                 stepsVi = listOf(
                     "1. Lưu trữ cục bộ an toàn: 100% dữ liệu số tài khoản, danh sách thành viên và các khoản chi được mã hóa và lưu trữ trong bộ nhớ nội bộ (App Sandbox), không tải lên máy chủ ngoài trái phép.",
-                    "2. Quyền riêng tư số tài khoản: Số tài khoản ngân hàng của thành viên chỉ dùng để tạo mã VietQR nội bộ trên máy, hoàn toàn không được bán, khai thác hay gửi cho bên thứ ba.",
+                    "2. Quyền riêng tư thông tin tài chính: Mọi thông tin của thành viên chỉ lưu cục bộ trên máy, hoàn toàn không được bán, khai thác hay gửi cho bên thứ ba.",
                     "3. Gợi ý chi tiêu ngoại tuyến: Tính năng phân tích và gợi ý chi tiêu hoạt động 100% cục bộ trên thiết bị, không cần mạng, không gửi dữ liệu ra bên ngoài.",
                     "4. Tính tham khảo: Các gợi ý và phân tích tài chính chỉ mang tính tham khảo hỗ trợ Trưởng đoàn và Thủ quỹ đối soát sổ sách.",
-                    "5. Tuyên bố miễn trừ giao dịch: Ứng dụng là công cụ ghi chép và tính toán hỗ trợ; các giao dịch chuyển tiền thực tế do người dùng tự thực hiện qua ngân hàng thương mại."
+                    "5. Tuyên bố miễn trừ giao dịch: Ứng dụng là công cụ ghi chép và tính toán hỗ trợ; việc thanh toán bù trừ thực tế do người dùng tự thỏa thuận và thực hiện."
                 ),
                 stepsEn = listOf(
                     "1. Secure Local Storage: 100% financial records, member bank accounts, and splits are isolated in local App Sandbox, completely offline without external transmission.",
-                    "2. Bank Account Privacy: Bank account details are used solely for local VietQR generation and never shared or monetized.",
+                    "2. Financial Information Privacy: Member information is stored solely on-device and never shared or monetized.",
                     "3. Offline Spending Insights: Spending analysis operates 100% locally on-device with zero network usage and zero external transmission.",
                     "4. Advisory Nature: Financial insights are advisory recommendations to assist the trip organizer and treasurer in bookkeeping.",
-                    "5. Payment Disclaimer: The app is an accounting assistant; actual money transfers are executed directly by users through their banking apps."
+                    "5. Payment Disclaimer: The app is an accounting assistant; actual balance settlements are handled directly by members."
                 ),
                 tipsVi = "Bạn có thể nhấn vào nút 'Xem Chính Sách Công Khai' để đọc bản đầy đủ trên trang web nhà phát triển.",
                 tipsEn = "You can tap 'View Online Privacy Policy' to read the full policy hosted on the developer website.",
@@ -648,7 +648,7 @@ fun UserGuideScreen(
                     }
                 }
             } else {
-                items(filteredItems) { item ->
+                items(filteredItems, key = { it.id }) { item ->
                     val isExpanded = expandedItemIds.contains(item.id)
                     GuideAccordionCard(
                         item = item,

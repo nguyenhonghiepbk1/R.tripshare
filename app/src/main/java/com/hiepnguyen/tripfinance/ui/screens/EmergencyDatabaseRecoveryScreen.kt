@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import androidx.activity.compose.BackHandler
 import com.hiepnguyen.tripfinance.ui.theme.DangerRed
 import com.hiepnguyen.tripfinance.ui.theme.EmeraldPrimary
 import com.hiepnguyen.tripfinance.ui.viewmodel.DatabaseInitState
@@ -37,6 +38,7 @@ fun EmergencyDatabaseRecoveryScreen(
     onRestoreBackup: (jsonContent: String, password: String?) -> Unit,
     onResetFresh: () -> Unit
 ) {
+    BackHandler { onRetry() }
     val context = LocalContext.current
     var showResetConfirmDialog by remember { mutableStateOf(false) }
     var pendingBackupJson by remember { mutableStateOf<String?>(null) }

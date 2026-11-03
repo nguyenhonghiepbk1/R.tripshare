@@ -18,9 +18,11 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.hiepnguyen.tripfinance.ui.theme.EmeraldPrimary
+import com.hiepnguyen.tripfinance.ui.theme.extendedColorScheme
 
 @Composable
 fun AiSpendingAdvisorDialog(
@@ -28,6 +30,8 @@ fun AiSpendingAdvisorDialog(
     isLoading: Boolean,
     onDismiss: () -> Unit
 ) {
+    BackHandler { onDismiss() }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -71,13 +75,13 @@ fun AiSpendingAdvisorDialog(
                         Column {
                             Text(
                                 text = "Gợi ý chi tiêu",
-                                fontSize = 17.sp,
+                                style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = "Phân tích cục bộ 100% ngoại tuyến",
-                                fontSize = 11.sp,
+                                style = MaterialTheme.typography.labelSmall,
                                 color = EmeraldPrimary,
                                 fontWeight = FontWeight.SemiBold
                             )
@@ -89,7 +93,10 @@ fun AiSpendingAdvisorDialog(
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = Color(0xFFE2E8F0))
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 12.dp),
+                    color = MaterialTheme.extendedColorScheme.cardBorder
+                )
 
                 // Content
                 if (isLoading) {
@@ -107,8 +114,8 @@ fun AiSpendingAdvisorDialog(
                             Spacer(modifier = Modifier.height(16.dp))
                             Text(
                                 text = "Đang phân tích dữ liệu tài chính đoàn...",
-                                fontSize = 13.sp,
-                                color = Color(0xFF64748B),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.extendedColorScheme.textMuted,
                                 fontWeight = FontWeight.Medium
                             )
                         }
@@ -122,7 +129,7 @@ fun AiSpendingAdvisorDialog(
                     ) {
                         Text(
                             text = insight ?: "Chưa có thông tin phân tích.",
-                            fontSize = 13.5.sp,
+                            style = MaterialTheme.typography.bodyMedium,
                             lineHeight = 22.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -133,9 +140,9 @@ fun AiSpendingAdvisorDialog(
 
                 // Safety & Privacy Note
                 Surface(
-                    color = Color(0xFFECFDF5),
+                    color = MaterialTheme.extendedColorScheme.successContainer,
                     shape = RoundedCornerShape(10.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA7F3D0)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.extendedColorScheme.cardBorder),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -151,8 +158,8 @@ fun AiSpendingAdvisorDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Gợi ý chi tiêu được xử lý cục bộ 100% trên thiết bị của bạn nhằm hỗ trợ quản lý tài chính đoàn minh bạch, không gửi dữ liệu ra mạng.",
-                            fontSize = 11.sp,
-                            color = Color(0xFF065F46),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.extendedColorScheme.onSuccessContainer,
                             lineHeight = 15.sp,
                             fontWeight = FontWeight.Medium
                         )

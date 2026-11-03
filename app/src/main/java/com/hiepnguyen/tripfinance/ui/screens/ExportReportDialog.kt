@@ -38,12 +38,17 @@ import com.hiepnguyen.tripfinance.ui.theme.IndigoSecondary
 import com.hiepnguyen.tripfinance.ui.theme.AppFontFamily
 import com.hiepnguyen.tripfinance.ui.viewmodel.UiState
 
+import androidx.activity.compose.BackHandler
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExportReportDialog(
     uiState: UiState,
+    isExportingPdf: Boolean = false,
+    onExportPdf: ((Context) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
+    BackHandler { onDismiss() }
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
     val lang = LocalAppLanguage.current
@@ -184,7 +189,7 @@ fun ExportReportDialog(
                             Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Báo cáo PDF chuẩn A4 đầy đủ: Tổng quan thu chi, Bảng quyết toán & số dư từng người, Kế hoạch chuyển khoản, BẢN KÊ CHI TIẾT CÁC KHOẢN CHI TIÊU & THU QUỸ và BẢNG SỐ TÀI KHOẢN NGÂN HÀNG các thành viên.",
+                                text = "Báo cáo PDF chuẩn A4 đầy đủ: Tổng quan thu chi, Bảng quyết toán & số dư từng người, Kế hoạch bù trừ công nợ và BẢN KÊ CHI TIẾT CÁC KHOẢN CHI TIÊU & THU QUỸ các thành viên.",
                                 fontSize = 11.sp,
                                 color = Color(0xFF1E40AF),
                                 lineHeight = 15.sp,
@@ -365,28 +370,39 @@ fun ExportReportDialog(
                     // Xuất & Chia sẻ file PDF
                     Button(
                         onClick = {
-                            val creator = uiState.currentMember?.name ?: if (lang == AppLanguage.VI) "Thành viên" else "Member"
-                            PdfReportExporter.exportAndSharePdf(
-                                context = context,
-                                trip = uiState.currentTrip,
-                                members = uiState.members,
-                                summary = uiState.financialSummary,
-                                statuses = uiState.memberStatuses,
-                                settlementTransfers = uiState.settlementTransfers,
-                                expenses = uiState.expenses,
-                                funds = uiState.fundContributions,
-                                splits = uiState.allSplits,
-                                creatorName = creator
-                            )
+                            if (onExportPdf != null) {
+                                onExportPdf(context)
+                            }
                         },
+                        enabled = !isExportingPdf,
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                         modifier = Modifier.testTag("export_pdf_button")
                     ) {
-                        Icon(Icons.Filled.PictureAsPdf, contentDescription = null, modifier = Modifier.size(16.dp))
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Xuất & Gửi File PDF", fontSize = 12.sp, fontFamily = AppFontFamily, fontWeight = FontWeight.Bold)
+                        if (isExportingPdf) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                if (lang == AppLanguage.VI) "Đang tạo PDF..." else "Creating PDF...",
+                                fontSize = 12.sp,
+                                fontFamily = AppFontFamily,
+                                fontWeight = FontWeight.Bold
+                            )
+                        } else {
+                            Icon(Icons.Filled.PictureAsPdf, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                if (lang == AppLanguage.VI) "Xuất & Gửi File PDF" else "Export & Share PDF",
+                                fontSize = 12.sp,
+                                fontFamily = AppFontFamily,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 } else {
                     // Copy Button

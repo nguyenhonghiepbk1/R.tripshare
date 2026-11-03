@@ -14,9 +14,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 enum class ReportType(val title: String, val description: String) {
-    FULL_SETTLEMENT("Báo Cáo Tổng Hợp Quyết Toán", "Đầy đủ thống kê, số dư từng người, kế hoạch chuyển khoản & đối soát"),
+    FULL_SETTLEMENT("Báo Cáo Tổng Hợp Quyết Toán", "Đầy đủ thống kê, số dư từng người, kế hoạch bù trừ công nợ & đối soát"),
     EXPENSE_LEDGER("Bảng Kê Chi Tiết Thu - Chi", "Danh sách từng khoản chi tiêu, người thanh toán và đóng góp quỹ"),
-    TRANSFER_INSTRUCTIONS("Lệnh Chuyển Khoản Quyết Toán", "Vắn tắt thông tin STK, ngân hàng, số tiền và cú pháp chuyển khoản"),
+    TRANSFER_INSTRUCTIONS("Kế Hoạch Bù Trừ Công Nợ", "Vắn tắt người nộp, người nhận, số tiền và nội dung đối soát"),
     MEMBER_BREAKDOWN("Báo Cáo Phân Bổ Theo Từng Thành Viên", "Bảng kê chi tiết tiền đã chi và tiền chịu chi của mỗi cá nhân")
 }
 
@@ -115,11 +115,11 @@ object ReportGenerator {
         }
         appendLine("--------------------------------------------------------------------------------")
         appendLine()
-        appendLine("III. KẾ HOẠCH CHUYỂN KHOẢN THANH TOÁN (TỐI ƯU HÓA DÒNG TIỀN)")
+        appendLine("III. KẾ HOẠCH BÙ TRỪ CÔNG NỢ THANH TOÁN (TỐI ƯU HÓA DÒNG TIỀN)")
         if (transfers.isEmpty()) {
-            appendLine("  -> Tất cả các thành viên đã cân bằng tài chính. Không cần chuyển khoản thêm.")
+            appendLine("  -> Tất cả các thành viên đã cân bằng tài chính. Không cần bù trừ thêm.")
         } else {
-            appendLine("  (Thuật toán tham lam đã rút gọn còn ${transfers.size} giao dịch chuyển khoản tối thiểu):")
+            appendLine("  (Thuật toán tham lam đã rút gọn còn ${transfers.size} giao dịch bù trừ tối thiểu):")
             appendLine()
             transfers.forEachIndexed { idx, tr ->
                 appendLine("  [Giao dịch #${idx + 1}]")
@@ -268,27 +268,27 @@ object ReportGenerator {
         date: Date
     ): String = buildString {
         appendLine("================================================================================")
-        appendLine("             HƯỚNG DẪN CHUYỂN KHOẢN THANH TOÁN QUYẾT TOÁN ĐOÀN")
+        appendLine("             HƯỚNG DẪN THANH TOÁN BÙ TRỪ QUYẾT TOÁN ĐOÀN")
         appendLine("                      ĐOÀN: ${tripTitle.uppercase()} (Mã: $joinCode)")
         appendLine("================================================================================")
         appendLine("Ngày xuất: ${dateFormat.format(date)} | Tạo bởi: $creatorName")
         appendLine()
         if (transfers.isEmpty()) {
-            appendLine("Tất cả thành viên đã hoàn thành quyết toán cân bằng 100%. Không cần chuyển khoản.")
+            appendLine("Tất cả thành viên đã hoàn thành quyết toán cân bằng 100%. Không cần bù trừ thêm.")
         } else {
             transfers.forEachIndexed { i, t ->
                 appendLine("--------------------------------------------------------------------------------")
-                appendLine("LỆNH CHUYỂN KHOẢN #${i + 1}:")
+                appendLine("KHOẢN BÙ TRỪ #${i + 1}:")
                 appendLine("  • Người gửi (Cần nộp) : ${t.fromMember.name}")
                 appendLine("  • Người nhận (Hưởng)  : ${t.toMember.name}")
                 appendLine("  • Số tiền             : ${NumberFormatUtils.formatVnd(t.amount)}")
                 appendLine("  • Ngân hàng           : ${t.toMember.bankName ?: "Chưa có"}")
                 appendLine("  • Số tài khoản        : ${t.toMember.bankAccount ?: "Chưa có"}")
                 appendLine("  • Tên chủ tài khoản   : ${t.toMember.bankAccountHolder ?: t.toMember.name.uppercase()}")
-                appendLine("  • Nội dung chuyển     : ${t.transferNote}")
+                appendLine("  • Nội dung thanh toán : ${t.transferNote}")
             }
             appendLine("--------------------------------------------------------------------------------")
-            appendLine("Lưu ý: Quý thành viên vui lòng điền chính xác nội dung chuyển khoản để đối soát tự động.")
+            appendLine("Lưu ý: Quý thành viên vui lòng đối soát chính xác nội dung để chốt sổ tự động.")
         }
     }
 
@@ -402,8 +402,8 @@ object ReportGenerator {
         appendLine()
 
         // Section 3: Transfers
-        appendLine("KẾ HOẠCH CHUYỂN KHOẢN QUYẾT TOÁN")
-        appendLine("STT,Người chuyển,Người nhận,Số tiền (VND),Ngân hàng,Số tài khoản,Chủ tài khoản,Nội dung chuyển khoản")
+        appendLine("KẾ HOẠCH BÙ TRỪ CÔNG NỢ QUYẾT TOÁN")
+        appendLine("STT,Người nộp bù,Người nhận,Số tiền (VND),Ngân hàng,Số tài khoản,Chủ tài khoản,Nội dung bù trừ")
         settlementTransfers.forEachIndexed { i, t ->
             appendLine("${i + 1},${escapeCsv(t.fromMember.name)},${escapeCsv(t.toMember.name)},${t.amount},${escapeCsv(t.toMember.bankName ?: "")},${escapeCsv(t.toMember.bankAccount ?: "")},${escapeCsv(t.toMember.bankAccountHolder ?: "")},${escapeCsv(t.transferNote)}")
         }

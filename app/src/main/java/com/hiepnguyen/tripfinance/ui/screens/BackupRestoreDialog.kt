@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.hiepnguyen.tripfinance.ui.theme.EmeraldPrimary
@@ -41,6 +42,7 @@ fun BackupRestoreDialog(
     viewModel: TripFinanceViewModel,
     onDismiss: () -> Unit
 ) {
+    BackHandler { onDismiss() }
     val context = LocalContext.current
     val localBackups by viewModel.localBackups.collectAsState()
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()) }
@@ -277,7 +279,7 @@ fun BackupRestoreDialog(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(localBackups) { file ->
+                        items(localBackups, key = { it.absolutePath }) { file ->
                             val fileSizeKb = (file.length() / 1024.0)
                             val modifiedDate = dateFormat.format(Date(file.lastModified()))
                             val isEncrypted = viewModel.isEncryptedBackupFile(file)

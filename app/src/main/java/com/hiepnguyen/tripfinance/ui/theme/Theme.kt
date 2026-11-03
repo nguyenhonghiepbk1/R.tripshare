@@ -8,8 +8,38 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+
+val LocalExtendedColorScheme = staticCompositionLocalOf { LightExtendedColorScheme }
+
+val MaterialTheme.extendedColorScheme: ExtendedColorScheme
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalExtendedColorScheme.current
+
+val MaterialTheme.semanticSuccess: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalExtendedColorScheme.current.success
+
+val MaterialTheme.semanticDanger: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalExtendedColorScheme.current.danger
+
+val MaterialTheme.semanticWarning: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalExtendedColorScheme.current.warning
+
+val MaterialTheme.semanticInfo: Color
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalExtendedColorScheme.current.info
 
 private val DarkColorScheme =
   darkColorScheme(
@@ -31,7 +61,11 @@ private val DarkColorScheme =
     onBackground = Color(0xFFF8FAFC),
     onSurface = Color(0xFFF8FAFC),
     onSurfaceVariant = Color(0xFFCBD5E1),
-    outline = Color(0xFF475569)
+    outline = Color(0xFF475569),
+    error = Color(0xFFF87171),
+    onError = Color(0xFF7F1D1D),
+    errorContainer = Color(0xFF991B1B),
+    onErrorContainer = Color(0xFFFECACA)
   )
 
 private val LightColorScheme =
@@ -54,7 +88,11 @@ private val LightColorScheme =
     onBackground = Color(0xFF0F172A),
     onSurface = Color(0xFF0F172A),
     onSurfaceVariant = Color(0xFF475569),
-    outline = NeutralBorder
+    outline = NeutralBorder,
+    error = DangerRed,
+    onError = Color.White,
+    errorContainer = DangerRedLight,
+    onErrorContainer = Color(0xFF991B1B)
   )
 
 @Composable
@@ -73,7 +111,11 @@ fun TripFinanceTheme(
       else -> LightColorScheme
     }
 
-  MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+  val extendedColors = if (darkTheme) DarkExtendedColorScheme else LightExtendedColorScheme
+
+  CompositionLocalProvider(LocalExtendedColorScheme provides extendedColors) {
+    MaterialTheme(colorScheme = colorScheme, typography = Typography, content = content)
+  }
 }
 
 @Composable
@@ -84,4 +126,3 @@ fun MyApplicationTheme(
 ) {
   TripFinanceTheme(darkTheme = darkTheme, dynamicColor = dynamicColor, content = content)
 }
-

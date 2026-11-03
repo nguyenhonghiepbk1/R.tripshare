@@ -18,6 +18,7 @@ object BackupCryptoUtils {
     private const val ALGORITHM = "AES/GCM/NoPadding"
     private const val KDF_ALGORITHM = "PBKDF2WithHmacSHA256"
     const val OWASP_RECOMMENDED_ITERATIONS = 600_000
+    const val TEST_ITERATIONS = 2_000
     const val MIN_ITERATIONS = 1_000
     const val MAX_ITERATIONS = 1_000_000
     private const val KEY_LENGTH_BITS = 256
@@ -26,18 +27,6 @@ object BackupCryptoUtils {
     private const val TAG_LENGTH_BITS = 128
 
     const val ENCRYPTED_MAGIC_FORMAT = "TRIPFINANCE_ENCRYPTED_BACKUP"
-
-    private fun isTestEnvironment(): Boolean {
-        return try {
-            Class.forName("org.robolectric.Robolectric") != null
-        } catch (_: Throwable) {
-            false
-        }
-    }
-
-    fun getIterations(): Int {
-        return if (isTestEnvironment()) 2_000 else OWASP_RECOMMENDED_ITERATIONS
-    }
 
     /**
      * Kiểm tra nhanh xem đoạn đầu tệp tin (snippet) có chứa thông tin mã hóa hay không.
@@ -74,17 +63,26 @@ object BackupCryptoUtils {
 
     /**
      * Mã hóa chuỗi JSON sao lưu bằng AES-256-GCM và PBKDF2WithHmacSHA256
+     * @param plainJson Nội dung JSON cần mã hóa
+     * @param password Mật khẩu mã hóa (tối thiểu 6 ký tự)
+     * @param iterations Số vòng lặp PBKDF2 (mặc định 600.000 theo chuẩn OWASP)
      */
-    fun encryptBackup(plainJson: String, password: String): String {
+    fun encryptBackup(
+        plainJson: String,
+        password: String,
+        iterations: Int = OWASP_RECOMMENDED_ITERATIONS
+    ): String {
         require(password.length >= 6) { "Mật khẩu mã hóa sao lưu phải có tối thiểu 6 ký tự!" }
+        require(iterations in MIN_ITERATIONS..MAX_ITERATIONS) {
+            "Số vòng lặp KDF ($iterations) không nằm trong giới hạn an toàn ($MIN_ITERATIONS - $MAX_ITERATIONS)."
+        }
 
         val secureRandom = SecureRandom()
         val salt = ByteArray(SALT_LENGTH_BYTES).apply { secureRandom.nextBytes(this) }
         val iv = ByteArray(IV_LENGTH_BYTES).apply { secureRandom.nextBytes(this) }
-        val iters = getIterations()
 
         // Dẫn xuất khóa 256-bit từ mật khẩu với PBKDF2WithHmacSHA256 theo chuẩn khuyến nghị
-        val keySpec = PBEKeySpec(password.toCharArray(), salt, iters, KEY_LENGTH_BITS)
+        val keySpec = PBEKeySpec(password.toCharArray(), salt, iterations, KEY_LENGTH_BITS)
         val keyFactory = SecretKeyFactory.getInstance(KDF_ALGORITHM)
         val keyBytes = keyFactory.generateSecret(keySpec).encoded
         val secretKey = SecretKeySpec(keyBytes, "AES")
@@ -102,7 +100,7 @@ object BackupCryptoUtils {
             put("version", 1)
             put("algorithm", "AES-256-GCM")
             put("kdf", KDF_ALGORITHM)
-            put("iterations", iters)
+            put("iterations", iterations)
             put("salt", Base64.encodeToString(salt, Base64.NO_WRAP))
             put("iv", Base64.encodeToString(iv, Base64.NO_WRAP))
             put("ciphertext", Base64.encodeToString(cipherBytes, Base64.NO_WRAP))
@@ -115,8 +113,15 @@ object BackupCryptoUtils {
     /**
      * Giải mã chuỗi JSON sao lưu được bảo vệ bằng mật khẩu.
      * Bắt buộc kiểm tra giới hạn số vòng lặp KDF iterations để chống tấn công DoS CPU.
+     * @param encryptedJson Nội dung JSON đã mã hóa
+     * @param password Mật khẩu giải mã
+     * @param defaultIterations Số vòng lặp mặc định nếu tệp sao lưu không chứa trường iterations (mặc định 600.000)
      */
-    fun decryptBackup(encryptedJson: String, password: String): Result<String> {
+    fun decryptBackup(
+        encryptedJson: String,
+        password: String,
+        defaultIterations: Int = OWASP_RECOMMENDED_ITERATIONS
+    ): Result<String> {
         return try {
             val root = JSONObject(encryptedJson)
             if (!root.optBoolean("encrypted", false)) {
@@ -126,7 +131,7 @@ object BackupCryptoUtils {
             val saltBase64 = root.getString("salt")
             val ivBase64 = root.getString("iv")
             val ciphertextBase64 = root.getString("ciphertext")
-            val iterations = root.optInt("iterations", getIterations())
+            val iterations = root.optInt("iterations", defaultIterations)
 
             // Kiểm soát chặt chẽ giới hạn vòng lặp: Ngăn ngừa file độc hại đặt iterations cực lớn gây treo CPU / ANR
             if (iterations !in MIN_ITERATIONS..MAX_ITERATIONS) {
