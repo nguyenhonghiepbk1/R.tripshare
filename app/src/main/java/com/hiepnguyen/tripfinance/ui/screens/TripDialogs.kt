@@ -46,8 +46,6 @@ fun CreateTripDialog(
     var description by remember { mutableStateOf("") }
     var adminName by remember { mutableStateOf("") }
     var joinCodeInput by remember { mutableStateOf(com.hiepnguyen.tripfinance.domain.model.TripCodeGenerator.generateCode("TRIP-")) }
-    var adminBankName by remember { mutableStateOf("Vietcombank") }
-    var adminBankAccount by remember { mutableStateOf("") }
     var selectedBaseCurrency by remember { mutableStateOf("VND") }
     var currencyDropdownExpanded by remember { mutableStateOf(false) }
 
@@ -185,24 +183,6 @@ fun CreateTripDialog(
                             Icon(Icons.Filled.Edit, contentDescription = "Tạo mã ngẫu nhiên mới", tint = EmeraldPrimary)
                         }
                     },
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = adminBankName,
-                    onValueChange = { adminBankName = it },
-                    label = { Text("Ngân hàng (Tùy chọn)") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = adminBankAccount,
-                    onValueChange = { adminBankAccount = it },
-                    label = { Text("Số tài khoản (Tùy chọn)") },
-                    singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = {
                         focusManager.clearFocus()
@@ -228,9 +208,9 @@ fun CreateTripDialog(
                         now,
                         now + 86400000L * 5,
                         adminName.trim(),
-                        adminBankName.trim().takeIf { it.isNotBlank() },
-                        adminBankAccount.trim().takeIf { it.isNotBlank() },
-                        adminName.trim(),
+                        null,
+                        null,
+                        null,
                         selectedBaseCurrency
                     )
                 },

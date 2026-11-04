@@ -33,7 +33,7 @@ object PdfReportExporter {
     private val dateOnlyFormat = SimpleDateFormat("dd/MM/yyyy", Locale("vi", "VN"))
 
     /**
-     * Dọn dẹp các tệp PDF báo cáo cũ hơn 24 giờ trong thư mục cache/reports khi ứng dụng khởi động
+     * Dọn dẹp các tệp báo cáo (PDF, XLSX) cũ hơn 24 giờ trong thư mục cache/reports khi ứng dụng khởi động
      */
     fun cleanOldReports(context: Context) {
         try {
@@ -41,13 +41,13 @@ object PdfReportExporter {
             if (reportsDir.exists() && reportsDir.isDirectory) {
                 val cutoff = System.currentTimeMillis() - 24 * 60 * 60 * 1000L
                 reportsDir.listFiles()?.forEach { file ->
-                    if (file.isFile && file.lastModified() < cutoff) {
+                    if (file.isFile && (file.name.endsWith(".pdf", ignoreCase = true) || file.name.endsWith(".xlsx", ignoreCase = true)) && file.lastModified() < cutoff) {
                         file.delete()
                     }
                 }
             }
         } catch (e: Throwable) {
-            android.util.Log.w("PdfReportExporter", "Không thể dọn dẹp file PDF cũ: ${e.message}")
+            android.util.Log.w("PdfReportExporter", "Không thể dọn dẹp file báo cáo cũ: ${e.message}")
         }
     }
 
@@ -110,15 +110,19 @@ object PdfReportExporter {
             val margin = 36f
             val contentWidth = pageWidth - (margin * 2)
 
+            fun drawFooter() {
+                paint.color = Color.parseColor("#94A3B8")
+                paint.textSize = 8f
+                paint.typeface = Typeface.DEFAULT
+                paint.textAlign = Paint.Align.LEFT
+                canvas.drawText("Đây là gợi ý, ứng dụng không thực hiện giao dịch", margin, pageHeight - 20f, paint)
+                paint.textAlign = Paint.Align.RIGHT
+                canvas.drawText("Trang $pageNumber", pageWidth - margin, pageHeight - 20f, paint)
+            }
+
             fun checkPageBreak(requiredHeight: Float) {
                 if (currentY + requiredHeight > pageHeight - 40f) {
-                    // Draw page footer
-                    paint.color = Color.parseColor("#94A3B8")
-                    paint.textSize = 8f
-                    paint.typeface = Typeface.DEFAULT
-                    paint.textAlign = Paint.Align.RIGHT
-                    canvas.drawText("Trang $pageNumber", pageWidth - margin, pageHeight - 20f, paint)
-
+                    drawFooter()
                     pdfDocument.finishPage(page)
                     pageNumber++
                     pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
@@ -551,74 +555,6 @@ object PdfReportExporter {
                 currentY += 28f
             }
 
-            // =========================================================================
-            // Section 6: Member Bank Accounts Appendix (DƯỚI CÙNG BÁO CÁO NHƯ YÊU CẦU)
-            // =========================================================================
-            checkPageBreak(40f + (members.size * 22f))
-            paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            paint.color = Color.parseColor("#0F172A")
-            paint.style = Paint.Style.FILL
-            paint.textSize = 10.5f
-            val appendixSectionIndex = if (funds.isNotEmpty()) "VI" else "V"
-            canvas.drawText("$appendixSectionIndex. DANH SÁCH TÀI KHOẢN NGÂN HÀNG CÁC THÀNH VIÊN TRONG ĐOÀN", margin, currentY, paint)
-            currentY += 12f
-
-            paint.color = Color.parseColor("#334155") // Slate Dark
-            paint.style = Paint.Style.FILL
-            canvas.drawRect(margin, currentY, margin + contentWidth, currentY + 20f, paint)
-
-            paint.color = Color.WHITE
-            paint.textSize = 8.5f
-            paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            canvas.drawText("STT", margin + 4f, currentY + 13f, paint)
-            canvas.drawText("Họ và tên thành viên", margin + 26f, currentY + 13f, paint)
-            canvas.drawText("Vai trò", margin + 148f, currentY + 13f, paint)
-            canvas.drawText("Tên ngân hàng", margin + 215f, currentY + 13f, paint)
-            canvas.drawText("Số tài khoản (STK)", margin + 302f, currentY + 13f, paint)
-            canvas.drawText("Chủ tài khoản (Không dấu)", margin + 400f, currentY + 13f, paint)
-            currentY += 20f
-
-            paint.typeface = Typeface.DEFAULT
-            members.forEachIndexed { index, mem ->
-                checkPageBreak(22f)
-                if (index % 2 == 1) {
-                    paint.color = Color.parseColor("#F8FAFC")
-                    paint.style = Paint.Style.FILL
-                    canvas.drawRect(margin, currentY, margin + contentWidth, currentY + 18f, paint)
-                }
-
-                paint.color = Color.parseColor("#1E293B")
-                paint.style = Paint.Style.FILL
-                canvas.drawText("${index + 1}", margin + 4f, currentY + 12f, paint)
-                canvas.drawText(mem.name.take(20), margin + 26f, currentY + 12f, paint)
-
-                val roleLabel = when (mem.role) {
-                    "ADMIN" -> "Trưởng đoàn"
-                    "TREASURER" -> "Thủ quỹ"
-                    "MEMBER" -> "Thành viên"
-                    else -> "Người xem"
-                }
-                canvas.drawText(roleLabel, margin + 148f, currentY + 12f, paint)
-                canvas.drawText(mem.bankName ?: "Chưa có", margin + 215f, currentY + 12f, paint)
-
-                paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                paint.color = Color.parseColor("#047857")
-                canvas.drawText(mem.bankAccount ?: "Chưa có", margin + 302f, currentY + 12f, paint)
-
-                paint.typeface = Typeface.DEFAULT
-                paint.color = Color.parseColor("#334155")
-                val holderName = mem.bankAccountHolder ?: mem.name.uppercase()
-                canvas.drawText(holderName.take(20), margin + 400f, currentY + 12f, paint)
-
-                paint.color = Color.parseColor("#E2E8F0")
-                paint.style = Paint.Style.STROKE
-                paint.strokeWidth = 0.5f
-                canvas.drawLine(margin, currentY + 18f, margin + contentWidth, currentY + 18f, paint)
-                currentY += 18f
-            }
-
-            currentY += 18f
-
             // Signatures area
             checkPageBreak(65f)
             paint.style = Paint.Style.FILL
@@ -639,12 +575,8 @@ object PdfReportExporter {
             canvas.drawText("(Ký và ghi rõ họ tên)", leftSignX, currentY + 24f, paint)
             canvas.drawText("(Ký và ghi rõ họ tên)", rightSignX, currentY + 24f, paint)
 
-            // Page Number for last page
-            paint.color = Color.parseColor("#94A3B8")
-            paint.textSize = 8f
-            paint.typeface = Typeface.DEFAULT
-            paint.textAlign = Paint.Align.RIGHT
-            canvas.drawText("Trang $pageNumber", pageWidth - margin, pageHeight - 20f, paint)
+            // Page Number and disclaimer for last page
+            drawFooter()
 
             pdfDocument.finishPage(page)
 
@@ -691,6 +623,70 @@ object PdfReportExporter {
         }
 
         val chooser = Intent.createChooser(intent, "Chia sẻ file Báo cáo PDF qua...")
+        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(chooser)
+    }
+
+    suspend fun exportAndShareXlsx(
+        context: Context,
+        trip: TripEntity?,
+        members: List<TripMemberEntity>,
+        summary: FinancialSummary,
+        statuses: List<MemberFinancialStatus>,
+        settlementTransfers: List<SettlementTransfer>,
+        expenses: List<ExpenseEntity>,
+        funds: List<FundContributionEntity>,
+        splits: List<ExpenseSplitEntity> = emptyList()
+    ): File? = withContext(Dispatchers.IO) {
+        try {
+            val reportsDir = File(context.cacheDir, "reports").apply { if (!exists()) mkdirs() }
+            val sanitizeTripTitle = (trip?.title ?: "Trip").replace("[^a-zA-Z0-9]".toRegex(), "_")
+            val dateStr = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
+            val xlsxFile = File(reportsDir, "${sanitizeTripTitle}_${dateStr}.xlsx")
+
+            FileOutputStream(xlsxFile).use { fos ->
+                ReportGenerator.generateXlsxReport(
+                    outputStream = fos,
+                    trip = trip,
+                    members = members,
+                    summary = summary,
+                    statuses = statuses,
+                    settlementTransfers = settlementTransfers,
+                    expenses = expenses,
+                    funds = funds,
+                    splits = splits
+                )
+                fos.flush()
+            }
+
+            withContext(Dispatchers.Main) {
+                shareXlsxFile(context, xlsxFile, trip?.title ?: "Đoàn")
+            }
+            xlsxFile
+        } catch (e: Exception) {
+            android.util.Log.e("PdfReportExporter", "Lỗi xuất file Excel: ${e.javaClass.simpleName}", e)
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "Không thể xuất file Excel báo cáo. Vui lòng thử lại sau.", Toast.LENGTH_LONG).show()
+            }
+            null
+        }
+    }
+
+    private fun shareXlsxFile(context: Context, file: File, tripTitle: String) {
+        val uri: Uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+
+        val intent = Intent(Intent.ACTION_SEND).apply {
+            type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            putExtra(Intent.EXTRA_SUBJECT, "Báo cáo quyết toán tài chính Excel - $tripTitle")
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+
+        val chooser = Intent.createChooser(intent, "Chia sẻ file Báo cáo Excel qua...")
         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(chooser)
     }

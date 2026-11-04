@@ -174,7 +174,7 @@ fun ExpensesScreen(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 contentPadding = PaddingValues(vertical = 4.dp)
             ) {
-                items(categories) { (catKey, catLabel) ->
+                items(categories, key = { it.first ?: "ALL" }) { (catKey, catLabel) ->
                     FilterChip(
                         selected = uiState.selectedCategoryFilter == catKey,
                         onClick = { onCategoryFilterChange(catKey) },

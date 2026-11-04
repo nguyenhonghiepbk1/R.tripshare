@@ -47,7 +47,7 @@ enum class GuideCategory(
     TRIP_MGMT("Quản lý đoàn", "Trip Management", Icons.Filled.FlightTakeoff),
     EXPENSES("Ghi nhận chi tiêu", "Expenses & Splitting", Icons.Filled.ReceiptLong),
     FUND("Quản lý Quỹ", "Group Fund", Icons.Filled.Savings),
-    SETTLEMENT("Quyết toán & QR", "Settlement & QR", Icons.Filled.Payments),
+    SETTLEMENT("Quyết toán & Bù trừ", "Settlement & Netting", Icons.Filled.Payments),
     EXCHANGE_RATE("Ngoại tệ & Tỷ giá", "Multi-Currency", Icons.Filled.CurrencyExchange),
     EXPORT("Xuất Báo Cáo", "Export Reports", Icons.Filled.FileDownload),
     PRIVACY("Chính sách & Bảo mật", "Privacy & Security", Icons.Filled.Shield),
@@ -116,13 +116,11 @@ fun UserGuideScreen(
                 stepsVi = listOf(
                     "Tại màn hình Tổng quan (Dashboard), bấm vào khung chọn đoàn xổ xuống và chọn '+ Tạo đoàn công tác mới'.",
                     "Điền Tên đoàn (VD: 'Công tác Đà Nẵng 2026'), Mô tả và thông tin Trưởng đoàn/Thủ quỹ.",
-                    "Nhập thông tin Ngân hàng + Số tài khoản (tùy chọn).",
                     "Thêm danh sách các thành viên tham gia chuyến đi tại tab 'Thành viên'."
                 ),
                 stepsEn = listOf(
                     "On Dashboard, tap the trip dropdown selector and pick '+ Create New Trip'.",
                     "Fill in Trip Title (e.g. 'Da Nang Business Trip 2026'), Description, and Leader/Treasurer name.",
-                    "Enter Bank name + Account number (optional).",
                     "Add participating members easily under the 'Members' tab."
                 ),
                 tipsVi = "Bạn có thể tạo và quản lý song song nhiều đoàn công tác khác nhau trực tiếp trên máy.",
@@ -255,24 +253,24 @@ fun UserGuideScreen(
             GuideItem(
                 id = "export_report_guide",
                 category = GuideCategory.EXPORT,
-                titleVi = "8. Xuất Báo Cáo Tài Chính & Bảng Kê Excel (CSV)",
-                titleEn = "8. Financial Report Export & Excel (CSV)",
+                titleVi = "8. Xuất Báo Cáo Tài Chính & Bảng Kê Excel (.xlsx)",
+                titleEn = "8. Financial Report Export & Excel (.xlsx)",
                 summaryVi = "Xuất dữ liệu chi tiết phục vụ thanh quyết toán công tác phí với cơ quan/doanh nghiệp.",
                 summaryEn = "Export detailed breakdown for company expense reimbursement.",
                 stepsVi = listOf(
                     "Tại Dashboard hoặc tab Quyết toán, bấm nút 'Báo Cáo' / biểu tượng Tài liệu trên thanh tiêu đề.",
-                    "Chọn định dạng xuất mong muốn: 'Báo cáo văn bản tóm tắt' hoặc 'Bảng kê chi tiết Excel (.csv)'.",
+                    "Chọn định dạng xuất mong muốn: 'PDF chuẩn in', 'Báo cáo văn bản' hoặc 'Bảng kê chi tiết Excel (.xlsx)'.",
                     "Xem trước nội dung bảng tổng hợp chi phí, phân loại danh mục, đối soát từng người.",
-                    "Bấm 'Sao chép' hoặc 'Chia sẻ' để gửi trực tiếp qua Zalo, Messenger, Email hoặc lưu về máy tính mở bằng Microsoft Excel."
+                    "Bấm 'Xuất & Gửi File Excel', 'Xuất & Gửi File PDF', hoặc 'Sao chép' để gửi trực tiếp qua Zalo, Messenger, Email hoặc mở bằng Microsoft Excel."
                 ),
                 stepsEn = listOf(
                     "From Dashboard or Settlement tab, tap 'Report' / Document icon on the top bar.",
-                    "Choose format: 'Summary Text Report' or 'Detailed Excel CSV Table'.",
+                    "Choose format: 'Print PDF', 'Summary Text Report', or 'Detailed Excel (.xlsx)'.",
                     "Preview the consolidated financial statement, category breakdown, and member ledger.",
-                    "Tap 'Copy' or 'Share' to send via Zalo, Email, or open directly in Microsoft Excel."
+                    "Tap 'Export & Share Excel', 'Export & Share PDF', or 'Copy' to send via Zalo, Email, or open directly in Microsoft Excel."
                 ),
-                tipsVi = "File CSV được mã hóa chuẩn UTF-8 kèm BOM, hiển thị tiếng Việt hoàn hảo trên mọi phiên bản Excel máy tính và điện thoại.",
-                tipsEn = "CSV exports include UTF-8 BOM encoding, ensuring Vietnamese characters display properly in Excel.",
+                tipsVi = "File Excel (.xlsx) gồm 5 sheet chi tiết, định dạng số chuẩn, hiển thị tiếng Việt hoàn hảo trên mọi phiên bản Excel máy tính và điện thoại.",
+                tipsEn = "Excel (.xlsx) exports feature 5 detailed sheets with formatted numbers and full Vietnamese support.",
                 icon = Icons.Filled.Description
             ),
             GuideItem(
@@ -286,13 +284,13 @@ fun UserGuideScreen(
                     "Ứng dụng hoàn toàn không yêu cầu kết nối mạng hay đăng ký tài khoản.",
                     "Khi bạn ở trên máy bay, vùng không có sóng hoặc công tác nước ngoài, toàn bộ tính năng thêm chi tiêu, nộp quỹ, đổi tỷ giá, quyết toán bù trừ và xuất báo cáo hoạt động trơn tru 100%.",
                     "Tất cả dữ liệu thu chi được lưu an toàn tuyệt đối trong bộ nhớ máy của bạn.",
-                    "Để chia sẻ báo cáo cho đoàn, bạn chỉ cần dùng chức năng Xuất báo cáo CSV/Excel hoặc sao chép văn bản gửi qua Zalo/Email."
+                    "Để chia sẻ báo cáo cho đoàn, bạn chỉ cần dùng chức năng Xuất báo cáo Excel (.xlsx), PDF hoặc sao chép văn bản gửi qua Zalo/Email."
                 ),
                 stepsEn = listOf(
                     "The app requires no internet connection or user accounts.",
                     "On airplanes, remote areas, or overseas trips, all features including expense tracking, fund management, debt settlement, and reporting work 100% offline.",
                     "All financial data is securely stored locally on your device.",
-                    "To share reports with your team, use the Export CSV/Excel or Copy Summary Report feature."
+                    "To share reports with your team, use the Export Excel (.xlsx), PDF or Copy Summary Report feature."
                 ),
                 tipsVi = "Bảo mật tuyệt đối, không thu thập thông tin và không lo mất dữ liệu hay lỗi mạng.",
                 tipsEn = "Absolute privacy with zero data collection and zero network dependence.",
@@ -484,7 +482,7 @@ fun UserGuideScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    items(GuideCategory.values()) { cat ->
+                    items(GuideCategory.values(), key = { it.name }) { cat ->
                         val isSelected = selectedCategory == cat
                         FilterChip(
                             selected = isSelected,
@@ -639,7 +637,7 @@ fun UserGuideScreen(
                                 fontSize = 14.sp
                             )
                             Text(
-                                text = if (lang == AppLanguage.VI) "Thử tìm với từ khóa khác như: 'quỹ', 'chia tiền', 'qr', 'tỷ giá'" else "Try searching with 'fund', 'split', 'qr', 'rate'",
+                                text = if (lang == AppLanguage.VI) "Thử tìm với từ khóa khác như: 'quỹ', 'chia tiền', 'bù trừ', 'tỷ giá'" else "Try searching with 'fund', 'split', 'settle', 'rate'",
                                 fontSize = 12.sp,
                                 color = Color(0xFF64748B),
                                 textAlign = TextAlign.Center

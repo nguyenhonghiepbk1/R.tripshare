@@ -76,6 +76,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
     val isLoadingAi: StateFlow<Boolean> = _isLoadingAi.asStateFlow()
     private val _isExportingPdf = MutableStateFlow(false)
     val isExportingPdf: StateFlow<Boolean> = _isExportingPdf.asStateFlow()
+    private val _isExportingXlsx = MutableStateFlow(false)
+    val isExportingXlsx: StateFlow<Boolean> = _isExportingXlsx.asStateFlow()
     private val _language = MutableStateFlow(
         if (sharedPrefs.getString("app_language", "vi") == "en") AppLanguage.EN else AppLanguage.VI
     )
@@ -295,6 +297,36 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                 }
             } finally {
                 _isExportingPdf.value = false
+            }
+        }
+    }
+
+    /**
+     * Xuất và chia sẻ báo cáo tài chính Excel (.xlsx) chuẩn OpenXML 5 sheet chạy trên viewModelScope
+     * và Dispatchers.IO, đồng thời quản lý trạng thái loading để giao diện hiển thị biểu tượng tiến trình.
+     */
+    fun exportAndShareXlsx(context: Context) {
+        val state = uiState.value
+        val trip = state.currentTrip ?: return
+
+        viewModelScope.launch {
+            _isExportingXlsx.value = true
+            try {
+                withContext(Dispatchers.IO) {
+                    PdfReportExporter.exportAndShareXlsx(
+                        context = context,
+                        trip = trip,
+                        members = state.members,
+                        summary = state.financialSummary,
+                        statuses = state.memberStatuses,
+                        settlementTransfers = state.settlementTransfers,
+                        expenses = state.expenses,
+                        funds = state.fundContributions,
+                        splits = state.allSplits
+                    )
+                }
+            } finally {
+                _isExportingXlsx.value = false
             }
         }
     }
@@ -1035,8 +1067,6 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                         put("totalOwed", st.totalOwed)
                         put("balance", st.balance)
                         put("status", st.status.name)
-                        put("bankAccount", st.member.bankAccount ?: org.json.JSONObject.NULL)
-                        put("bankName", st.member.bankName ?: org.json.JSONObject.NULL)
                     })
                 }
             })
@@ -1048,9 +1078,6 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                         put("toMemberId", tr.toMember.id)
                         put("toMemberName", tr.toMember.name)
                         put("amount", tr.amount)
-                        put("bankName", tr.toMember.bankName ?: org.json.JSONObject.NULL)
-                        put("bankAccount", tr.toMember.bankAccount ?: org.json.JSONObject.NULL)
-                        put("bankAccountHolder", tr.toMember.bankAccountHolder ?: org.json.JSONObject.NULL)
                         put("transferNote", tr.transferNote)
                     })
                 }

@@ -895,142 +895,211 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun `test escapeCsv neutralizes spreadsheet formula injection and escapes quotes correctly`() {
-        // 1. Công thức bắt đầu bằng =
-        val formulaEqual = "=HYPERLINK(\"http://evil.com\", \"Click\")"
-        val escapedEqual = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv(formulaEqual)
-        assertEquals("\"'=HYPERLINK(\"\"http://evil.com\"\", \"\"Click\"\")\"", escapedEqual)
-
-        // 2. Công thức bắt đầu bằng +, -, @, %
-        val formulaPlus = "+cmd|' /C calc'!A0"
-        val escapedPlus = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv(formulaPlus)
-        assertTrue(escapedPlus.startsWith("\"'+"))
-
-        val formulaMinus = "-2+3*cmd|' /C calc'!A0"
-        val escapedMinus = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv(formulaMinus)
-        assertTrue(escapedMinus.startsWith("\"'-"))
-
-        val formulaAt = "@SUM(A1:A10)"
-        val escapedAt = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv(formulaAt)
-        assertTrue(escapedAt.startsWith("\"'@"))
-
-        val formulaPercent = "%LOCALAPPDATA%"
-        val escapedPercent = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv(formulaPercent)
-        assertTrue(escapedPercent.startsWith("\"'%"))
-
-        // 3. Chuỗi có khoảng trắng phía trước công thức
-        val spacedFormula = "   =1+1"
-        val escapedSpaced = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv(spacedFormula)
-        assertTrue(escapedSpaced.startsWith("\"'   ="))
-
-        // 4. Dấu ngoặc kép trong văn bản thường: phải nhân đôi (" -> "") và không làm vỡ cấu trúc cột
-        val textWithQuotes = "Khoản chi \"Ăn uống buffet\" tại Đà Nẵng"
-        val escapedQuotes = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv(textWithQuotes)
-        assertEquals("\"Khoản chi \"\"Ăn uống buffet\"\" tại Đà Nẵng\"", escapedQuotes)
-
-        // 5. Xuống dòng trong ghi chú: phải được làm sạch thành dấu cách
-        val textWithNewline = "Dòng 1\nDòng 2\r\nDòng 3"
-        val escapedNewline = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv(textWithNewline)
-        assertFalse(escapedNewline.contains("\n"))
-        assertFalse(escapedNewline.contains("\r"))
-        assertEquals("\"Dòng 1 Dòng 2 Dòng 3\"", escapedNewline)
-    }
-
-    @Test
-    fun `test generateCsvReport outputs UTF-8 BOM and escapes formula injections in ledger`() {
+    fun `test generateXlsxReport produces valid workbook with 5 sheets and zero bank details`() {
         val trip = TripEntity(
-            id = "t-csv",
-            title = "=HYPERLINK(\"http://evil.com\", \"Đoàn Hack\")",
-            description = "Test CSV",
-            joinCode = "CSV01",
+            id = "t-xlsx",
+            title = "=HYPERLINK(\"http://evil.com\", \"Đoàn Kiểm Thử\")",
+            description = "Test Excel XLSX",
+            joinCode = "XLSX01",
             startDate = 1000L,
             endDate = 2000L
         )
-        val member = TripMemberEntity(
-            id = "m-csv",
-            tripId = "t-csv",
-            userId = "u-csv",
+        val member1 = TripMemberEntity(
+            id = "m-1",
+            tripId = "t-xlsx",
+            userId = "u-1",
             name = "@HackerName",
             role = "ADMIN",
-            bankName = "+MBBank",
-            bankAccount = "=1+1",
-            bankAccountHolder = "HACKER"
+            bankName = "Ngân hàng ACB",
+            bankAccount = "987654321",
+            bankAccountHolder = "NGUYEN VAN A"
+        )
+        val member2 = TripMemberEntity(
+            id = "m-2",
+            tripId = "t-xlsx",
+            userId = "u-2",
+            name = "+SecondPerson",
+            role = "MEMBER",
+            bankName = "Vietcombank",
+            bankAccount = "1122334455",
+            bankAccountHolder = "TRAN THI B"
         )
         val expense = ExpenseEntity(
-            id = "e-csv",
-            tripId = "t-csv",
+            id = "e-1",
+            tripId = "t-xlsx",
             title = "=CMD|' /C calc'!A0",
             category = "FOOD",
             payerType = "MEMBER",
-            payerMemberId = "m-csv",
-            totalAmount = 100000.0,
+            payerMemberId = "m-1",
+            totalAmount = 200000.0,
             currency = "VND",
             exchangeRate = 1.0,
-            convertedTotalAmount = 100000L,
+            convertedTotalAmount = 200000L,
             splitType = "EQUAL",
             note = "Ghi chú có dấu \"ngoặc kép\" và\nxuống dòng",
             timestamp = 1500L,
-            createdMemberId = "m-csv"
+            createdMemberId = "m-1"
         )
-        val split = ExpenseSplitEntity(
-            id = "s-csv",
-            expenseId = "e-csv",
-            tripId = "t-csv",
-            memberId = "m-csv",
-            amount = 100000L
+        val fund = FundContributionEntity(
+            id = "f-1",
+            tripId = "t-xlsx",
+            memberId = "m-2",
+            amount = 500000L,
+            currency = "VND",
+            exchangeRate = 1.0,
+            convertedAmount = 500000L,
+            note = "Đóng quỹ đợt 1",
+            timestamp = 1100L,
+            recordedByMemberId = "m-1"
         )
 
         val summary = com.hiepnguyen.tripfinance.domain.model.FinancialSummary(
-            totalExpenses = 100000L,
-            personalPaidExpenses = 100000L,
+            totalExpenses = 200000L,
+            personalPaidExpenses = 200000L,
             fundPaidExpenses = 0L,
-            totalFundCollected = 0L,
-            remainingFund = 0L,
+            totalFundCollected = 500000L,
+            remainingFund = 500000L,
             isBalanced = true,
             balanceDiscrepancy = 0L
         )
 
-        val status = com.hiepnguyen.tripfinance.domain.model.MemberFinancialStatus(
-            member = member,
-            totalPaid = 100000L,
-            outOfPocketPaid = 100000L,
+        val status1 = com.hiepnguyen.tripfinance.domain.model.MemberFinancialStatus(
+            member = member1,
+            totalPaid = 200000L,
+            outOfPocketPaid = 200000L,
             fundContributed = 0L,
             totalOwed = 100000L,
-            balance = 0L,
-            status = com.hiepnguyen.tripfinance.domain.model.BalanceStatus.BALANCED
+            balance = 100000L,
+            status = com.hiepnguyen.tripfinance.domain.model.BalanceStatus.RECEIVE
+        )
+        val status2 = com.hiepnguyen.tripfinance.domain.model.MemberFinancialStatus(
+            member = member2,
+            totalPaid = 500000L,
+            outOfPocketPaid = 0L,
+            fundContributed = 500000L,
+            totalOwed = 100000L,
+            balance = 400000L,
+            status = com.hiepnguyen.tripfinance.domain.model.BalanceStatus.RECEIVE
         )
 
-        val csv = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.generateCsvReport(
+        val transfer = com.hiepnguyen.tripfinance.domain.model.SettlementTransfer(
+            fromMember = member2,
+            toMember = member1,
+            amount = 100000L,
+            transferNote = "+SecondPerson chuyển cho @HackerName"
+        )
+
+        val baos = java.io.ByteArrayOutputStream()
+        com.hiepnguyen.tripfinance.domain.export.ReportGenerator.generateXlsxReport(
+            outputStream = baos,
+            trip = trip,
+            members = listOf(member1, member2),
+            summary = summary,
+            statuses = listOf(status1, status2),
+            settlementTransfers = listOf(transfer),
+            expenses = listOf(expense),
+            funds = listOf(fund)
+        )
+
+        val bytes = baos.toByteArray()
+        assertTrue("File XLSX phải có nội dung", bytes.isNotEmpty())
+
+        val entries = mutableMapOf<String, String>()
+        var firstEntryName: String? = null
+        java.util.zip.ZipInputStream(java.io.ByteArrayInputStream(bytes)).use { zis ->
+            var entry = zis.nextEntry
+            while (entry != null) {
+                if (firstEntryName == null) firstEntryName = entry.name
+                val text = zis.bufferedReader(Charsets.UTF_8).readText()
+                entries[entry.name] = text
+                entry = zis.nextEntry
+            }
+        }
+
+        // 1. Phải có [Content_Types].xml đầu tiên
+        assertEquals("[Content_Types].xml", firstEntryName)
+
+        // 2. Phải có 5 sheet XML tương ứng 5 sheet
+        assertTrue(entries.containsKey("xl/worksheets/sheet1.xml"))
+        assertTrue(entries.containsKey("xl/worksheets/sheet2.xml"))
+        assertTrue(entries.containsKey("xl/worksheets/sheet3.xml"))
+        assertTrue(entries.containsKey("xl/worksheets/sheet4.xml"))
+        assertTrue(entries.containsKey("xl/worksheets/sheet5.xml"))
+
+        // 3. Tên 5 sheet trong workbook
+        val workbookXml = entries["xl/workbook.xml"] ?: ""
+        assertTrue(workbookXml.contains("name=\"Tổng quan\""))
+        assertTrue(workbookXml.contains("name=\"Chi tiêu\""))
+        assertTrue(workbookXml.contains("name=\"Theo thành viên\""))
+        assertTrue(workbookXml.contains("name=\"Quỹ chung\""))
+        assertTrue(workbookXml.contains("name=\"Gợi ý chuyển khoản\""))
+
+        // 4. Tuyệt đối không chứa chuỗi ngân hàng, số tài khoản
+        val fullContent = entries.values.joinToString("\n")
+        assertFalse("Không được chứa tên ngân hàng ACB", fullContent.contains("Ngân hàng ACB"))
+        assertFalse("Không được chứa tên ngân hàng Vietcombank", fullContent.contains("Vietcombank"))
+        assertFalse("Không được chứa số tài khoản", fullContent.contains("987654321"))
+        assertFalse("Không được chứa số tài khoản", fullContent.contains("1122334455"))
+
+        // 5. Chuỗi công thức phải được vô hiệu hóa bằng dấu nháy đơn
+        assertTrue("Công thức =HYPERLINK phải có tiền tố '", fullContent.contains("'=HYPERLINK"))
+        assertTrue("Tên bắt đầu bằng @ phải có tiền tố '", fullContent.contains("'@HackerName"))
+        assertTrue("Tên bắt đầu bằng + phải có tiền tố '", fullContent.contains("'+SecondPerson"))
+        assertTrue("Công thức =CMD phải có tiền tố '", fullContent.contains("'=CMD"))
+
+        // 6. Số liệu khớp với tổng quan
+        val sheet1 = entries["xl/worksheets/sheet1.xml"] ?: ""
+        assertTrue(sheet1.contains("<v>200000</v>"))
+        assertTrue(sheet1.contains("<v>500000</v>"))
+    }
+
+    @Test
+    fun `test exportAndShareXlsx creates file in cache reports directory and cleanOldReports handles it`() = runBlocking {
+        val context = org.robolectric.RuntimeEnvironment.getApplication()
+        val trip = TripEntity(
+            id = "t-export-xlsx",
+            title = "Chuyến đi Hà Nội - Hạ Long",
+            description = "Công tác",
+            joinCode = "HL2026",
+            startDate = 1000L,
+            endDate = 2000L
+        )
+        val member = TripMemberEntity(
+            id = "m-export",
+            tripId = "t-export-xlsx",
+            userId = "u-export",
+            name = "Trần Văn An",
+            role = "ADMIN"
+        )
+        val summary = com.hiepnguyen.tripfinance.domain.model.FinancialSummary()
+
+        val exportedFile = com.hiepnguyen.tripfinance.domain.export.PdfReportExporter.exportAndShareXlsx(
+            context = context,
             trip = trip,
             members = listOf(member),
             summary = summary,
-            statuses = listOf(status),
+            statuses = emptyList(),
             settlementTransfers = emptyList(),
-            expenses = listOf(expense),
-            funds = emptyList(),
-            splits = listOf(split)
+            expenses = emptyList(),
+            funds = emptyList()
         )
 
-        // 1. Phải có UTF-8 BOM
-        assertTrue("CSV phải có tiền tố UTF-8 BOM", csv.startsWith("\uFEFF"))
+        assertNotNull("Tệp XLSX xuất ra không được null", exportedFile)
+        assertTrue("Tệp XLSX phải tồn tại trên đĩa", exportedFile!!.exists())
+        assertTrue("Tên tệp phải kết thúc bằng .xlsx", exportedFile.name.endsWith(".xlsx"))
+        val todayStr = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US).format(java.util.Date())
+        assertTrue("Tên tệp phải chứa định dạng ngày yyyyMMdd", exportedFile.name.contains(todayStr))
 
-        // 2. Không có ô nào bắt đầu thô bằng ký tự công thức mà không được vô hiệu hóa bằng dấu nháy đơn
-        assertFalse("Tên đoàn chứa công thức phải bị vô hiệu hóa", csv.contains(",\"=HYPERLINK"))
-        assertTrue("Tên đoàn phải có tiền tố dấu nháy đơn", csv.contains(",\"'=HYPERLINK"))
+        // Kiểm tra cleanOldReports: tệp mới tạo không bị xóa
+        com.hiepnguyen.tripfinance.domain.export.PdfReportExporter.cleanOldReports(context)
+        assertTrue("Tệp mới tạo không được bị xóa bởi cleanOldReports", exportedFile.exists())
 
-        assertFalse("Tên thành viên chứa @ phải bị vô hiệu hóa", csv.contains(",\"@HackerName\""))
-        assertTrue("Tên thành viên phải có dấu nháy đơn", csv.contains(",\"'@HackerName\""))
-
-        assertFalse("Tên khoản chi chứa =CMD phải bị vô hiệu hóa", csv.contains(",\"=CMD"))
-        assertTrue("Tên khoản chi phải có dấu nháy đơn", csv.contains(",\"'=CMD"))
-
-        assertFalse("Tài khoản ngân hàng chứa =1+1 phải bị vô hiệu hóa", csv.contains(",\"=1+1\""))
-        assertTrue("Tài khoản ngân hàng phải có dấu nháy đơn", csv.contains(",\"'=1+1\""))
-
-        // 3. Dấu ngoặc kép trong ghi chú phải được nhân đôi và xuống dòng được làm phẳng
-        assertTrue("Dấu ngoặc kép phải được nhân đôi", csv.contains("\"\"ngoặc kép\"\""))
-        assertFalse("Không được có xuống dòng thô phá vỡ dòng CSV trong ô", csv.contains("có dấu \"\"ngoặc kép\"\" và\nxuống dòng"))
+        // Đặt mốc thời gian cũ hơn 25 giờ: cleanOldReports phải dọn dẹp
+        exportedFile.setLastModified(System.currentTimeMillis() - 25 * 60 * 60 * 1000L)
+        com.hiepnguyen.tripfinance.domain.export.PdfReportExporter.cleanOldReports(context)
+        assertFalse("Tệp cũ hơn 24 giờ phải được cleanOldReports tự động xóa", exportedFile.exists())
     }
+
 
     @Test
     fun `test database trigger and repository block expense insertions on settled trip`(): Unit = runBlocking {
@@ -1719,6 +1788,165 @@ class ExampleRobolectricTest {
         assertEquals(settledTimestamp, tripAfterStreaming.settledAt)
 
         testBackupFile.delete()
+    }
+
+    @Test
+    fun `test DAO lockSettlementWithOptimisticLock and reopenSettlementWithOptimisticLock enforce version check`(): Unit = runBlocking {
+        val trip = TripEntity(
+            id = "trip-opt-dao",
+            title = "Đoàn Test Khóa Lạc Quan DAO",
+            description = "Test DAO lock queries",
+            joinCode = "DAO-OPT-01",
+            startDate = 1000L,
+            endDate = 2000L,
+            isSettled = false,
+            version = 1L
+        )
+        db.tripDao().insertTrip(trip)
+
+        val settledAtTime = 1750000000000L
+
+        // 1. Khóa sổ với expectedVersion = 1 đúng -> trả về 1 (thành công)
+        val lockRows = db.tripDao().lockSettlementWithOptimisticLock(
+            tripId = "trip-opt-dao",
+            expectedVersion = 1L,
+            settledAt = settledAtTime
+        )
+        assertEquals(1, lockRows)
+
+        val afterLock = db.tripDao().getTripByIdOnce("trip-opt-dao")!!
+        assertTrue(afterLock.isSettled)
+        assertEquals(settledAtTime, afterLock.settledAt)
+        assertEquals("Version phải được tăng lên 2 sau khi khóa sổ", 2L, afterLock.version)
+
+        // 2. Thao tác đồng thời với stale version 1 -> Trả về 0 (bị chặn)
+        val staleLockRows = db.tripDao().lockSettlementWithOptimisticLock(
+            tripId = "trip-opt-dao",
+            expectedVersion = 1L,
+            settledAt = settledAtTime + 1000L
+        )
+        assertEquals(0, staleLockRows)
+
+        // 3. Thao tác khóa lại khi đã isSettled = 1 (kể cả đúng version 2) -> Trả về 0 (isSettled = 0 điều kiện không thỏa mãn)
+        val repeatLockRows = db.tripDao().lockSettlementWithOptimisticLock(
+            tripId = "trip-opt-dao",
+            expectedVersion = 2L,
+            settledAt = settledAtTime + 2000L
+        )
+        assertEquals(0, repeatLockRows)
+
+        // 4. Mở khóa sổ với expectedVersion = 2 đúng -> trả về 1 (thành công)
+        val reopenRows = db.tripDao().reopenSettlementWithOptimisticLock(
+            tripId = "trip-opt-dao",
+            expectedVersion = 2L
+        )
+        assertEquals(1, reopenRows)
+
+        val afterReopen = db.tripDao().getTripByIdOnce("trip-opt-dao")!!
+        assertFalse(afterReopen.isSettled)
+        assertNull(afterReopen.settledAt)
+        assertEquals("Version phải được tăng lên 3 sau khi mở sổ", 3L, afterReopen.version)
+
+        // 5. Thao tác mở lại với stale version 2 -> Trả về 0
+        val staleReopenRows = db.tripDao().reopenSettlementWithOptimisticLock(
+            tripId = "trip-opt-dao",
+            expectedVersion = 2L
+        )
+        assertEquals(0, staleReopenRows)
+    }
+
+    @Test
+    fun `test Database triggers block tampering with funds members rates and splits when settled`(): Unit = runBlocking {
+        val tripId = "trip-triggers-comprehensive"
+        // 1. Tạo chuyến đi ban đầu chưa khóa sổ để thêm thành viên hợp lệ
+        val initialTrip = TripEntity(
+            id = tripId,
+            title = "Đoàn Niêm Phong Toàn Diện",
+            description = "Test all lock triggers",
+            joinCode = "ALL-LOCK-01",
+            startDate = 1000L,
+            endDate = 2000L,
+            isSettled = false
+        )
+        db.tripDao().insertTrip(initialTrip)
+
+        val existingMember = TripMemberEntity(
+            id = "mem-1",
+            tripId = tripId,
+            userId = "user-1",
+            name = "Thành viên ban đầu",
+            role = "MEMBER"
+        )
+        db.tripMemberDao().insertMember(existingMember)
+
+        // 2. Khóa sổ chuyến đi
+        db.tripDao().updateTrip(initialTrip.copy(isSettled = true, settledAt = 3000L))
+
+        // 3. Trigger trg_prevent_fund_insert_when_settled
+        val fund = FundContributionEntity(
+            id = UUID.randomUUID().toString(),
+            tripId = tripId,
+            memberId = "mem-1",
+            amount = 100000L,
+            currency = "VND",
+            exchangeRate = 1.0,
+            convertedAmount = 100000L,
+            timestamp = 1500L,
+            recordedByMemberId = "mem-1"
+        )
+        val fundEx = assertThrows(android.database.sqlite.SQLiteConstraintException::class.java) {
+            runBlocking { db.fundDao().insertFundContribution(fund) }
+        }
+        assertTrue("Trigger nộp quỹ phải trả về lỗi SETTLEMENT LOCKED", fundEx.message?.contains("SETTLEMENT LOCKED") == true)
+
+        // 4. Trigger trg_prevent_member_insert_when_settled
+        val newMember = TripMemberEntity(
+            id = "mem-settled-new",
+            tripId = tripId,
+            userId = "user-new",
+            name = "Thành viên mới",
+            role = "MEMBER"
+        )
+        val memberEx = assertThrows(android.database.sqlite.SQLiteConstraintException::class.java) {
+            runBlocking { db.tripMemberDao().insertMember(newMember) }
+        }
+        assertTrue("Trigger thêm thành viên phải trả về lỗi SETTLEMENT LOCKED", memberEx.message?.contains("SETTLEMENT LOCKED") == true)
+
+        // 5. Trigger trg_prevent_rate_insert_when_settled
+        val rate = ExchangeRateEntity(
+            id = UUID.randomUUID().toString(),
+            tripId = tripId,
+            currencyCode = "EUR",
+            rateToBase = 27000.0,
+            updatedAt = 1000L
+        )
+        val rateEx = assertThrows(android.database.sqlite.SQLiteConstraintException::class.java) {
+            runBlocking { db.exchangeRateDao().insertExchangeRate(rate) }
+        }
+        assertTrue("Trigger thêm tỷ giá phải trả về lỗi SETTLEMENT LOCKED", rateEx.message?.contains("SETTLEMENT LOCKED") == true)
+    }
+
+    @Test
+    fun `test BackupCryptoUtils default encryption uses 600_000 iterations and verifies roundtrip`() {
+        val sampleJson = """{"test":"payload","amount":500000}"""
+        val password = "StrongPassword123"
+
+        // 1. Gọi encryptBackup không truyền iterations -> mặc định phải là OWASP_RECOMMENDED_ITERATIONS (600.000)
+        val encryptedJson = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.encryptBackup(sampleJson, password)
+        val root = org.json.JSONObject(encryptedJson)
+        assertEquals("Số vòng lặp mặc định trong JSON phải là 600.000", 600_000, root.getInt("iterations"))
+        assertEquals("AES-256-GCM", root.getString("algorithm"))
+        assertEquals("PBKDF2WithHmacSHA256", root.getString("kdf"))
+        assertTrue(root.getBoolean("encrypted"))
+
+        // 2. Giải mã bằng decryptBackup với đúng mật khẩu -> dữ liệu khớp hoàn toàn
+        val decryptResult = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.decryptBackup(encryptedJson, password)
+        assertTrue(decryptResult.isSuccess)
+        assertEquals(sampleJson, decryptResult.getOrThrow())
+
+        // 3. Giải mã sai mật khẩu -> phải trả về Result.failure
+        val wrongResult = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.decryptBackup(encryptedJson, "WrongPassword999")
+        assertTrue(wrongResult.isFailure)
     }
 }
 

@@ -17,8 +17,7 @@
 
 - ⚡ **Thuật toán quyết toán thông minh & phi trạng thái (Stateless Settlement Engine):**
   - Tối ưu hóa số lượng giao dịch chuyển khoản giữa các thành viên đoàn theo nguyên tắc cân bằng nợ trực tiếp hoặc hoàn tiền qua quỹ chung.
-  - Dung sai đối soát bằng không (Zero Discrepancy Tolerance) – chính xác đến từng 1 đồng VND.
-  - Tự động sinh mã chuyển khoản VietQR chuẩn Napas với ghi chú cú pháp rõ ràng.
+  - Kế hoạch bù trừ công nợ rõ ràng giữa các thành viên đoàn.
 
 - 📊 **Theo dõi & Phân bổ chi phí linh hoạt:**
   - Hỗ trợ chia đều (Equal Split) và chia theo tỷ lệ phần trăm (Ratio Split) với cơ chế phân bổ phần dư thông minh.

@@ -1,6 +1,7 @@
 package com.hiepnguyen.tripfinance.data.security
 
 import android.content.Context
+import androidx.annotation.VisibleForTesting
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -258,8 +259,11 @@ object DatabaseKeyManager : KeyProvider {
 
     @Volatile
     var keyProvider: KeyProvider = AndroidKeyStoreKeyProvider()
+        @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+        internal set
 
-    fun resetKeyProvider() {
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    internal fun resetKeyProvider() {
         keyProvider = AndroidKeyStoreKeyProvider()
     }
 

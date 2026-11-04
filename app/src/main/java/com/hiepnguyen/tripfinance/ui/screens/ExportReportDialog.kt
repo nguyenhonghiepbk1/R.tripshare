@@ -46,6 +46,8 @@ fun ExportReportDialog(
     uiState: UiState,
     isExportingPdf: Boolean = false,
     onExportPdf: ((Context) -> Unit)? = null,
+    isExportingXlsx: Boolean = false,
+    onExportXlsx: ((Context) -> Unit)? = null,
     onDismiss: () -> Unit
 ) {
     BackHandler { onDismiss() }
@@ -53,36 +55,23 @@ fun ExportReportDialog(
     val clipboardManager = LocalClipboardManager.current
     val lang = LocalAppLanguage.current
     var selectedReportType by remember { mutableStateOf(ReportType.FULL_SETTLEMENT) }
-    var exportFormat by remember { mutableStateOf("PDF") } // PDF, TEXT, CSV
+    var exportFormat by remember { mutableStateOf("PDF") } // PDF, TEXT, XLSX
     var copiedNotice by remember { mutableStateOf<String?>(null) }
     var reportTypeDropdownExpanded by remember { mutableStateOf(false) }
 
-    val reportText = remember(selectedReportType, exportFormat, uiState) {
-        if (exportFormat == "CSV") {
-            ReportGenerator.generateCsvReport(
-                trip = uiState.currentTrip,
-                members = uiState.members,
-                summary = uiState.financialSummary,
-                statuses = uiState.memberStatuses,
-                settlementTransfers = uiState.settlementTransfers,
-                expenses = uiState.expenses,
-                funds = uiState.fundContributions,
-                splits = uiState.allSplits
-            )
-        } else {
-            ReportGenerator.generateTextReport(
-                trip = uiState.currentTrip,
-                members = uiState.members,
-                financialSummary = uiState.financialSummary,
-                memberStatuses = uiState.memberStatuses,
-                settlementTransfers = uiState.settlementTransfers,
-                expenses = uiState.expenses,
-                fundContributions = uiState.fundContributions,
-                splits = uiState.allSplits,
-                reportType = selectedReportType,
-                creatorName = uiState.currentMember?.name ?: if (lang == AppLanguage.VI) "Thành viên" else "Member"
-            )
-        }
+    val reportText = remember(selectedReportType, uiState) {
+        ReportGenerator.generateTextReport(
+            trip = uiState.currentTrip,
+            members = uiState.members,
+            financialSummary = uiState.financialSummary,
+            memberStatuses = uiState.memberStatuses,
+            settlementTransfers = uiState.settlementTransfers,
+            expenses = uiState.expenses,
+            fundContributions = uiState.fundContributions,
+            splits = uiState.allSplits,
+            reportType = selectedReportType,
+            creatorName = uiState.currentMember?.name ?: if (lang == AppLanguage.VI) "Thành viên" else "Member"
+        )
     }
 
     AlertDialog(
@@ -119,7 +108,7 @@ fun ExportReportDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Format Selector Chips (PDF, Văn bản, CSV)
+                // Format Selector Chips (PDF, Văn bản, Excel)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -157,24 +146,24 @@ fun ExportReportDialog(
                         modifier = Modifier.weight(0.9f).testTag("format_text_chip")
                     )
                     FilterChip(
-                        selected = exportFormat == "CSV",
-                        onClick = { exportFormat = "CSV" },
+                        selected = exportFormat == "XLSX",
+                        onClick = { exportFormat = "XLSX" },
                         label = {
                             Text(
-                                "Excel/CSV",
+                                "Excel (.xlsx)",
                                 fontSize = 11.sp,
                                 fontFamily = AppFontFamily,
                                 fontWeight = FontWeight.SemiBold
                             )
                         },
                         leadingIcon = {
-                            Icon(Icons.Filled.TableView, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.TableView, contentDescription = null, tint = Color(0xFF059669), modifier = Modifier.size(16.dp))
                         },
-                        modifier = Modifier.weight(0.95f).testTag("format_csv_chip")
+                        modifier = Modifier.weight(1f).testTag("format_xlsx_chip")
                     )
                 }
 
-                // If in PDF mode, show banner explaining PDF structure with Bank accounts included
+                // If in PDF mode, show banner explaining PDF structure
                 if (exportFormat == "PDF") {
                     Surface(
                         shape = RoundedCornerShape(8.dp),
@@ -189,9 +178,34 @@ fun ExportReportDialog(
                             Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Báo cáo PDF chuẩn A4 đầy đủ: Tổng quan thu chi, Bảng quyết toán & số dư từng người, Kế hoạch bù trừ công nợ và BẢN KÊ CHI TIẾT CÁC KHOẢN CHI TIÊU & THU QUỸ các thành viên.",
+                                text = "Báo cáo PDF chuẩn A4 đầy đủ: Tổng quan thu chi, Bảng quyết toán & số dư từng người, Kế hoạch bù trừ công nợ và Bản kê chi tiết các khoản chi tiêu & thu quỹ các thành viên.",
                                 fontSize = 11.sp,
                                 color = Color(0xFF1E40AF),
+                                lineHeight = 15.sp,
+                                fontFamily = AppFontFamily
+                            )
+                        }
+                    }
+                }
+
+                // If in XLSX mode, show banner explaining the 5 Excel sheets
+                if (exportFormat == "XLSX") {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = Color(0xFFECFDF5),
+                        border = BorderStroke(1.dp, Color(0xFFA7F3D0)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF059669), modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Báo cáo Excel (.xlsx) gồm 5 sheet: 'Tổng quan', 'Chi tiêu' (ngày, danh mục, người trả, tiền gốc, tiền tệ, tỷ giá, quy đổi), 'Theo thành viên' (đã chi, phải chịu, số dư), 'Quỹ chung' và 'Gợi ý chuyển khoản'. Mở trực tiếp trên Microsoft Excel và Google Sheets.",
+                                fontSize = 11.sp,
+                                color = Color(0xFF065F46),
                                 lineHeight = 15.sp,
                                 fontFamily = AppFontFamily
                             )
@@ -404,6 +418,44 @@ fun ExportReportDialog(
                             )
                         }
                     }
+                } else if (exportFormat == "XLSX") {
+                    // Xuất & Chia sẻ file Excel (.xlsx)
+                    Button(
+                        onClick = {
+                            if (onExportXlsx != null) {
+                                onExportXlsx(context)
+                            }
+                        },
+                        enabled = !isExportingXlsx,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF059669)),
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        modifier = Modifier.testTag("export_xlsx_button")
+                    ) {
+                        if (isExportingXlsx) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                if (lang == AppLanguage.VI) "Đang tạo Excel..." else "Creating Excel...",
+                                fontSize = 12.sp,
+                                fontFamily = AppFontFamily,
+                                fontWeight = FontWeight.Bold
+                            )
+                        } else {
+                            Icon(Icons.Filled.TableView, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                if (lang == AppLanguage.VI) "Xuất & Gửi File Excel" else "Export & Share Excel",
+                                fontSize = 12.sp,
+                                fontFamily = AppFontFamily,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 } else {
                     // Copy Button
                     OutlinedButton(
@@ -423,7 +475,7 @@ fun ExportReportDialog(
                     // Share Button
                     Button(
                         onClick = {
-                            shareReport(context, reportText, uiState.currentTrip?.title ?: "Báo cáo đoàn", exportFormat)
+                            shareReport(context, reportText, uiState.currentTrip?.title ?: "Báo cáo đoàn")
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = IndigoSecondary),
                         shape = RoundedCornerShape(8.dp),
@@ -445,12 +497,12 @@ fun ExportReportDialog(
     )
 }
 
-private fun shareReport(context: Context, reportContent: String, tripTitle: String, format: String) {
+private fun shareReport(context: Context, reportContent: String, tripTitle: String) {
     val sendIntent = Intent().apply {
         action = Intent.ACTION_SEND
         putExtra(Intent.EXTRA_SUBJECT, "Báo cáo quyết toán tài chính - $tripTitle")
         putExtra(Intent.EXTRA_TEXT, reportContent)
-        type = if (format == "CSV") "text/comma-separated-values" else "text/plain"
+        type = "text/plain"
     }
     val shareIntent = Intent.createChooser(sendIntent, "Chia sẻ báo cáo tài chính qua...")
     context.startActivity(shareIntent)

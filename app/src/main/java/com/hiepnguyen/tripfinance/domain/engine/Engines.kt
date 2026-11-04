@@ -196,9 +196,9 @@ object SettlementEngine {
                 name = fundMemberName,
                 role = "TREASURER",
                 isActive = true,
-                bankName = fundHolder?.bankName,
-                bankAccount = fundHolder?.bankAccount,
-                bankAccountHolder = fundHolder?.bankAccountHolder ?: fundHolder?.name?.uppercase(),
+                bankName = null,
+                bankAccount = null,
+                bankAccountHolder = null,
                 joinedAt = 0L
             )
             balanceEntries.add(BalanceEntry(fundMember, -totalMemberBalance))
@@ -240,11 +240,7 @@ object SettlementEngine {
             val settleAmount = minOf(debtor.balance, creditor.balance)
 
             if (settleAmount > 0L) {
-                val transferNote = when {
-                    debtor.member.id == "FUND_ORGANIZATION" -> "[$tripJoinCode] Trich Quy doan quyet toan cho ${creditor.member.name}"
-                    creditor.member.id == "FUND_ORGANIZATION" -> "[$tripJoinCode] ${debtor.member.name} nop bu thieu hut Quy doan"
-                    else -> "[$tripJoinCode] ${debtor.member.name} quyet toan cho ${creditor.member.name}"
-                }
+                val transferNote = "${debtor.member.name} chuyển cho ${creditor.member.name}"
 
                 transfers.add(
                     SettlementTransfer(

@@ -652,9 +652,6 @@ class TripFinanceRepository(private val db: AppDatabase) {
                             put("totalOwed", st.totalOwed)
                             put("balance", st.balance)
                             put("status", st.status.name)
-                            put("bankAccount", st.member.bankAccount ?: JSONObject.NULL)
-                            put("bankName", st.member.bankName ?: JSONObject.NULL)
-                            put("bankAccountHolder", st.member.bankAccountHolder ?: JSONObject.NULL)
                         })
                     }
                 })
@@ -666,9 +663,6 @@ class TripFinanceRepository(private val db: AppDatabase) {
                             put("toMemberId", tr.toMember.id)
                             put("toMemberName", tr.toMember.name)
                             put("amount", tr.amount)
-                            put("bankName", tr.toMember.bankName ?: JSONObject.NULL)
-                            put("bankAccount", tr.toMember.bankAccount ?: JSONObject.NULL)
-                            put("bankAccountHolder", tr.toMember.bankAccountHolder ?: JSONObject.NULL)
                             put("transferNote", tr.transferNote)
                         })
                     }

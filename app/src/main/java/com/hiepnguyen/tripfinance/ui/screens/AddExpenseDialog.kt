@@ -869,7 +869,7 @@ fun AddExpenseDialog(
                                                         "ADMIN" -> "Trưởng đoàn"
                                                         "TREASURER" -> "Thủ quỹ đoàn"
                                                         else -> "Thành viên"
-                                                    } + (selectedMember?.bankAccount?.let { " • STK: $it" } ?: ""),
+                                                    },
                                                     fontSize = 11.sp,
                                                     color = Color(0xFF64748B)
                                                 )

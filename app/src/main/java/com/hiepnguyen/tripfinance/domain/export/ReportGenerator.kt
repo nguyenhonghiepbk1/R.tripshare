@@ -10,6 +10,7 @@ import com.hiepnguyen.tripfinance.domain.model.MemberFinancialStatus
 import com.hiepnguyen.tripfinance.domain.model.SettlementTransfer
 import com.hiepnguyen.tripfinance.domain.model.sumOfSafe
 import com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -122,14 +123,13 @@ object ReportGenerator {
             appendLine("  (Thuật toán tham lam đã rút gọn còn ${transfers.size} giao dịch bù trừ tối thiểu):")
             appendLine()
             transfers.forEachIndexed { idx, tr ->
+                val fromName = if (tr.fromMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else tr.fromMember.name
+                val toName = if (tr.toMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else tr.toMember.name
                 appendLine("  [Giao dịch #${idx + 1}]")
-                appendLine("  • Người chuyển (Nộp) : ${tr.fromMember.name}")
-                appendLine("  • Người nhận tiền    : ${tr.toMember.name}")
+                appendLine("  • Người chuyển (Nộp) : $fromName")
+                appendLine("  • Người nhận tiền    : $toName")
                 appendLine("  • Số tiền            : ${NumberFormatUtils.formatVnd(tr.amount)}")
-                appendLine("  • Ngân hàng          : ${tr.toMember.bankName ?: "Chưa cập nhật"}")
-                appendLine("  • Số tài khoản       : ${tr.toMember.bankAccount ?: "Chưa cập nhật"}")
-                appendLine("  • Chủ tài khoản      : ${tr.toMember.bankAccountHolder ?: tr.toMember.name.uppercase()}")
-                appendLine("  • Nội dung CK        : ${tr.transferNote}")
+                appendLine("  • Nội dung gợi ý     : ${tr.transferNote}")
                 appendLine()
             }
         }
@@ -149,28 +149,7 @@ object ReportGenerator {
             appendLine(String.format("  • %-20s: %15s (%4.1f%%) - %d khoản", catMap[cat] ?: cat, NumberFormatUtils.formatVnd(sum), pct, list.size))
         }
         appendLine()
-        appendLine("V. DANH SÁCH SỐ TÀI KHOẢN NGÂN HÀNG CÁC THÀNH VIÊN TRONG ĐOÀN")
-        appendLine(String.format("%-4s | %-18s | %-12s | %-12s | %-16s | %-18s", "STT", "Họ và tên", "Vai trò", "Ngân hàng", "Số tài khoản", "Chủ tài khoản"))
-        appendLine("--------------------------------------------------------------------------------")
-        members.forEachIndexed { i, m ->
-            val roleName = when (m.role) {
-                "ADMIN" -> "Trưởng đoàn"
-                "TREASURER" -> "Thủ quỹ"
-                "MEMBER" -> "Thành viên"
-                else -> "Người xem"
-            }
-            appendLine(
-                String.format(
-                    "%-4d | %-18s | %-12s | %-12s | %-16s | %-18s",
-                    i + 1,
-                    m.name.take(18),
-                    roleName,
-                    (m.bankName ?: "Chưa có").take(12),
-                    (m.bankAccount ?: "Chưa có").take(16),
-                    (m.bankAccountHolder ?: m.name.uppercase()).take(18)
-                )
-            )
-        }
+        appendLine("Ghi chú: Đây là gợi ý bù trừ công nợ, ứng dụng không thực hiện giao dịch chuyển khoản.")
         appendLine()
         appendLine("================================================================================")
         appendLine("                                   XÁC NHẬN")
@@ -277,18 +256,17 @@ object ReportGenerator {
             appendLine("Tất cả thành viên đã hoàn thành quyết toán cân bằng 100%. Không cần bù trừ thêm.")
         } else {
             transfers.forEachIndexed { i, t ->
+                val fromName = if (t.fromMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else t.fromMember.name
+                val toName = if (t.toMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else t.toMember.name
                 appendLine("--------------------------------------------------------------------------------")
                 appendLine("KHOẢN BÙ TRỪ #${i + 1}:")
-                appendLine("  • Người gửi (Cần nộp) : ${t.fromMember.name}")
-                appendLine("  • Người nhận (Hưởng)  : ${t.toMember.name}")
+                appendLine("  • Người gửi (Cần nộp) : $fromName")
+                appendLine("  • Người nhận (Hưởng)  : $toName")
                 appendLine("  • Số tiền             : ${NumberFormatUtils.formatVnd(t.amount)}")
-                appendLine("  • Ngân hàng           : ${t.toMember.bankName ?: "Chưa có"}")
-                appendLine("  • Số tài khoản        : ${t.toMember.bankAccount ?: "Chưa có"}")
-                appendLine("  • Tên chủ tài khoản   : ${t.toMember.bankAccountHolder ?: t.toMember.name.uppercase()}")
-                appendLine("  • Nội dung thanh toán : ${t.transferNote}")
+                appendLine("  • Nội dung gợi ý      : ${t.transferNote}")
             }
             appendLine("--------------------------------------------------------------------------------")
-            appendLine("Lưu ý: Quý thành viên vui lòng đối soát chính xác nội dung để chốt sổ tự động.")
+            appendLine("Lưu ý: Đây là gợi ý bù trừ công nợ, ứng dụng không thực hiện giao dịch chuyển khoản.")
         }
     }
 
@@ -321,49 +299,22 @@ object ReportGenerator {
             } else {
                 appendLine("  ==> KẾT LUẬN: ĐÃ CÂN BẰNG TÀI CHÍNH")
             }
-            appendLine("  • Tài khoản nhận tiền: ${st.member.bankAccount ?: "Chưa có"} (${st.member.bankName ?: "Chưa có"})")
         }
         appendLine("================================================================================")
     }
 
     /**
-     * Vô hiệu hóa tấn công CSV Injection (Formula Injection) và thoát ký tự theo chuẩn RFC 4180:
-     * 1. Thay thế dấu xuống dòng trong ô để bảo toàn tính toàn vẹn của từng hàng dữ liệu.
-     * 2. Nếu ô bắt đầu bằng các ký tự công thức spreadsheet (=, +, -, @, tab, cr, pipe),
-     *    thêm tiền tố dấu nháy đơn (') theo chuẩn bảo mật OWASP để Excel / Google Sheets xử lý như văn bản thuần.
-     * 3. Thoát dấu ngoặc kép bằng cách nhân đôi (" -> "") theo chuẩn RFC 4180.
-     * 4. Đóng gói toàn bộ ô trong cặp dấu ngoặc kép ("...").
+     * Xuất báo cáo tài chính đoàn dưới định dạng Microsoft Excel (.xlsx) chuẩn OpenXML gồm 5 sheet:
+     * 1. "Tổng quan": Thông tin chung, số liệu tổng hợp thu - chi, quỹ đoàn và tình trạng đối soát.
+     * 2. "Chi tiêu": Toàn bộ các khoản chi tiêu (ngày, danh mục, người trả, tiền gốc, tiền tệ, tỷ giá, quy đổi VND, kiểu phân bổ, ghi chú).
+     * 3. "Theo thành viên": Bảng số dư từng cá nhân (đã chi, nộp quỹ, tổng chi, phải chịu, số dư, trạng thái).
+     *    TUYỆT ĐỐI KHÔNG chứa thông tin ngân hàng, số tài khoản hay chủ tài khoản.
+     * 4. "Quỹ chung": Nhật ký các đợt nộp quỹ của các thành viên.
+     * 5. "Gợi ý chuyển khoản": Danh sách gợi ý bù trừ công nợ tối ưu (chỉ gồm người trả, người nhận, số tiền, nội dung gợi ý).
+     *    TUYỆT ĐỐI KHÔNG chứa cột ngân hàng, số tài khoản, chủ tài khoản hay mã QR.
      */
-    fun escapeCsv(value: Any?): String {
-        if (value == null) return "\"\""
-        var str = value.toString()
-            .replace("\r\n", " ")
-            .replace("\r", " ")
-            .replace("\n", " ")
-
-        val trimmed = str.trimStart()
-        val startsWithFormulaChar = trimmed.isNotEmpty() && (
-            trimmed.startsWith("=") ||
-            trimmed.startsWith("+") ||
-            trimmed.startsWith("-") ||
-            trimmed.startsWith("@") ||
-            trimmed.startsWith("\t") ||
-            trimmed.startsWith("|") ||
-            trimmed.startsWith("%")
-        )
-        if (startsWithFormulaChar && !str.startsWith("'")) {
-            str = "'$str"
-        }
-
-        val escaped = str.replace("\"", "\"\"")
-        return "\"$escaped\""
-    }
-
-    /**
-     * Generates a clean, UTF-8 CSV string with BOM (`\uFEFF`) to guarantee flawless Vietnamese
-     * rendering in Excel, Sheets, and all spreadsheet applications.
-     */
-    fun generateCsvReport(
+    fun generateXlsxReport(
+        outputStream: OutputStream,
         trip: TripEntity?,
         members: List<TripMemberEntity>,
         summary: FinancialSummary,
@@ -372,67 +323,183 @@ object ReportGenerator {
         expenses: List<ExpenseEntity>,
         funds: List<FundContributionEntity>,
         splits: List<ExpenseSplitEntity> = emptyList()
-    ): String = buildString {
-        // UTF-8 BOM prefix for Microsoft Excel Vietnamese compatibility
-        append('\uFEFF')
+    ) {
+        val now = Date()
+        val tripTitle = trip?.title ?: "ĐOÀN CÔNG TÁC / DU LỊCH"
+        val joinCode = trip?.joinCode ?: "---"
 
-        // Section 1: Trip Info
-        appendLine("BÁO CÁO TỔNG KẾT TÀI CHÍNH VÀ QUYẾT TOÁN ĐOÀN")
-        appendLine("Tên đoàn,${escapeCsv(trip?.title ?: "")}")
-        appendLine("Mã đoàn,${escapeCsv(trip?.joinCode ?: "")}")
-        appendLine("Ngày xuất báo cáo,${escapeCsv(dateFormat.format(Date()))}")
-        appendLine("Tổng chi tiêu đoàn (VND),${summary.totalExpenses}")
-        appendLine("Chi hộ cá nhân (VND),${summary.personalPaidExpenses}")
-        appendLine("Chi từ quỹ chung (VND),${summary.fundPaidExpenses}")
-        appendLine("Tổng quỹ đã thu (VND),${summary.totalFundCollected}")
-        appendLine("Số dư quỹ còn lại (VND),${summary.remainingFund}")
-        appendLine()
-
-        // Section 2: Member Balance Table
-        appendLine("BẢNG TỔNG HỢP SỐ DƯ TỪNG THÀNH VIÊN")
-        appendLine("STT,Họ và tên,Vai trò,Chi hộ cá nhân (VND),Nộp quỹ (VND),Tổng đã bỏ ra (VND),Phải chịu (VND),Số dư (VND),Trạng thái,Số tài khoản,Ngân hàng,Chủ tài khoản")
-        statuses.forEachIndexed { i, s ->
-            val statusText = when {
-                s.balance > 0 -> "Nhận lại"
-                s.balance < 0 -> "Cần nộp"
-                else -> "Cân bằng"
-            }
-            appendLine("${i + 1},${escapeCsv(s.member.name)},${escapeCsv(s.member.role)},${s.outOfPocketPaid},${s.fundContributed},${s.totalPaid},${s.totalOwed},${s.balance},${escapeCsv(statusText)},${escapeCsv(s.member.bankAccount ?: "")},${escapeCsv(s.member.bankName ?: "")},${escapeCsv(s.member.bankAccountHolder ?: "")}")
-        }
-        appendLine()
-
-        // Section 3: Transfers
-        appendLine("KẾ HOẠCH BÙ TRỪ CÔNG NỢ QUYẾT TOÁN")
-        appendLine("STT,Người nộp bù,Người nhận,Số tiền (VND),Ngân hàng,Số tài khoản,Chủ tài khoản,Nội dung bù trừ")
-        settlementTransfers.forEachIndexed { i, t ->
-            appendLine("${i + 1},${escapeCsv(t.fromMember.name)},${escapeCsv(t.toMember.name)},${t.amount},${escapeCsv(t.toMember.bankName ?: "")},${escapeCsv(t.toMember.bankAccount ?: "")},${escapeCsv(t.toMember.bankAccountHolder ?: "")},${escapeCsv(t.transferNote)}")
-        }
-        appendLine()
-
-        // Section 4: Expense Ledger
-        appendLine("DANH SÁCH CHI TIÊU CHI TIẾT")
-        appendLine("STT,Thời gian,Tên khoản chi,Danh mục,Nguồn thanh toán,Số tiền gốc,Ngoại tệ,Tỷ giá,Quy đổi VND,Kiểu phân bổ,Danh sách người cùng chịu chi,Ghi chú")
-        expenses.sortedBy { it.timestamp }.forEachIndexed { i, e ->
-            val payer = if (e.payerType == "FUND") "Quỹ chung" else (members.find { it.id == e.payerMemberId }?.name ?: "")
-            val expSplits = splits.filter { it.expenseId == e.id }
-            val participantsDetail = if (expSplits.isNotEmpty()) {
-                expSplits.joinToString("; ") { sp ->
-                    val memName = members.find { it.id == sp.memberId }?.name ?: "TV"
-                    "$memName: ${sp.amount}"
+        XlsxWriter(outputStream).use { writer ->
+            // ==========================================
+            // Sheet 1: "Tổng quan"
+            // ==========================================
+            writer.sheet("Tổng quan") {
+                headerRow("Chỉ tiêu", "Giá trị", "Ghi chú")
+                row("Tên chuyến đi / đoàn", tripTitle, "")
+                row("Mã đoàn", joinCode, "")
+                row("Ngày xuất báo cáo", dateFormat.format(now), "")
+                row {
+                    cell("Tổng chi tiêu đoàn (VND)")
+                    currencyCell(summary.totalExpenses)
+                    cell("Bao gồm tiền thành viên tự chi và tiền quỹ")
                 }
-            } else {
-                ""
+                row {
+                    cell("Thành viên tự chi hộ (VND)")
+                    currencyCell(summary.personalPaidExpenses)
+                    cell("Các khoản cá nhân bỏ tiền túi chi hộ")
+                }
+                row {
+                    cell("Chi từ nguồn Quỹ chung (VND)")
+                    currencyCell(summary.fundPaidExpenses)
+                    cell("Các khoản chi xuất trực tiếp từ quỹ đoàn")
+                }
+                row {
+                    cell("Tổng tiền đã thu vào Quỹ (VND)")
+                    currencyCell(summary.totalFundCollected)
+                    cell("Tổng đóng góp từ các thành viên")
+                }
+                row {
+                    cell("Số dư Quỹ chung còn lại (VND)")
+                    currencyCell(summary.remainingFund)
+                    cell("Tiền quỹ còn tồn sau khi đã chi")
+                }
+                row {
+                    cell("Tình trạng đối soát")
+                    cell(if (summary.isBalanced) "CÂN BẰNG (0 đ)" else "CẢNH BÁO LỆCH: " + NumberFormatUtils.formatVnd(summary.balanceDiscrepancy))
+                    cell(if (summary.isBalanced) "Hợp lệ" else "Cần kiểm tra lại")
+                }
+                row {
+                    cell("Tổng số thành viên")
+                    cell(members.size)
+                    cell("người")
+                }
             }
-            appendLine("${i + 1},${escapeCsv(dateFormat.format(Date(e.timestamp)))},${escapeCsv(e.title)},${escapeCsv(e.category)},${escapeCsv(payer)},${e.totalAmount},${escapeCsv(e.currency)},${e.exchangeRate},${e.convertedTotalAmount},${escapeCsv(e.splitType)},${escapeCsv(participantsDetail)},${escapeCsv(e.note)}")
-        }
-        appendLine()
 
-        // Section 5: Fund Ledger
-        appendLine("LỊCH SỬ NỘP QUỸ ĐOÀN")
-        appendLine("STT,Thời gian,Người nộp,Số tiền gốc,Ngoại tệ,Tỷ giá,Quy đổi VND,Ghi chú")
-        funds.sortedBy { it.timestamp }.forEachIndexed { i, f ->
-            val contributor = members.find { it.id == f.memberId }?.name ?: ""
-            appendLine("${i + 1},${escapeCsv(dateFormat.format(Date(f.timestamp)))},${escapeCsv(contributor)},${f.amount},${escapeCsv(f.currency)},${f.exchangeRate},${f.convertedAmount},${escapeCsv(f.note)}")
+            // ==========================================
+            // Sheet 2: "Chi tiêu"
+            // ==========================================
+            writer.sheet("Chi tiêu") {
+                headerRow(
+                    "STT",
+                    "Ngày",
+                    "Tên khoản chi",
+                    "Danh mục",
+                    "Người trả",
+                    "Tiền gốc",
+                    "Tiền tệ",
+                    "Tỷ giá",
+                    "Quy đổi (VND)",
+                    "Kiểu phân bổ",
+                    "Ghi chú"
+                )
+                expenses.sortedBy { it.timestamp }.forEachIndexed { i, e ->
+                    val payer = if (e.payerType == "FUND") "Quỹ chung" else (members.find { it.id == e.payerMemberId }?.name ?: "")
+                    row {
+                        cell(i + 1)
+                        cell(dateOnlyFormat.format(Date(e.timestamp)))
+                        cell(e.title)
+                        cell(e.category)
+                        cell(payer)
+                        if (e.currency == "VND") {
+                            currencyCell(e.totalAmount.toLong())
+                        } else {
+                            decimalCell(e.totalAmount)
+                        }
+                        cell(e.currency)
+                        cell(e.exchangeRate)
+                        currencyCell(e.convertedTotalAmount)
+                        cell(e.splitType)
+                        cell(e.note)
+                    }
+                }
+            }
+
+            // ==========================================
+            // Sheet 3: "Theo thành viên"
+            // ==========================================
+            writer.sheet("Theo thành viên") {
+                headerRow(
+                    "STT",
+                    "Họ và tên",
+                    "Vai trò",
+                    "Chi hộ cá nhân (VND)",
+                    "Nộp quỹ (VND)",
+                    "Tổng đã chi (VND)",
+                    "Phải chịu (VND)",
+                    "Số dư (VND)",
+                    "Trạng thái quyết toán"
+                )
+                statuses.forEachIndexed { i, s ->
+                    val statusText = when {
+                        s.balance > 0 -> "Được nhận lại"
+                        s.balance < 0 -> "Cần nộp thêm"
+                        else -> "Đã cân bằng"
+                    }
+                    row {
+                        cell(i + 1)
+                        cell(s.member.name)
+                        cell(s.member.role)
+                        currencyCell(s.outOfPocketPaid)
+                        currencyCell(s.fundContributed)
+                        currencyCell(s.totalPaid)
+                        currencyCell(s.totalOwed)
+                        currencyCell(s.balance)
+                        cell(statusText)
+                    }
+                }
+            }
+
+            // ==========================================
+            // Sheet 4: "Quỹ chung"
+            // ==========================================
+            writer.sheet("Quỹ chung") {
+                headerRow(
+                    "STT",
+                    "Thời gian",
+                    "Người nộp",
+                    "Số tiền gốc",
+                    "Tiền tệ",
+                    "Tỷ giá",
+                    "Quy đổi (VND)",
+                    "Ghi chú"
+                )
+                funds.sortedBy { it.timestamp }.forEachIndexed { i, f ->
+                    val contributor = members.find { it.id == f.memberId }?.name ?: ""
+                    row {
+                        cell(i + 1)
+                        cell(dateFormat.format(Date(f.timestamp)))
+                        cell(contributor)
+                        currencyCell(f.amount)
+                        cell(f.currency)
+                        cell(f.exchangeRate)
+                        currencyCell(f.convertedAmount)
+                        cell(f.note)
+                    }
+                }
+            }
+
+            // ==========================================
+            // Sheet 5: "Gợi ý chuyển khoản"
+            // ==========================================
+            writer.sheet("Gợi ý chuyển khoản") {
+                headerRow(
+                    "STT",
+                    "Người trả",
+                    "Người nhận",
+                    "Số tiền (VND)",
+                    "Nội dung gợi ý"
+                )
+                settlementTransfers.forEachIndexed { i, t ->
+                    val fromName = if (t.fromMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else t.fromMember.name
+                    val toName = if (t.toMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else t.toMember.name
+                    row {
+                        cell(i + 1)
+                        cell(fromName)
+                        cell(toName)
+                        currencyCell(t.amount)
+                        cell(t.transferNote)
+                    }
+                }
+            }
         }
     }
 }

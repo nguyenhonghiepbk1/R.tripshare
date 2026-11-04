@@ -26,8 +26,8 @@ Dự án **TripFinance** cam kết bảo vệ an toàn thông tin tài chính c�
 - **Động Cơ Gợi Ý Chi Tiêu Cục Bộ (`LocalSpendingAdvisor`):**
   - Mọi phân tích cơ cấu chi tiêu, số dư và sức khỏe quỹ đoàn được thực hiện 100% nội bộ bằng giải thuật đối soát cục bộ trên thiết bị (`LocalSpendingAdvisor.generateLocalInsight`).
   - Dữ liệu tài chính, thành viên, và các khoản chi tuyệt đối không bao giờ rời khỏi thiết bị.
-- **Bảo Vệ Số Tài Khoản Ngân Hàng:**
-  - Thông tin số tài khoản và ngân hàng chỉ dùng để tạo mã chuyển khoản VietQR nội bộ trên máy, hoàn toàn không được truyền đi hay chia sẻ.
+- **Bảo Vệ Dữ Liệu Riêng Tư:**
+  - Mọi thông tin tài chính cá nhân được bảo vệ nghiêm ngặt trong sandbox cục bộ của ứng dụng, hoàn toàn không được truyền đi hay chia sẻ ra bên ngoài.
 
 ---
 

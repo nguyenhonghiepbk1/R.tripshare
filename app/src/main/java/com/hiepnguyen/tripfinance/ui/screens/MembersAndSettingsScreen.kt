@@ -645,26 +645,12 @@ fun MembersAndSettingsScreen(
                     HorizontalDivider(color = Color(0xFFF1F5F9))
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Bank Account details & Action buttons (Edit & Delete for Admin)
+                    // Action buttons (Edit & Delete for Admin)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.End,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "${if (lang == AppLanguage.VI) "STK" else "Account"}: ${member.bankAccount ?: if (lang == AppLanguage.VI) "Chưa cập nhật" else "Not updated"} (${member.bankName ?: if (lang == AppLanguage.VI) "Chưa có" else "N/A"})",
-                                fontSize = 11.sp,
-                                color = Color(0xFF475569)
-                            )
-                            if (!member.bankAccountHolder.isNullOrBlank()) {
-                                Text(
-                                    text = "${if (lang == AppLanguage.VI) "Chủ TK" else "Holder"}: ${member.bankAccountHolder}",
-                                    fontSize = 10.sp,
-                                    color = Color(0xFF64748B)
-                                )
-                            }
-                        }
 
                         if (isAdmin) {
                             Row(
@@ -886,37 +872,6 @@ fun AddMemberDialog(
                         )
                     }
                 }
-
-                OutlinedTextField(
-                    value = bankName,
-                    onValueChange = { bankName = it },
-                    label = { Text(if (lang == AppLanguage.VI) "Tên Ngân hàng (VD: MBBank, VCB...)" else "Bank Name (e.g. MBBank, Chase...)") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = bankAccount,
-                    onValueChange = { bankAccount = it },
-                    label = { Text(if (lang == AppLanguage.VI) "Số tài khoản nhận tiền" else "Bank Account Number") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = holder,
-                    onValueChange = { holder = it },
-                    label = { Text(if (lang == AppLanguage.VI) "Chủ tài khoản (Không dấu)" else "Account Holder Name") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = {
-                        focusManager.clearFocus()
-                        keyboardController?.hide()
-                    }),
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         },
         confirmButton = {
@@ -924,7 +879,7 @@ fun AddMemberDialog(
                 onClick = {
                     focusManager.clearFocus()
                     keyboardController?.hide()
-                    onSave(name, role, bankName.takeIf { it.isNotBlank() }, bankAccount.takeIf { it.isNotBlank() }, holder.takeIf { it.isNotBlank() })
+                    onSave(name, role, null, null, null)
                 },
                 enabled = name.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
@@ -1224,37 +1179,6 @@ fun EditMemberDialog(
                         )
                     }
                 }
-
-                OutlinedTextField(
-                    value = bankName,
-                    onValueChange = { bankName = it },
-                    label = { Text(if (lang == AppLanguage.VI) "Tên Ngân hàng" else "Bank Name") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = bankAccount,
-                    onValueChange = { bankAccount = it },
-                    label = { Text(if (lang == AppLanguage.VI) "Số tài khoản nhận tiền" else "Account Number") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = holder,
-                    onValueChange = { holder = it },
-                    label = { Text(if (lang == AppLanguage.VI) "Chủ tài khoản (Không dấu)" else "Account Holder") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = {
-                        focusManager.clearFocus()
-                        keyboardController?.hide()
-                    }),
-                    modifier = Modifier.fillMaxWidth()
-                )
             }
         },
         confirmButton = {
@@ -1262,7 +1186,7 @@ fun EditMemberDialog(
                 onClick = {
                     focusManager.clearFocus()
                     keyboardController?.hide()
-                    onSave(name, role, bankName.takeIf { it.isNotBlank() }, bankAccount.takeIf { it.isNotBlank() }, holder.takeIf { it.isNotBlank() })
+                    onSave(name, role, null, null, null)
                 },
                 enabled = name.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),

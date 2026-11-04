@@ -103,7 +103,8 @@ class ExampleUnitTest {
         assertEquals("mem_a", transfer.fromMember.id)
         assertEquals("FUND_ORGANIZATION", transfer.toMember.id)
         assertEquals(500000L, transfer.amount)
-        assertTrue(transfer.transferNote.contains("nop bu thieu hut Quy doan"))
+        assertEquals("Thành viên A chuyển cho Quỹ đoàn (Thủ quỹ: Thủ quỹ)", transfer.transferNote)
+        assertFalse(transfer.transferNote.contains("TRIP1"))
     }
 
     @Test
@@ -288,40 +289,120 @@ class ExampleUnitTest {
     }
 
     @Test
-    fun `test escapeCsv protects against formula injection and escapes special characters`() {
-        // 1. null / empty
-        assertEquals("\"\"", com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv(null))
-        assertEquals("\"\"", com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv(""))
+    fun `test generateXlsxReport produces valid workbook with 5 sheets and zero bank details`() {
+        val hiep = createMember("member_hiep", "Nguyễn Hồng Hiệp", "ADMIN")
+        val mai = createMember("member_mai", "Trần Tuyết Mai", "TREASURER")
+        val trip = com.hiepnguyen.tripfinance.data.entity.TripEntity(
+            id = "trip_test",
+            title = "=HYPERLINK(\"http://evil.com\", \"Đoàn Đà Nẵng\")",
+            description = "Công tác",
+            joinCode = "DN2026",
+            startDate = 1000L,
+            endDate = 2000L
+        )
+        val expense = com.hiepnguyen.tripfinance.data.entity.ExpenseEntity(
+            id = "exp_1",
+            tripId = "trip_test",
+            title = "Ăn tối",
+            category = "FOOD",
+            payerType = "MEMBER",
+            payerMemberId = "member_hiep",
+            totalAmount = 500000.0,
+            currency = "VND",
+            exchangeRate = 1.0,
+            convertedTotalAmount = 500000L,
+            splitType = "EQUAL",
+            note = "Ăn hải sản",
+            timestamp = 1500L,
+            createdMemberId = "member_hiep"
+        )
+        val fund = com.hiepnguyen.tripfinance.data.entity.FundContributionEntity(
+            id = "fund_1",
+            tripId = "trip_test",
+            memberId = "member_mai",
+            amount = 1000000L,
+            currency = "VND",
+            exchangeRate = 1.0,
+            convertedAmount = 1000000L,
+            note = "Đợt 1",
+            timestamp = 1200L,
+            recordedByMemberId = "member_hiep"
+        )
+        val summary = com.hiepnguyen.tripfinance.domain.model.FinancialSummary(
+            totalExpenses = 500000L,
+            personalPaidExpenses = 500000L,
+            fundPaidExpenses = 0L,
+            totalFundCollected = 1000000L,
+            remainingFund = 1000000L,
+            isBalanced = true,
+            balanceDiscrepancy = 0L
+        )
+        val statusHiep = MemberFinancialStatus(hiep, 500000L, 500000L, 0L, 250000L, 250000L, BalanceStatus.RECEIVE)
+        val statusMai = MemberFinancialStatus(mai, 1000000L, 0L, 1000000L, 250000L, -250000L, BalanceStatus.PAY)
+        val transfer = com.hiepnguyen.tripfinance.domain.model.SettlementTransfer(
+            fromMember = mai,
+            toMember = hiep,
+            amount = 250000L,
+            transferNote = "Trần Tuyết Mai chuyển cho Nguyễn Hồng Hiệp"
+        )
 
-        // 2. Chữ thông thường
-        assertEquals("\"Hà Nội\"", com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv("Hà Nội"))
+        val baos = java.io.ByteArrayOutputStream()
+        com.hiepnguyen.tripfinance.domain.export.ReportGenerator.generateXlsxReport(
+            outputStream = baos,
+            trip = trip,
+            members = listOf(hiep, mai),
+            summary = summary,
+            statuses = listOf(statusHiep, statusMai),
+            settlementTransfers = listOf(transfer),
+            expenses = listOf(expense),
+            funds = listOf(fund)
+        )
 
-        // 3. Chứa dấu ngoặc kép: phải nhân đôi (" -> "")
-        assertEquals("\"Ăn \"\"buffet\"\" hải sản\"", com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv("Ăn \"buffet\" hải sản"))
+        val bytes = baos.toByteArray()
+        assertTrue("File XLSX phải có dung lượng lớn hơn 0", bytes.isNotEmpty())
 
-        // 4. Ký tự xuống dòng: phải được thay bằng dấu cách để không làm vỡ hàng CSV
-        assertEquals("\"Dòng 1 Dòng 2\"", com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv("Dòng 1\nDòng 2"))
-        assertEquals("\"Dòng 1 Dòng 2\"", com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv("Dòng 1\r\nDòng 2"))
+        val entries = mutableMapOf<String, String>()
+        var firstEntryName: String? = null
+        java.util.zip.ZipInputStream(java.io.ByteArrayInputStream(bytes)).use { zis ->
+            var entry = zis.nextEntry
+            while (entry != null) {
+                if (firstEntryName == null) firstEntryName = entry.name
+                val content = zis.bufferedReader(Charsets.UTF_8).readText()
+                entries[entry.name] = content
+                entry = zis.nextEntry
+            }
+        }
 
-        // 5. Chống tiêm công thức nguy hiểm trong bảng tính: =, +, -, @, %
-        val eq = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv("=SUM(A1:A10)")
-        assertEquals("\"'=SUM(A1:A10)\"", eq)
+        // 1. [Content_Types].xml phải là phần tử đầu tiên
+        assertEquals("[Content_Types].xml", firstEntryName)
 
-        val plus = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv("+cmd|' /C calc'!A0")
-        assertTrue(plus.startsWith("\"'+"))
+        // 2. Phải có đủ 5 sheet
+        assertTrue(entries.containsKey("xl/worksheets/sheet1.xml"))
+        assertTrue(entries.containsKey("xl/worksheets/sheet2.xml"))
+        assertTrue(entries.containsKey("xl/worksheets/sheet3.xml"))
+        assertTrue(entries.containsKey("xl/worksheets/sheet4.xml"))
+        assertTrue(entries.containsKey("xl/worksheets/sheet5.xml"))
 
-        val minus = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv("-2+3")
-        assertTrue(minus.startsWith("\"'-"))
+        // 3. Tên 5 sheet trong workbook.xml
+        val wbXml = entries["xl/workbook.xml"] ?: ""
+        assertTrue(wbXml.contains("name=\"Tổng quan\""))
+        assertTrue(wbXml.contains("name=\"Chi tiêu\""))
+        assertTrue(wbXml.contains("name=\"Theo thành viên\""))
+        assertTrue(wbXml.contains("name=\"Quỹ chung\""))
+        assertTrue(wbXml.contains("name=\"Gợi ý chuyển khoản\""))
 
-        val at = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv("@SUM(B1:B5)")
-        assertTrue(at.startsWith("\"'@"))
+        // 4. Tuyệt đối không chứa số tài khoản, tên ngân hàng trong toàn bộ file
+        val allContent = entries.values.joinToString("\n")
+        assertFalse("Không được chứa tên ngân hàng", allContent.contains("Bank Nguyễn Hồng Hiệp"))
+        assertFalse("Không được chứa số tài khoản", allContent.contains("123456789"))
 
-        val percent = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv("%APPDATA%")
-        assertTrue(percent.startsWith("\"'%"))
+        // 5. Chống formula injection: chuỗi bắt đầu bằng '=' được vô hiệu hóa bằng dấu nháy đơn
+        assertTrue("Tiêu đề chứa công thức phải có tiền tố dấu nháy đơn", allContent.contains("'=HYPERLINK"))
 
-        // 6. Khoảng trắng đứng trước ký tự công thức (VD: "   =cmd")
-        val spaced = com.hiepnguyen.tripfinance.domain.export.ReportGenerator.escapeCsv("   =1+1")
-        assertTrue(spaced.startsWith("\"'   ="))
+        // 6. Số liệu khớp
+        val sheet1Xml = entries["xl/worksheets/sheet1.xml"] ?: ""
+        assertTrue("Sheet 1 phải chứa tổng chi tiêu 500000", sheet1Xml.contains("<v>500000</v>"))
+        assertTrue("Sheet 1 phải chứa tổng quỹ 1000000", sheet1Xml.contains("<v>1000000</v>"))
     }
 
     @Test

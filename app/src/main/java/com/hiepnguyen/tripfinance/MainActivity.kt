@@ -83,6 +83,7 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
     val aiInsight by viewModel.aiInsight.collectAsStateWithLifecycle()
     val isLoadingAi by viewModel.isLoadingAi.collectAsStateWithLifecycle()
     val isExportingPdf by viewModel.isExportingPdf.collectAsStateWithLifecycle()
+    val isExportingXlsx by viewModel.isExportingXlsx.collectAsStateWithLifecycle()
     val lang = uiState.language
     var currentTab by remember { mutableStateOf(NavigationTab.DASHBOARD) }
 
@@ -404,6 +405,8 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
             uiState = uiState,
             isExportingPdf = isExportingPdf,
             onExportPdf = { viewModel.exportAndSharePdf(it) },
+            isExportingXlsx = isExportingXlsx,
+            onExportXlsx = { viewModel.exportAndShareXlsx(it) },
             onDismiss = { showExportReportDialog = false }
         )
     }

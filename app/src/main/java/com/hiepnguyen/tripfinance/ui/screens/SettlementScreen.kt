@@ -145,7 +145,7 @@ fun SettlementScreen(
                                 text = if (isSettled)
                                     "Chuyến đi đã khóa sổ quyết toán. Dữ liệu chi tiêu & quỹ được niêm phong."
                                 else
-                                    "Xuất báo cáo tiếng Việt (Times New Roman / Excel CSV) và lưu snapshot quyết toán",
+                                    "Xuất báo cáo tiếng Việt (PDF / Excel .xlsx) và lưu snapshot quyết toán",
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B)
                             )
@@ -280,13 +280,36 @@ fun SettlementScreen(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                if (copiedNotice != null) {
-                    Text(
-                        text = copiedNotice!!,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.extendedColorScheme.success,
-                        fontWeight = FontWeight.Bold
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (copiedNotice != null) {
+                        Text(
+                            text = copiedNotice!!,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.extendedColorScheme.success,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    if (uiState.settlementTransfers.isNotEmpty()) {
+                        OutlinedButton(
+                            onClick = {
+                                val text = uiState.settlementTransfers.joinToString("\n") { t ->
+                                    "${t.fromMember.name} → ${t.toMember.name}: ${NumberFormatUtils.formatCurrency(t.amount, tripCurrency)}"
+                                }
+                                clipboardManager.setText(AnnotatedString(text))
+                                copiedNotice = "Đã sao chép danh sách!"
+                            },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.height(30.dp)
+                        ) {
+                            Icon(Icons.Filled.ContentCopy, contentDescription = "Sao chép danh sách", modifier = Modifier.size(12.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Sao chép", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
                 }
             }
         }
