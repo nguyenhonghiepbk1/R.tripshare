@@ -196,9 +196,6 @@ object SettlementEngine {
                 name = fundMemberName,
                 role = "TREASURER",
                 isActive = true,
-                bankName = null,
-                bankAccount = null,
-                bankAccountHolder = null,
                 joinedAt = 0L
             )
             balanceEntries.add(BalanceEntry(fundMember, -totalMemberBalance))

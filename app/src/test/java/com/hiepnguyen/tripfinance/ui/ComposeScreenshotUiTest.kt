@@ -47,9 +47,6 @@ class ComposeScreenshotUiTest {
             userId = "user-1",
             name = "Nguyễn Văn A",
             role = "ADMIN",
-            bankName = "Vietcombank",
-            bankAccount = "1234567890",
-            bankAccountHolder = "NGUYEN VAN A",
             isActive = true
         )
         val member2 = TripMemberEntity(
@@ -58,9 +55,6 @@ class ComposeScreenshotUiTest {
             userId = "user-2",
             name = "Trần Thị B",
             role = "MEMBER",
-            bankName = "MB Bank",
-            bankAccount = "0987654321",
-            bankAccountHolder = "TRAN THI B",
             isActive = true
         )
         val summary = FinancialSummary(

@@ -123,10 +123,7 @@ class ExampleRobolectricTest {
             joinCode = "HN2026",
             startDate = System.currentTimeMillis(),
             endDate = System.currentTimeMillis() + 86400000L,
-            adminName = "Nguyễn Văn A",
-            adminBankName = "Vietcombank",
-            adminBankAccount = "1234567890",
-            adminBankHolder = "NGUYEN VAN A"
+            adminName = "Nguyễn Văn A"
         )
         val members = repository.getMembers(tripId).first()
         val adminMember = members.first()
@@ -136,9 +133,6 @@ class ExampleRobolectricTest {
             tripId = tripId,
             name = "Trần Văn B",
             role = "MEMBER",
-            bankName = null,
-            bankAccount = null,
-            bankAccountHolder = null,
             actor = adminMember
         )
         val updatedMembers = repository.getMembers(tripId).first()
@@ -512,9 +506,9 @@ class ExampleRobolectricTest {
         sqlite.execSQL("INSERT INTO `expenses` VALUES('exp-v1', 'trip-v1', 'Chi tiêu v1', 'FOOD', 'MEMBER', 'member-v1', 50000, 'VND', 1.0, 50000, 'EQUAL', NULL, 'Ghi chú', 1000, 'member-v1', 1000, 1)")
         sqlite.close()
 
-        // Mở qua Room Database builder kèm migration 1_2, 2_3, 3_4 (không có destructive fallback)
+        // Mở qua Room Database builder kèm migration 1_2, 2_3, 3_4, 4_5 (không có destructive fallback)
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration.db")
-            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4, AppDatabase.MIGRATION_4_5)
             .build()
 
         val migratedTrips = runBlocking { migratedDb.tripDao().getAllTripsOnce() }
@@ -525,7 +519,12 @@ class ExampleRobolectricTest {
         assertEquals(1, migratedExpenses.size)
         assertEquals(50000.0, migratedExpenses[0].totalAmount, 0.001)
 
-        // Kiểm tra bảng settlement_snapshots đã tồn tại và có các cột chuẩn v4
+        val migratedMembers = runBlocking { migratedDb.tripMemberDao().getAllMembersOnce() }
+        assertEquals(1, migratedMembers.size)
+        assertEquals("member-v1", migratedMembers[0].id)
+        assertEquals("Thành viên v1", migratedMembers[0].name)
+
+        // Kiểm tra bảng settlement_snapshots đã tồn tại và có các cột chuẩn v5
         val snapshotList = runBlocking { migratedDb.settlementDao().getAllSnapshotsOnce() }
         assertTrue(snapshotList.isEmpty()) // Chưa có snapshot nào nhưng bảng đã sẵn sàng
 
@@ -620,9 +619,9 @@ class ExampleRobolectricTest {
         sqlite.execSQL("INSERT INTO `settlement_snapshots` VALUES('snap-old', 'trip-legacy', 2000, 500000, 600000, 100000, 'member-1', '{\"summary\":\"test\"}')")
         sqlite.close()
 
-        // Nâng cấp trực tiếp lên v4
+        // Nâng cấp trực tiếp lên v5
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_legacy_snapshot.db")
-            .addMigrations(AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4)
+            .addMigrations(AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4, AppDatabase.MIGRATION_4_5)
             .build()
 
         val snapshots = runBlocking { migratedDb.settlementDao().getAllSnapshotsOnce() }
@@ -647,10 +646,7 @@ class ExampleRobolectricTest {
             joinCode = "DN2026",
             startDate = 1000L,
             endDate = 2000L,
-            adminName = "Admin DN",
-            adminBankName = "MBBank",
-            adminBankAccount = "0987654321",
-            adminBankHolder = "ADMIN DN"
+            adminName = "Admin DN"
         )
         val adminMember = repository.getMembers(tripId).first().first()
 
@@ -659,9 +655,6 @@ class ExampleRobolectricTest {
             tripId = tripId,
             name = "Thành viên 2",
             role = "MEMBER",
-            bankName = null,
-            bankAccount = null,
-            bankAccountHolder = null,
             actor = adminMember
         )
 
@@ -724,35 +717,37 @@ class ExampleRobolectricTest {
     }
 
     @Test
-    fun `test unencrypted backup masks bank account whereas encrypted backup preserves it`(): Unit = runBlocking {
+    fun `test backup export contains zero bank fields and encrypted backup preserves privacy`(): Unit = runBlocking {
         val tripId = repository.createTrip(
             title = "Đoàn Test Bảo Mật",
-            description = "Kiểm tra bảo mật số tài khoản",
+            description = "Kiểm tra bảo mật dữ liệu thành viên",
             joinCode = "SEC-2026",
             startDate = 1000L,
             endDate = 2000L,
-            adminName = "Thủ quỹ",
-            adminBankName = "VietinBank",
-            adminBankAccount = "102030405060",
-            adminBankHolder = "THU QUY"
+            adminName = "Thủ quỹ"
         )
 
         val context = ApplicationProvider.getApplicationContext<Context>()
 
-        // 1. Tạo bản sao lưu không mã hóa: Phải tự động che mờ số tài khoản
+        // 1. Tạo bản sao lưu không mã hóa: Tuyệt đối không có trường ngân hàng
         val unencryptedFile = repository.createLocalBackup(context, password = null)
         val unencryptedJson = unencryptedFile.readText(Charsets.UTF_8)
-        assertFalse("Bản sao lưu không mã hóa tuyệt đối không chứa số tài khoản thô", unencryptedJson.contains("102030405060"))
-        assertTrue("Bản sao lưu không mã hóa phải che mờ dạng ******5060", unencryptedJson.contains("******5060"))
+        assertFalse("Bản sao lưu không được chứa bankName", unencryptedJson.contains("bankName"))
+        assertFalse("Bản sao lưu không được chứa bankAccount", unencryptedJson.contains("bankAccount"))
+        assertFalse("Bản sao lưu không được chứa bankAccountHolder", unencryptedJson.contains("bankAccountHolder"))
 
-        // 2. Tạo bản sao lưu có mã hóa mật khẩu: Nội dung tệp không lộ số tài khoản thô (AES-256-GCM)
+        // 2. Tạo bản sao lưu có mã hóa mật khẩu: Nội dung tệp mã hóa AES-256-GCM
         val encryptedFile = repository.createLocalBackup(context, password = "StrongPassword789")
         val encryptedContent = encryptedFile.readText(Charsets.UTF_8)
-        assertFalse("Ciphertext không được chứa plaintext", encryptedContent.contains("102030405060"))
+        val rootEnc = org.json.JSONObject(encryptedContent)
+        assertTrue("Tệp phải có cờ encrypted = true", rootEnc.getBoolean("encrypted"))
+        assertEquals("PBKDF2WithHmacSHA256", rootEnc.getString("kdf"))
 
-        // Nhưng sau khi giải mã đúng mật khẩu, số tài khoản đầy đủ được phục hồi nguyên vẹn
+        // Sau khi giải mã đúng mật khẩu, dữ liệu JSON phục hồi nguyên vẹn và cũng không chứa trường ngân hàng
         val decrypted = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.decryptBackup(encryptedContent, "StrongPassword789").getOrThrow()
-        assertTrue("Sau khi giải mã phải phục hồi đầy đủ số tài khoản", decrypted.contains("102030405060"))
+        assertFalse("Sau khi giải mã không được chứa bankName", decrypted.contains("bankName"))
+        assertFalse("Sau khi giải mã không được chứa bankAccount", decrypted.contains("bankAccount"))
+        assertTrue("Sau khi giải mã phải phục hồi thông tin đoàn", decrypted.contains("SEC-2026"))
 
         unencryptedFile.delete()
         encryptedFile.delete()
@@ -909,20 +904,14 @@ class ExampleRobolectricTest {
             tripId = "t-xlsx",
             userId = "u-1",
             name = "@HackerName",
-            role = "ADMIN",
-            bankName = "Ngân hàng ACB",
-            bankAccount = "987654321",
-            bankAccountHolder = "NGUYEN VAN A"
+            role = "ADMIN"
         )
         val member2 = TripMemberEntity(
             id = "m-2",
             tripId = "t-xlsx",
             userId = "u-2",
             name = "+SecondPerson",
-            role = "MEMBER",
-            bankName = "Vietcombank",
-            bankAccount = "1122334455",
-            bankAccountHolder = "TRAN THI B"
+            role = "MEMBER"
         )
         val expense = ExpenseEntity(
             id = "e-1",
@@ -983,6 +972,7 @@ class ExampleRobolectricTest {
         )
 
         val transfer = com.hiepnguyen.tripfinance.domain.model.SettlementTransfer(
+            id = "tf-1",
             fromMember = member2,
             toMember = member1,
             amount = 100000L,
@@ -1042,10 +1032,13 @@ class ExampleRobolectricTest {
         assertFalse("Không được chứa số tài khoản", fullContent.contains("1122334455"))
 
         // 5. Chuỗi công thức phải được vô hiệu hóa bằng dấu nháy đơn
-        assertTrue("Công thức =HYPERLINK phải có tiền tố '", fullContent.contains("'=HYPERLINK"))
-        assertTrue("Tên bắt đầu bằng @ phải có tiền tố '", fullContent.contains("'@HackerName"))
-        assertTrue("Tên bắt đầu bằng + phải có tiền tố '", fullContent.contains("'+SecondPerson"))
-        assertTrue("Công thức =CMD phải có tiền tố '", fullContent.contains("'=CMD"))
+        assertTrue(
+            "Công thức =HYPERLINK phải có tiền tố ' hoặc &apos;",
+            fullContent.contains("'=HYPERLINK") || fullContent.contains("&apos;=HYPERLINK")
+        )
+        assertTrue("Tên bắt đầu bằng @ phải có tiền tố '", fullContent.contains("'@HackerName") || fullContent.contains("&apos;@HackerName"))
+        assertTrue("Tên bắt đầu bằng + phải có tiền tố '", fullContent.contains("'+SecondPerson") || fullContent.contains("&apos;+SecondPerson"))
+        assertTrue("Công thức =CMD phải có tiền tố '", fullContent.contains("'=CMD") || fullContent.contains("&apos;=CMD"))
 
         // 6. Số liệu khớp với tổng quan
         val sheet1 = entries["xl/worksheets/sheet1.xml"] ?: ""
@@ -1947,6 +1940,255 @@ class ExampleRobolectricTest {
         // 3. Giải mã sai mật khẩu -> phải trả về Result.failure
         val wrongResult = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.decryptBackup(encryptedJson, "WrongPassword999")
         assertTrue(wrongResult.isFailure)
+    }
+
+    @Test
+    fun `test migration 4 to 5 safely drops bank columns while preserving all member and financial data`() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val dbFile = context.getDatabasePath("test_migration_4_5.db")
+        dbFile.delete()
+
+        // 1. Tạo CSDL SQLite v4 chứa bảng trip_members với 3 cột ngân hàng
+        val sqlite = android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(dbFile, null)
+        sqlite.version = 4
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `trips` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `joinCode` TEXT NOT NULL, `startDate` INTEGER NOT NULL, `endDate` INTEGER NOT NULL, `baseCurrency` TEXT NOT NULL, `isSettled` INTEGER NOT NULL, `settledAt` INTEGER, `createdAt` INTEGER NOT NULL, `version` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+        sqlite.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_trips_joinCode` ON `trips` (`joinCode`)")
+        sqlite.execSQL("""
+            CREATE TABLE IF NOT EXISTS `trip_members` (
+                `id` TEXT NOT NULL,
+                `tripId` TEXT NOT NULL,
+                `userId` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `role` TEXT NOT NULL,
+                `isActive` INTEGER NOT NULL,
+                `bankName` TEXT,
+                `bankAccount` TEXT,
+                `bankAccountHolder` TEXT,
+                `joinedAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`),
+                FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+        """.trimIndent())
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `expenses` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `title` TEXT NOT NULL, `category` TEXT NOT NULL, `payerType` TEXT NOT NULL, `payerMemberId` TEXT, `totalAmount` REAL NOT NULL, `currency` TEXT NOT NULL, `exchangeRate` REAL NOT NULL, `convertedTotalAmount` INTEGER NOT NULL, `splitType` TEXT NOT NULL, `receiptImageUri` TEXT, `note` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `createdMemberId` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`payerMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`createdMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `expense_splits` (`id` TEXT NOT NULL, `expenseId` TEXT NOT NULL, `tripId` TEXT NOT NULL, `memberId` TEXT NOT NULL, `amount` INTEGER NOT NULL, `percentage` REAL, PRIMARY KEY(`id`), FOREIGN KEY(`expenseId`) REFERENCES `expenses`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`memberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `fund_contributions` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `memberId` TEXT NOT NULL, `amount` INTEGER NOT NULL, `currency` TEXT NOT NULL, `exchangeRate` REAL NOT NULL, `convertedAmount` INTEGER NOT NULL, `note` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `recordedByMemberId` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`memberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`recordedByMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `exchange_rates` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `currencyCode` TEXT NOT NULL, `rateToBase` REAL NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `settlement_snapshots` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `snapshotTitle` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `totalExpenses` INTEGER NOT NULL, `totalFundCollected` INTEGER NOT NULL, `totalFundSpent` INTEGER NOT NULL, `remainingFund` INTEGER NOT NULL, `settlementJson` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `audit_logs` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `actorMemberId` TEXT NOT NULL, `actorName` TEXT NOT NULL, `action` TEXT NOT NULL, `description` TEXT NOT NULL, `detailBefore` TEXT, `detailAfter` TEXT, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+
+        // Chèn dữ liệu mẫu vào v4 có cả thông tin ngân hàng cũ
+        sqlite.execSQL("INSERT INTO `trips` VALUES('trip-v4', 'Chuyến Đi V4', 'Khám phá Đà Nẵng', 'TRIP-V4', 1000, 2000, 'VND', 0, NULL, 1000, 1)")
+        sqlite.execSQL("INSERT INTO `trip_members` VALUES('mem-admin', 'trip-v4', 'usr-1', 'Trưởng Đoàn A', 'ADMIN', 1, 'Vietcombank', '0123456789', 'TRUONG DOAN A', 1000)")
+        sqlite.execSQL("INSERT INTO `trip_members` VALUES('mem-user', 'trip-v4', 'usr-2', 'Thành Viên B', 'MEMBER', 1, 'Techcombank', '9876543210', 'THANH VIEN B', 1100)")
+        sqlite.close()
+
+        // 2. Mở qua Room Database builder kèm MIGRATION_4_5 (không dùng fallbackToDestructiveMigration)
+        val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration_4_5.db")
+            .addMigrations(AppDatabase.MIGRATION_4_5)
+            .build()
+
+        val members = runBlocking { migratedDb.tripMemberDao().getAllMembersOnce() }
+        assertEquals("Số lượng thành viên phải bảo toàn nguyên vẹn", 2, members.size)
+
+        val admin = members.first { it.id == "mem-admin" }
+        assertEquals("Trưởng Đoàn A", admin.name)
+        assertEquals("ADMIN", admin.role)
+        assertTrue(admin.isActive)
+        assertEquals(1000L, admin.joinedAt)
+
+        val user = members.first { it.id == "mem-user" }
+        assertEquals("Thành Viên B", user.name)
+        assertEquals("MEMBER", user.role)
+        assertTrue(user.isActive)
+        assertEquals(1100L, user.joinedAt)
+
+        // 3. Kiểm tra cấu trúc bảng SQLite: các cột ngân hàng đã hoàn toàn biến mất
+        val pragmaCursor = migratedDb.openHelper.readableDatabase.query("PRAGMA table_info(`trip_members`)")
+        val columnNames = mutableListOf<String>()
+        while (pragmaCursor.moveToNext()) {
+            columnNames.add(pragmaCursor.getString(1))
+        }
+        pragmaCursor.close()
+
+        assertTrue("Cột id phải tồn tại", columnNames.contains("id"))
+        assertTrue("Cột tripId phải tồn tại", columnNames.contains("tripId"))
+        assertTrue("Cột name phải tồn tại", columnNames.contains("name"))
+        assertTrue("Cột role phải tồn tại", columnNames.contains("role"))
+        assertTrue("Cột isActive phải tồn tại", columnNames.contains("isActive"))
+        assertTrue("Cột joinedAt phải tồn tại", columnNames.contains("joinedAt"))
+        assertFalse("Cột bankName phải bị xóa bỏ", columnNames.contains("bankName"))
+        assertFalse("Cột bankAccount phải bị xóa bỏ", columnNames.contains("bankAccount"))
+        assertFalse("Cột bankAccountHolder phải bị xóa bỏ", columnNames.contains("bankAccountHolder"))
+
+        migratedDb.close()
+        dbFile.delete()
+    }
+
+    @Test
+    fun `test importing legacy backup containing bank fields succeeds gracefully and drops bank fields`(): Unit = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).build()
+
+        // Bản backup cũ phiên bản schema 4 chứa các trường bankName, bankAccount, bankAccountHolder
+        val legacyBackupJson = """
+        {
+          "metadata": {
+            "appName": "TripFinance",
+            "backupVersion": 1,
+            "schemaVersion": 4,
+            "createdAt": 1700000000000,
+            "totalTrips": 1,
+            "totalMembers": 2,
+            "totalExpenses": 1,
+            "totalSplits": 2,
+            "totalFunds": 0,
+            "totalRates": 0,
+            "totalSnapshots": 0,
+            "totalLogs": 0
+          },
+          "trips": [
+            {
+              "id": "trip-legacy-bank",
+              "title": "Chuyến Đi Miền Tây",
+              "description": "Du lịch sinh thái",
+              "joinCode": "LEGACY-BNK",
+              "startDate": 1700000000000,
+              "endDate": 1700500000000,
+              "baseCurrency": "VND",
+              "isSettled": false,
+              "settledAt": null,
+              "createdAt": 1700000000000,
+              "version": 1
+            }
+          ],
+          "members": [
+            {
+              "id": "mem-1-bank",
+              "tripId": "trip-legacy-bank",
+              "userId": "usr-1",
+              "name": "Nguyễn Văn Admin",
+              "role": "ADMIN",
+              "bankName": "Vietcombank",
+              "bankAccount": "1234567890",
+              "bankAccountHolder": "NGUYEN VAN ADMIN",
+              "isActive": true,
+              "joinedAt": 1700000000000
+            },
+            {
+              "id": "mem-2-bank",
+              "tripId": "trip-legacy-bank",
+              "userId": "usr-2",
+              "name": "Trần Thị Member",
+              "role": "MEMBER",
+              "bankName": "MB Bank",
+              "bankAccount": "0987654321",
+              "bankAccountHolder": "TRAN THI MEMBER",
+              "isActive": true,
+              "joinedAt": 1700000000000
+            }
+          ],
+          "expenses": [
+            {
+              "id": "exp-1",
+              "tripId": "trip-legacy-bank",
+              "title": "Vé tàu du lịch",
+              "category": "TRANSPORT",
+              "payerType": "MEMBER",
+              "payerMemberId": "mem-1-bank",
+              "totalAmount": 200000.0,
+              "currency": "VND",
+              "exchangeRate": 1.0,
+              "convertedTotalAmount": 200000,
+              "splitType": "EQUAL",
+              "receiptImageUri": null,
+              "note": "Tiền vé khứ hồi",
+              "timestamp": 1700010000000,
+              "createdMemberId": "mem-1-bank",
+              "updatedAt": 1700010000000,
+              "isSynced": true
+            }
+          ],
+          "splits": [
+            {
+              "id": "spl-1",
+              "expenseId": "exp-1",
+              "tripId": "trip-legacy-bank",
+              "memberId": "mem-1-bank",
+              "amount": 100000,
+              "percentage": 50.0
+            },
+            {
+              "id": "spl-2",
+              "expenseId": "exp-1",
+              "tripId": "trip-legacy-bank",
+              "memberId": "mem-2-bank",
+              "amount": 100000,
+              "percentage": 50.0
+            }
+          ],
+          "fundContributions": [],
+          "exchangeRates": [],
+          "settlementSnapshots": [],
+          "auditLogs": []
+        }
+        """.trimIndent()
+
+        // 1. Phục hồi qua BackupRestoreManager.restoreFromReader
+        val parseResult = com.hiepnguyen.tripfinance.data.backup.BackupRestoreManager.parseBackupFromReader(java.io.StringReader(legacyBackupJson))
+        assertTrue("Phải phân tích cú pháp bản sao lưu cũ thành công mà không bị lỗi trường lạ", parseResult.isSuccess)
+
+        val backupData = parseResult.getOrThrow()
+        assertEquals(2, backupData.members.size)
+        assertEquals("mem-1-bank", backupData.members[0].id)
+        assertEquals("Nguyễn Văn Admin", backupData.members[0].name)
+
+        // 2. Nạp dữ liệu vào CSDL
+        val restoreResult = com.hiepnguyen.tripfinance.data.backup.BackupRestoreManager.restoreFromBackupData(db, backupData, clearExisting = false)
+        assertTrue("Quá trình khôi phục phải thành công: ${restoreResult.exceptionOrNull()?.message}", restoreResult.isSuccess)
+
+        val restoredTrips = db.tripDao().getAllTripsOnce()
+        assertEquals(1, restoredTrips.size)
+        assertEquals("Chuyến Đi Miền Tây", restoredTrips[0].title)
+
+        val restoredMembers = db.tripMemberDao().getAllMembersOnce()
+        assertEquals(2, restoredMembers.size)
+        val adminMember = restoredMembers.first { it.id == "mem-1-bank" }
+        assertEquals("Nguyễn Văn Admin", adminMember.name)
+        assertEquals("ADMIN", adminMember.role)
+
+        val restoredExpenses = db.expenseDao().getAllExpensesOnce()
+        assertEquals(1, restoredExpenses.size)
+        assertEquals(200000.0, restoredExpenses[0].totalAmount, 0.001)
+
+        db.close()
+    }
+
+    @Test
+    fun `test all entity and domain classes have zero bank account or QR fields`() {
+        val classesToCheck = listOf(
+            com.hiepnguyen.tripfinance.data.entity.TripMemberEntity::class.java,
+            com.hiepnguyen.tripfinance.data.entity.TripEntity::class.java,
+            com.hiepnguyen.tripfinance.data.entity.ExpenseEntity::class.java,
+            com.hiepnguyen.tripfinance.data.entity.ExpenseSplitEntity::class.java,
+            com.hiepnguyen.tripfinance.data.entity.FundContributionEntity::class.java,
+            com.hiepnguyen.tripfinance.data.entity.SettlementSnapshotEntity::class.java,
+            com.hiepnguyen.tripfinance.domain.model.SettlementTransfer::class.java,
+            com.hiepnguyen.tripfinance.domain.model.MemberFinancialStatus::class.java,
+            com.hiepnguyen.tripfinance.domain.model.FinancialSummary::class.java
+        )
+
+        val forbiddenKeywords = listOf("bank", "account", "qr", "vietqr", "holder")
+
+        for (clazz in classesToCheck) {
+            val declaredFields = clazz.declaredFields.map { it.name.lowercase() }
+            for (keyword in forbiddenKeywords) {
+                val matches = declaredFields.filter { it.contains(keyword) }
+                assertTrue(
+                    "Lớp ${clazz.simpleName} không được chứa trường liên quan '$keyword' (tìm thấy: $matches)",
+                    matches.isEmpty()
+                )
+            }
+        }
     }
 }
 

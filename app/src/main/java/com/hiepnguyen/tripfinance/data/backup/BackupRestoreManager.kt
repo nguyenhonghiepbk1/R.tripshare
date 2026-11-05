@@ -24,7 +24,7 @@ import java.util.UUID
 data class BackupMetadata(
     val appName: String = "TripFinance",
     val backupVersion: Int = 1,
-    val schemaVersion: Int = 4,
+    val schemaVersion: Int = 5,
     val createdAt: Long = System.currentTimeMillis(),
     val createdAtFormatted: String = "",
     val totalTrips: Int = 0,
@@ -116,7 +116,7 @@ object BackupRestoreManager {
         val metaJson = JSONObject().apply {
             put("appName", "TripFinance")
             put("backupVersion", 1)
-            put("schemaVersion", 4)
+            put("schemaVersion", 5)
             put("createdAt", now)
             put("createdAtFormatted", dateFormat.format(Date(now)))
             put("totalTrips", trips.size)
@@ -154,14 +154,6 @@ object BackupRestoreManager {
                 put("userId", m.userId)
                 put("name", m.name)
                 put("role", m.role)
-                put("bankName", m.bankName ?: JSONObject.NULL)
-                val bankAcc = if (maskSensitiveData && !m.bankAccount.isNullOrBlank()) {
-                    maskBankAccount(m.bankAccount)
-                } else {
-                    m.bankAccount
-                }
-                put("bankAccount", bankAcc ?: JSONObject.NULL)
-                put("bankAccountHolder", m.bankAccountHolder ?: JSONObject.NULL)
                 put("isActive", m.isActive)
                 put("joinedAt", m.joinedAt)
             })
@@ -693,9 +685,6 @@ object BackupRestoreManager {
             var userId = UUID.randomUUID().toString()
             var name = ""
             var role = "MEMBER"
-            var bankName: String? = null
-            var bankAccount: String? = null
-            var bankAccountHolder: String? = null
             var isActive = true
             var joinedAt = System.currentTimeMillis()
 
@@ -706,9 +695,9 @@ object BackupRestoreManager {
                     "userId" -> userId = reader.nextStringOrDefault(UUID.randomUUID().toString())
                     "name" -> name = reader.nextStringOrDefault()
                     "role" -> role = reader.nextStringOrDefault("MEMBER")
-                    "bankName" -> bankName = reader.nextStringOrNull()
-                    "bankAccount" -> bankAccount = reader.nextStringOrNull()
-                    "bankAccountHolder" -> bankAccountHolder = reader.nextStringOrNull()
+                    "bankName" -> reader.skipValue() // Bỏ qua an toàn khi đọc bản sao lưu cũ
+                    "bankAccount" -> reader.skipValue() // Bỏ qua an toàn khi đọc bản sao lưu cũ
+                    "bankAccountHolder" -> reader.skipValue() // Bỏ qua an toàn khi đọc bản sao lưu cũ
                     "isActive" -> isActive = reader.nextBooleanOrDefault(true)
                     "joinedAt" -> joinedAt = reader.nextLongOrDefault(System.currentTimeMillis())
                     else -> reader.skipValue()
@@ -722,9 +711,6 @@ object BackupRestoreManager {
                     userId = userId,
                     name = name,
                     role = role,
-                    bankName = bankName,
-                    bankAccount = bankAccount,
-                    bankAccountHolder = bankAccountHolder,
                     isActive = isActive,
                     joinedAt = joinedAt
                 )

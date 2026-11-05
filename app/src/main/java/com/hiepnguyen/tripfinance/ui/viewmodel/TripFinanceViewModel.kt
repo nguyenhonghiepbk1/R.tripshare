@@ -919,10 +919,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             try {
                 val updated = member.copy(
                     name = newName,
-                    role = newRole,
-                    bankName = newBankName,
-                    bankAccount = newBankAccount,
-                    bankAccountHolder = newBankAccountHolder
+                    role = newRole
                 )
                 repository.updateMember(updated, currentMember)
                 showSuccess("Đã cập nhật thông tin thành viên '$newName' thành công!")

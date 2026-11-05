@@ -26,7 +26,7 @@ import java.util.UUID
         SettlementSnapshotEntity::class,
         AuditLogEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -214,6 +214,68 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Xóa bỏ các cột ngân hàng bankName, bankAccount, bankAccountHolder khỏi bảng trip_members một cách an toàn:
+                // 1. Tạo bảng trip_members_new không có 3 cột ngân hàng
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `trip_members_new` (
+                        `id` TEXT NOT NULL,
+                        `tripId` TEXT NOT NULL,
+                        `userId` TEXT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `role` TEXT NOT NULL,
+                        `isActive` INTEGER NOT NULL,
+                        `joinedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """.trimIndent())
+
+                // 2. Chép toàn bộ dữ liệu thành viên từ trip_members cũ sang bảng mới
+                db.execSQL("""
+                    INSERT INTO `trip_members_new` (`id`, `tripId`, `userId`, `name`, `role`, `isActive`, `joinedAt`)
+                    SELECT `id`, `tripId`, `userId`, `name`, `role`, `isActive`, `joinedAt`
+                    FROM `trip_members`
+                """.trimIndent())
+
+                // 3. Xóa bảng cũ và đổi tên bảng mới thành trip_members
+                db.execSQL("DROP TABLE `trip_members`")
+                db.execSQL("ALTER TABLE `trip_members_new` RENAME TO `trip_members`")
+
+                // 4. Tạo lại index đầy đủ khớp với Room schema v5
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_trip_members_tripId` ON `trip_members` (`tripId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_trip_members_tripId_name` ON `trip_members` (`tripId`, `name`)")
+
+                // 5. Tạo lại ràng buộc và trigger trên bảng trip_members
+                createDatabaseCheckConstraints(db)
+            }
+        }
+
+        val MIGRATION_1_5 = object : Migration(1, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_1_2.migrate(db)
+                MIGRATION_2_3.migrate(db)
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+            }
+        }
+
+        val MIGRATION_2_5 = object : Migration(2, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_2_3.migrate(db)
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+            }
+        }
+
+        val MIGRATION_3_5 = object : Migration(3, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+            }
+        }
+
         @Synchronized
         fun resetDatabase(context: Context) {
             try {
@@ -281,7 +343,10 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 "trip_finance_database"
             )
-            .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_1_4, MIGRATION_2_4)
+            .addMigrations(
+                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
+                MIGRATION_1_4, MIGRATION_2_4, MIGRATION_1_5, MIGRATION_2_5, MIGRATION_3_5
+            )
 
             if (sqlCipherFactory != null) {
                 builder.openHelperFactory(sqlCipherFactory)

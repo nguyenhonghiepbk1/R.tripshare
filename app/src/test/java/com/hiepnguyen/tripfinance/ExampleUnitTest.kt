@@ -16,10 +16,7 @@ class ExampleUnitTest {
             userId = "user_$id",
             name = name,
             role = role,
-            isActive = true,
-            bankName = "Bank $name",
-            bankAccount = "123456789",
-            bankAccountHolder = name.uppercase()
+            isActive = true
         )
     }
 
@@ -340,6 +337,7 @@ class ExampleUnitTest {
         val statusHiep = MemberFinancialStatus(hiep, 500000L, 500000L, 0L, 250000L, 250000L, BalanceStatus.RECEIVE)
         val statusMai = MemberFinancialStatus(mai, 1000000L, 0L, 1000000L, 250000L, -250000L, BalanceStatus.PAY)
         val transfer = com.hiepnguyen.tripfinance.domain.model.SettlementTransfer(
+            id = "tf-hiep-mai",
             fromMember = mai,
             toMember = hiep,
             amount = 250000L,
@@ -397,7 +395,10 @@ class ExampleUnitTest {
         assertFalse("Không được chứa số tài khoản", allContent.contains("123456789"))
 
         // 5. Chống formula injection: chuỗi bắt đầu bằng '=' được vô hiệu hóa bằng dấu nháy đơn
-        assertTrue("Tiêu đề chứa công thức phải có tiền tố dấu nháy đơn", allContent.contains("'=HYPERLINK"))
+        assertTrue(
+            "Tiêu đề chứa công thức phải có tiền tố dấu nháy đơn (hoặc &apos; trong XML thô)",
+            allContent.contains("'=HYPERLINK") || allContent.contains("&apos;=HYPERLINK")
+        )
 
         // 6. Số liệu khớp
         val sheet1Xml = entries["xl/worksheets/sheet1.xml"] ?: ""
@@ -417,6 +418,19 @@ class ExampleUnitTest {
         // Xác nhận ngưỡng kiểm soát an toàn chống DoS CPU
         assertEquals(1_000, com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.MIN_ITERATIONS)
         assertEquals(1_000_000, com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.MAX_ITERATIONS)
+    }
+
+    @Test
+    fun `test domain models and entities have zero bank or QR fields`() {
+        val memberFields = TripMemberEntity::class.java.declaredFields.map { it.name }
+        assertFalse("TripMemberEntity không được chứa bankName", memberFields.contains("bankName"))
+        assertFalse("TripMemberEntity không được chứa bankAccount", memberFields.contains("bankAccount"))
+        assertFalse("TripMemberEntity không được chứa bankAccountHolder", memberFields.contains("bankAccountHolder"))
+
+        val transferFields = com.hiepnguyen.tripfinance.domain.model.SettlementTransfer::class.java.declaredFields.map { it.name }
+        assertFalse("SettlementTransfer không được chứa bankName", transferFields.contains("bankName"))
+        assertFalse("SettlementTransfer không được chứa bankAccount", transferFields.contains("bankAccount"))
+        assertFalse("SettlementTransfer không được chứa qrUrl", transferFields.contains("qrUrl"))
     }
 }
 

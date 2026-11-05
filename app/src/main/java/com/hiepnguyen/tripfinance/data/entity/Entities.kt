@@ -53,9 +53,6 @@ data class TripMemberEntity(
     val name: String,
     val role: String, // ADMIN, TREASURER, MEMBER, VIEWER
     val isActive: Boolean = true,
-    val bankName: String? = null,
-    val bankAccount: String? = null,
-    val bankAccountHolder: String? = null,
     val joinedAt: Long = System.currentTimeMillis()
 ) {
     init {

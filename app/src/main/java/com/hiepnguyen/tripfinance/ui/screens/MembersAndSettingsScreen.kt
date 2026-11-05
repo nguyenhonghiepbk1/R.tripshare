@@ -819,9 +819,6 @@ fun AddMemberDialog(
     val lang = LocalAppLanguage.current
     var name by remember { mutableStateOf("") }
     var role by remember { mutableStateOf("MEMBER") }
-    var bankName by remember { mutableStateOf("Vietcombank") }
-    var bankAccount by remember { mutableStateOf("") }
-    var holder by remember { mutableStateOf("") }
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -1121,9 +1118,6 @@ fun EditMemberDialog(
     val lang = LocalAppLanguage.current
     var name by remember { mutableStateOf(member.name) }
     var role by remember { mutableStateOf(member.role) }
-    var bankName by remember { mutableStateOf(member.bankName ?: "Vietcombank") }
-    var bankAccount by remember { mutableStateOf(member.bankAccount ?: "") }
-    var holder by remember { mutableStateOf(member.bankAccountHolder ?: member.name) }
 
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current

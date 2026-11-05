@@ -32,9 +32,9 @@ class TripFinanceRepository(private val db: AppDatabase) {
         startDate: Long,
         endDate: Long,
         adminName: String,
-        adminBankName: String?,
-        adminBankAccount: String?,
-        adminBankHolder: String?,
+        adminBankName: String? = null,
+        adminBankAccount: String? = null,
+        adminBankHolder: String? = null,
         baseCurrency: String = "VND"
     ): String {
         val tripId = UUID.randomUUID().toString()
@@ -73,9 +73,6 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 name = adminName,
                 role = "ADMIN",
                 isActive = true,
-                bankName = adminBankName,
-                bankAccount = adminBankAccount,
-                bankAccountHolder = adminBankHolder,
                 joinedAt = System.currentTimeMillis()
             )
             db.tripMemberDao().insertMember(adminMember)
@@ -165,9 +162,9 @@ class TripFinanceRepository(private val db: AppDatabase) {
         tripId: String,
         name: String,
         role: String,
-        bankName: String?,
-        bankAccount: String?,
-        bankAccountHolder: String?,
+        bankName: String? = null,
+        bankAccount: String? = null,
+        bankAccountHolder: String? = null,
         actor: TripMemberEntity
     ): String {
         return db.withTransaction {
@@ -184,9 +181,6 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 name = name,
                 role = role,
                 isActive = true,
-                bankName = bankName,
-                bankAccount = bankAccount,
-                bankAccountHolder = bankAccountHolder,
                 joinedAt = System.currentTimeMillis()
             )
             db.tripMemberDao().insertMember(member)
