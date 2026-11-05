@@ -29,6 +29,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.hiepnguyen.tripfinance.data.entity.TripMemberEntity
+import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.AppStrings
+import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
 import com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator
 import com.hiepnguyen.tripfinance.domain.model.AmountValidationResult
 import com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils
@@ -43,6 +46,7 @@ fun FundScreen(
     uiState: UiState,
     onOpenAddFund: () -> Unit
 ) {
+    val lang = LocalAppLanguage.current
     val isSettled = uiState.currentTrip?.isSettled == true
     val canAddFund = !isSettled && (uiState.currentMember?.role == "ADMIN" || uiState.currentMember?.role == "TREASURER")
     val tripCurrency = uiState.currentTrip?.baseCurrency ?: "VND"
@@ -59,7 +63,7 @@ fun FundScreen(
                         .padding(bottom = 72.dp)
                         .testTag("fab_add_fund")
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Ghi nhận nộp quỹ")
+                    Icon(Icons.Filled.Add, contentDescription = AppStrings.recordFundContributionFabCd(lang))
                 }
             }
         }
@@ -87,7 +91,7 @@ fun FundScreen(
                             Icon(Icons.Filled.Lock, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Chuyến đi đã khóa sổ quyết toán. Dữ liệu quỹ đoàn được bảo vệ và không thể nộp thêm quỹ.",
+                                text = AppStrings.tripSettledBannerFund(lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF475569),
                                 fontWeight = FontWeight.Medium
@@ -113,7 +117,7 @@ fun FundScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = "SỐ DƯ QUỸ ĐOÀN HIỆN TẠI",
+                                    text = AppStrings.currentFundBalanceTitle(lang),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF64748B)
@@ -138,7 +142,7 @@ fun FundScreen(
                                     ) {
                                         Icon(Icons.Filled.Lock, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(14.dp))
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Đã khóa", fontSize = 11.sp, color = Color(0xFF475569), fontWeight = FontWeight.Bold)
+                                        Text(AppStrings.settledLockedBadge(lang), fontSize = 11.sp, color = Color(0xFF475569), fontWeight = FontWeight.Bold)
                                     }
                                 }
                             } else if (canAddFund) {
@@ -150,7 +154,7 @@ fun FundScreen(
                                 ) {
                                     Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text("Nộp Quỹ", fontSize = 12.sp)
+                                    Text(AppStrings.contributeFundBtn(lang), fontSize = 12.sp)
                                 }
                             }
                         }
@@ -164,7 +168,7 @@ fun FundScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text("Tổng tiền đã thu:", fontSize = 12.sp, color = Color(0xFF64748B))
+                                Text(AppStrings.totalCollectedLabel(lang), fontSize = 12.sp, color = Color(0xFF64748B))
                                 Text(
                                     NumberFormatUtils.formatCurrency(uiState.financialSummary.totalFundCollected, tripCurrency),
                                     fontSize = 14.sp,
@@ -173,7 +177,7 @@ fun FundScreen(
                                 )
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text("Tổng tiền đã chi từ quỹ:", fontSize = 12.sp, color = Color(0xFF64748B))
+                                Text(AppStrings.totalSpentFromFundLabel(lang), fontSize = 12.sp, color = Color(0xFF64748B))
                                 Text(
                                     NumberFormatUtils.formatCurrency(uiState.financialSummary.fundPaidExpenses, tripCurrency),
                                     fontSize = 14.sp,
@@ -199,7 +203,7 @@ fun FundScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Đã giải ngân ${(progress * 100).toInt()}% ngân sách quỹ",
+                            text = AppStrings.disbursedBudgetProgress((progress * 100).toInt(), lang),
                             fontSize = 10.sp,
                             color = Color(0xFF64748B)
                         )
@@ -215,13 +219,13 @@ fun FundScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Lịch Sử Đóng Góp Quỹ",
+                        text = AppStrings.fundContributionHistoryTitle(lang),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "${uiState.fundContributions.size} đợt nộp",
+                        text = AppStrings.contributionRoundsCount(uiState.fundContributions.size, lang),
                         fontSize = 12.sp,
                         color = Color(0xFF64748B)
                     )
@@ -244,8 +248,8 @@ fun FundScreen(
                         ) {
                             Icon(Icons.Filled.Savings, contentDescription = null, tint = Color(0xFF94A3B8), modifier = Modifier.size(40.dp))
                             Spacer(modifier = Modifier.height(6.dp))
-                            Text("Chưa có thành viên nào nộp quỹ", fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
-                            Text("Nhấn 'Nộp Quỹ' để ghi nhận khoản đóng góp", fontSize = 11.sp, color = Color(0xFF94A3B8))
+                            Text(AppStrings.noContributionsYet(lang), fontWeight = FontWeight.Bold, color = Color(0xFF64748B))
+                            Text(AppStrings.tapContributeHint(lang), fontSize = 11.sp, color = Color(0xFF94A3B8))
                         }
                     }
                 }
@@ -285,12 +289,12 @@ fun FundScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = contributor?.name ?: "Thành viên",
+                                        text = contributor?.name ?: AppStrings.memberDefaultContributor(lang),
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.SemiBold
                                     )
                                     Text(
-                                        text = if (item.note.isNotBlank()) item.note else "Đóng quỹ đoàn",
+                                        text = if (item.note.isNotBlank()) item.note else AppStrings.defaultContributionNote(lang),
                                         fontSize = 12.sp,
                                         color = Color(0xFF64748B)
                                     )
@@ -333,9 +337,10 @@ fun AddFundContributionDialog(
     onDismiss: () -> Unit,
     onSave: (memberId: String, amount: Long, currency: String, exchangeRate: Double, note: String) -> Unit
 ) {
+    val lang = LocalAppLanguage.current
     var selectedMemberId by remember { mutableStateOf(members.firstOrNull()?.id ?: "") }
     var amountText by remember { mutableStateOf("") }
-    var note by remember { mutableStateOf("Đóng quỹ đợt 1") }
+    var note by remember { mutableStateOf(AppStrings.defaultRoundOneNote(lang)) }
 
     val amountValidation = FinancialInputValidator.parseAmount(amountText, baseCurrency)
     val parsedAmount = (amountValidation as? AmountValidationResult.Success)?.amount?.toLong() ?: 0L
@@ -359,7 +364,7 @@ fun AddFundContributionDialog(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Savings, contentDescription = null, tint = AmberTertiary, modifier = Modifier.size(24.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Ghi Nhận Nộp Quỹ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text(AppStrings.recordFundContributionHeader(lang), fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         },
         text = {
@@ -367,7 +372,7 @@ fun AddFundContributionDialog(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Thành viên đóng góp:", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text(AppStrings.contributingMemberLabel(lang), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -390,7 +395,7 @@ fun AddFundContributionDialog(
                             Text(amountValidation.message, color = DangerRed, fontSize = 11.sp)
                         }
                     },
-                    label = { Text("Số tiền nộp ($baseCurrency)") },
+                    label = { Text(AppStrings.amountContributedLabel(baseCurrency, lang)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -400,7 +405,7 @@ fun AddFundContributionDialog(
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text("Ghi chú nộp quỹ (VD: Đóng quỹ đợt 2)") },
+                    label = { Text(AppStrings.contributionNoteHint(lang)) },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = {
                         focusManager.clearFocus()
@@ -422,13 +427,85 @@ fun AddFundContributionDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = AmberTertiary),
                 modifier = Modifier.testTag("save_fund_button")
             ) {
-                Text("Ghi nhận")
+                Text(AppStrings.recordBtn(lang))
             }
         },
         dismissButton = {
             TextButton(onClick = safeDismiss) {
-                Text("Hủy")
+                Text(AppStrings.cancelFundBtn(lang))
             }
         }
     )
 }
+
+
+// =========================================================================
+// AppStrings Localization Extensions for FundScreen
+// =========================================================================
+
+fun AppStrings.recordFundContributionFabCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ghi nhận nộp quỹ" else "Record fund contribution"
+
+fun AppStrings.tripSettledBannerFund(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi đã khóa sổ quyết toán. Dữ liệu quỹ đoàn được bảo vệ và không thể nộp thêm quỹ."
+    else "Trip ledger is settled. Group fund data is protected and no new contributions can be recorded."
+
+fun AppStrings.currentFundBalanceTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "SỐ DƯ QUỸ ĐOÀN HIỆN TẠI" else "CURRENT GROUP FUND BALANCE"
+
+fun AppStrings.settledLockedBadge(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã khóa" else "Locked"
+
+fun AppStrings.contributeFundBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nộp Quỹ" else "Add Fund"
+
+fun AppStrings.totalCollectedLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tổng tiền đã thu:" else "Total collected:"
+
+fun AppStrings.totalSpentFromFundLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tổng tiền đã chi từ quỹ:" else "Total spent from fund:"
+
+fun AppStrings.disbursedBudgetProgress(percent: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã giải ngân $percent% ngân sách quỹ"
+    else "Disbursed $percent% of group fund"
+
+fun AppStrings.fundContributionHistoryTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lịch Sử Đóng Góp Quỹ" else "Fund Contribution History"
+
+fun AppStrings.contributionRoundsCount(count: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "$count đợt nộp" else "$count contributions"
+
+fun AppStrings.noContributionsYet(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chưa có thành viên nào nộp quỹ" else "No fund contributions yet"
+
+fun AppStrings.tapContributeHint(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nhấn 'Nộp Quỹ' để ghi nhận khoản đóng góp"
+    else "Tap 'Add Fund' to record a contribution"
+
+fun AppStrings.memberDefaultContributor(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên" else "Member"
+
+fun AppStrings.defaultContributionNote(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đóng quỹ đoàn" else "Group fund contribution"
+
+fun AppStrings.defaultRoundOneNote(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đóng quỹ đợt 1" else "Fund Round 1"
+
+fun AppStrings.recordFundContributionHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ghi Nhận Nộp Quỹ" else "Record Fund Contribution"
+
+fun AppStrings.contributingMemberLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên đóng góp:" else "Contributing Member:"
+
+fun AppStrings.amountContributedLabel(currency: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Số tiền nộp ($currency)" else "Contribution Amount ($currency)"
+
+fun AppStrings.contributionNoteHint(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ghi chú nộp quỹ (VD: Đóng quỹ đợt 2)"
+    else "Contribution memo (e.g., Fund Round 2)"
+
+fun AppStrings.recordBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ghi nhận" else "Record"
+
+fun AppStrings.cancelFundBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hủy" else "Cancel"

@@ -31,6 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import com.hiepnguyen.tripfinance.data.entity.ExpenseEntity
+import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.AppStrings
+import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
 import com.hiepnguyen.tripfinance.data.entity.ExpenseSplitEntity
 import com.hiepnguyen.tripfinance.data.entity.TripMemberEntity
 import com.hiepnguyen.tripfinance.ui.components.CategoryIcon
@@ -74,6 +77,7 @@ fun ExpensesScreen(
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val isAdmin = uiState.currentMember?.role == "ADMIN"
+    val lang = LocalAppLanguage.current
     val isSettled = uiState.currentTrip?.isSettled == true
     val tripCurrency = uiState.currentTrip?.baseCurrency ?: "VND"
 
@@ -89,7 +93,7 @@ fun ExpensesScreen(
                         .padding(bottom = 72.dp)
                         .testTag("fab_add_expense")
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Thêm khoản chi")
+                    Icon(Icons.Filled.Add, contentDescription = AppStrings.addExpenseFabCd(lang))
                 }
             }
         }
@@ -116,7 +120,7 @@ fun ExpensesScreen(
                         Icon(Icons.Filled.Lock, contentDescription = null, tint = Color(0xFF64748B), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Chuyến đi đã khóa sổ quyết toán. Dữ liệu chi tiêu được bảo vệ và không thể thêm/sửa/xóa.",
+                            text = AppStrings.tripSettledBannerExpenses(lang),
                             fontSize = 11.sp,
                             color = Color(0xFF475569),
                             fontWeight = FontWeight.Medium
@@ -129,7 +133,7 @@ fun ExpensesScreen(
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = onSearchChange,
-                placeholder = { Text("Tìm kiếm khoản chi, ghi chú...") },
+                placeholder = { Text(AppStrings.searchExpensesHint(lang)) },
                 leadingIcon = {
                     Icon(Icons.Filled.Search, contentDescription = null, tint = Color(0xFF64748B))
                 },
@@ -140,7 +144,7 @@ fun ExpensesScreen(
                             focusManager.clearFocus()
                             keyboardController?.hide()
                         }) {
-                            Icon(Icons.Filled.Clear, contentDescription = "Xóa tìm kiếm")
+                            Icon(Icons.Filled.Clear, contentDescription = AppStrings.clearSearchCd(lang))
                         }
                     }
                 },
@@ -160,14 +164,14 @@ fun ExpensesScreen(
 
             // Category Filter Chips
             val categories = listOf(
-                null to "Tất cả",
-                "FOOD" to "Ăn uống",
-                "TRANSPORT" to "Di chuyển",
-                "HOTEL" to "Khách sạn",
-                "SIGHTSEEING" to "Vé tham quan",
-                "ENTERTAINMENT" to "Giải trí",
-                "SHOPPING" to "Mua sắm",
-                "OTHER" to "Khác"
+                null to AppStrings.categoryAll(lang),
+                "FOOD" to AppStrings.categoryFood(lang),
+                "TRANSPORT" to AppStrings.categoryTransport(lang),
+                "HOTEL" to AppStrings.categoryHotel(lang),
+                "SIGHTSEEING" to AppStrings.categorySightseeing(lang),
+                "ENTERTAINMENT" to AppStrings.categoryEntertainment(lang),
+                "SHOPPING" to AppStrings.categoryShopping(lang),
+                "OTHER" to AppStrings.categoryOther(lang)
             )
 
             LazyRow(
@@ -202,13 +206,13 @@ fun ExpensesScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Chưa có khoản chi nào",
+                            text = AppStrings.noExpensesYet(lang),
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF64748B),
                             fontSize = 15.sp
                         )
                         Text(
-                            text = "Nhấn nút '+' bên dưới để tạo khoản chi mới",
+                            text = AppStrings.tapPlusToCreateExpense(lang),
                             color = Color(0xFF94A3B8),
                             fontSize = 12.sp
                         )
@@ -287,10 +291,10 @@ fun ExpensesScreen(
                 Icon(Icons.Filled.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
             },
             title = {
-                Text("Xác Nhận Xóa Khoản Chi", fontWeight = FontWeight.Bold)
+                Text(AppStrings.confirmDeleteExpenseHeader(lang), fontWeight = FontWeight.Bold)
             },
             text = {
-                Text("Bạn có chắc chắn muốn xóa khoản chi '${exp.title}' (${NumberFormatUtils.formatCurrency(exp.convertedTotalAmount, tripCurrency)})? Thao tác này chỉ dành cho Trưởng đoàn.")
+                Text(AppStrings.confirmDeleteExpensePrompt(exp.title, NumberFormatUtils.formatCurrency(exp.convertedTotalAmount, tripCurrency), lang))
             },
             confirmButton = {
                 Button(
@@ -301,12 +305,12 @@ fun ExpensesScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.testTag("confirm_delete_expense_button")
                 ) {
-                    Text("Xóa khoản chi")
+                    Text(AppStrings.deleteExpenseBtn(lang))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { expenseToDelete = null }) {
-                    Text("Hủy")
+                    Text(AppStrings.cancelBtn(lang))
                 }
             }
         )
@@ -324,10 +328,11 @@ fun ExpenseItemCard(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val lang = LocalAppLanguage.current
     val payerName = if (expense.payerType == "FUND") {
-        "Quỹ chung đoàn"
+        AppStrings.groupFundPayer(lang)
     } else {
-        members.find { it.id == expense.payerMemberId }?.name ?: "Thành viên"
+        members.find { it.id == expense.payerMemberId }?.name ?: AppStrings.memberDefaultName(lang)
     }
 
     val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
@@ -396,7 +401,7 @@ fun ExpenseItemCard(
                         )
                         Spacer(modifier = Modifier.width(3.dp))
                         Text(
-                            text = if (expense.payerType == "FUND") "Quỹ chi" else "Chi hộ: $payerName",
+                            text = if (expense.payerType == "FUND") AppStrings.fundPaidBadge(lang) else AppStrings.memberPaidBadge(payerName, lang),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = if (expense.payerType == "FUND") Color(0xFF92400E) else Color(0xFF3730A3)
@@ -432,7 +437,7 @@ fun ExpenseItemCard(
                         ) {
                             Icon(
                                 Icons.Filled.Edit,
-                                contentDescription = "Sửa khoản chi",
+                                contentDescription = AppStrings.editExpenseCd(lang),
                                 tint = IndigoSecondary,
                                 modifier = Modifier.size(16.dp)
                             )
@@ -443,7 +448,7 @@ fun ExpenseItemCard(
                         ) {
                             Icon(
                                 Icons.Filled.DeleteOutline,
-                                contentDescription = "Xóa khoản chi",
+                                contentDescription = AppStrings.deleteExpenseCd(lang),
                                 tint = Color(0xFFEF4444),
                                 modifier = Modifier.size(16.dp)
                             )
@@ -467,33 +472,34 @@ fun ExpenseDetailDialog(
     onEdit: () -> Unit = {},
     onDelete: () -> Unit = {}
 ) {
+    val lang = LocalAppLanguage.current
     val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     val payerMember = members.find { it.id == expense.payerMemberId }
     val payerName = if (expense.payerType == "FUND") {
-        "Quỹ chung của đoàn (Trừ thẳng vào quỹ)"
+        AppStrings.groupFundDirectDeduct(lang)
     } else {
-        "${payerMember?.name ?: "Thành viên"} (${when (payerMember?.role) {
-            "ADMIN" -> "Trưởng đoàn"
-            "TREASURER" -> "Thủ quỹ"
-            else -> "Thành viên"
+        "${payerMember?.name ?: AppStrings.memberDefaultName(lang)} (${when (payerMember?.role) {
+            "ADMIN" -> AppStrings.roleAdmin(lang)
+            "TREASURER" -> AppStrings.roleTreasurer(lang)
+            else -> AppStrings.memberDefaultName(lang)
         }})"
     }
 
     val categoryLabel = when (expense.category) {
-        "FOOD" -> "Ăn uống"
-        "TRANSPORT" -> "Di chuyển"
-        "HOTEL" -> "Khách sạn / Lưu trú"
-        "SIGHTSEEING" -> "Vé tham quan"
-        "ENTERTAINMENT" -> "Giải trí"
-        "SHOPPING" -> "Mua sắm"
-        else -> "Chi phí khác"
+        "FOOD" -> AppStrings.categoryFood(lang)
+        "TRANSPORT" -> AppStrings.categoryTransport(lang)
+        "HOTEL" -> AppStrings.categoryHotelAccommodation(lang)
+        "SIGHTSEEING" -> AppStrings.categorySightseeing(lang)
+        "ENTERTAINMENT" -> AppStrings.categoryEntertainment(lang)
+        "SHOPPING" -> AppStrings.categoryShopping(lang)
+        else -> AppStrings.categoryOtherExpenses(lang)
     }
 
     val splitTypeLabel = when (expense.splitType) {
-        "EQUAL" -> "Chia đều cho tất cả thành viên"
-        "CUSTOM_PARTICIPANT" -> "Chọn danh sách người tham gia"
-        "RATIO" -> "Chia theo tỷ lệ %"
-        "CUSTOM_AMOUNT" -> "Tùy nhập số tiền từng người"
+        "EQUAL" -> AppStrings.splitEqualAll(lang)
+        "CUSTOM_PARTICIPANT" -> AppStrings.splitCustomParticipants(lang)
+        "RATIO" -> AppStrings.splitRatioPercentage(lang)
+        "CUSTOM_AMOUNT" -> AppStrings.splitCustomExactAmount(lang)
         else -> expense.splitType
     }
 
@@ -509,7 +515,7 @@ fun ExpenseDetailDialog(
                 Column {
                     Text(expense.title, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     Text(
-                        text = "Thời gian: ${dateFormat.format(Date(expense.timestamp))}",
+                        text = AppStrings.expenseTimeLabel(dateFormat.format(Date(expense.timestamp)), lang),
                         fontSize = 11.sp,
                         color = Color(0xFF64748B)
                     )
@@ -531,7 +537,7 @@ fun ExpenseDetailDialog(
                             modifier = Modifier.padding(12.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text("Tổng số tiền quy đổi ($baseCurrency)", fontSize = 11.sp, color = EmeraldOnPrimaryContainer)
+                            Text(AppStrings.convertedTotalAmountLabel(baseCurrency, lang), fontSize = 11.sp, color = EmeraldOnPrimaryContainer)
                             Text(
                                 text = NumberFormatUtils.formatCurrency(expense.convertedTotalAmount, baseCurrency),
                                 fontSize = 22.sp,
@@ -541,7 +547,7 @@ fun ExpenseDetailDialog(
                             if (expense.currency != baseCurrency) {
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "Tiền gốc: ${expense.totalAmount} ${expense.currency} • Tỷ giá: ${expense.exchangeRate}",
+                                    text = AppStrings.originalAmountAndRate(expense.totalAmount, expense.currency, expense.exchangeRate, lang),
                                     fontSize = 12.sp,
                                     color = EmeraldOnPrimaryContainer
                                 )
@@ -559,25 +565,25 @@ fun ExpenseDetailDialog(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = "• Danh mục: $categoryLabel",
+                            text = AppStrings.expenseCategoryRow(categoryLabel, lang),
                             fontSize = 13.sp,
                             color = Color(0xFF1E293B)
                         )
                         Text(
-                            text = "• Người xuất tiền: $payerName",
+                            text = AppStrings.expensePayerRow(payerName, lang),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color(0xFF1E293B)
                         )
                         Text(
-                            text = "• Cách phân bổ: $splitTypeLabel",
+                            text = AppStrings.expenseSplitMethodRow(splitTypeLabel, lang),
                             fontSize = 13.sp,
                             color = Color(0xFF1E293B)
                         )
                         if (expense.note.isNotBlank()) {
                             HorizontalDivider(color = Color(0xFFE2E8F0), modifier = Modifier.padding(vertical = 2.dp))
                             Text(
-                                text = "• Ghi chú: ${expense.note}",
+                                text = AppStrings.expenseNoteRow(expense.note, lang),
                                 fontSize = 13.sp,
                                 color = Color(0xFF334155)
                             )
@@ -589,7 +595,7 @@ fun ExpenseDetailDialog(
                 if (splits.isNotEmpty()) {
                     item {
                         Text(
-                            text = "Danh Sách Người Tham Gia (${splits.size} người):",
+                            text = AppStrings.participantsCountTitle(splits.size, lang),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E293B)
@@ -603,7 +609,7 @@ fun ExpenseDetailDialog(
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
                             splits.forEach { sp ->
-                                val memName = members.find { it.id == sp.memberId }?.name ?: "Thành viên"
+                                val memName = members.find { it.id == sp.memberId }?.name ?: AppStrings.memberDefaultName(lang)
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -630,7 +636,7 @@ fun ExpenseDetailDialog(
                 if (isSettled) {
                     item {
                         Text(
-                            text = "🔒 Chuyến đi đã khóa sổ. Dữ liệu chi tiêu được niêm phong, không thể sửa hoặc xóa.",
+                            text = AppStrings.tripSettledBannerLocked(lang),
                             fontSize = 11.sp,
                             color = Color(0xFFB91C1C),
                             fontWeight = FontWeight.Medium
@@ -639,7 +645,7 @@ fun ExpenseDetailDialog(
                 } else if (!isAdmin) {
                     item {
                         Text(
-                            text = "ℹ️ Chỉ Trưởng đoàn (Admin) mới có quyền sửa hoặc xóa khoản chi này.",
+                            text = AppStrings.adminOnlyEditNotice(lang),
                             fontSize = 11.sp,
                             color = Color(0xFF64748B)
                         )
@@ -656,7 +662,7 @@ fun ExpenseDetailDialog(
                     ) {
                         Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Sửa")
+                        Text(AppStrings.editAction(lang))
                     }
                     Button(
                         onClick = onDelete,
@@ -664,16 +670,167 @@ fun ExpenseDetailDialog(
                     ) {
                         Icon(Icons.Filled.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Xóa")
+                        Text(AppStrings.deleteAction(lang))
                     }
                 }
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                 ) {
-                    Text("Đóng")
+                    Text(AppStrings.closeAction(lang))
                 }
             }
         }
     )
 }
+
+
+// =========================================================================
+// AppStrings Localization Extensions for ExpensesScreen
+// =========================================================================
+
+fun AppStrings.addExpenseFabCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thêm khoản chi" else "Add expense"
+
+fun AppStrings.tripSettledBannerExpenses(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi đã khóa sổ quyết toán. Dữ liệu chi tiêu được bảo vệ và không thể thêm/sửa/xóa."
+    else "Trip ledger is settled. Expense records are protected and cannot be added/edited/deleted."
+
+fun AppStrings.searchExpensesHint(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tìm kiếm khoản chi, ghi chú..." else "Search expenses, notes..."
+
+fun AppStrings.clearSearchCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xóa tìm kiếm" else "Clear search"
+
+fun AppStrings.categoryAll(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tất cả" else "All"
+
+fun AppStrings.categoryFood(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ăn uống" else "Food & Dining"
+
+fun AppStrings.categoryTransport(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Di chuyển" else "Transportation"
+
+fun AppStrings.categoryHotel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Khách sạn" else "Accommodation"
+
+fun AppStrings.categorySightseeing(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Vé tham quan" else "Sightseeing"
+
+fun AppStrings.categoryEntertainment(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Giải trí" else "Entertainment"
+
+fun AppStrings.categoryShopping(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mua sắm" else "Shopping"
+
+fun AppStrings.categoryOther(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Khác" else "Others"
+
+fun AppStrings.noExpensesYet(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chưa có khoản chi nào" else "No expenses recorded yet"
+
+fun AppStrings.tapPlusToCreateExpense(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nhấn nút '+' bên dưới để tạo khoản chi mới"
+    else "Tap '+' button below to record a new expense"
+
+fun AppStrings.confirmDeleteExpenseHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xác Nhận Xóa Khoản Chi" else "Confirm Delete Expense"
+
+fun AppStrings.confirmDeleteExpensePrompt(title: String, amountStr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bạn có chắc chắn muốn xóa khoản chi '$title' ($amountStr)? Thao tác này chỉ dành cho Trưởng đoàn."
+    else "Are you sure you want to delete expense '$title' ($amountStr)? Only the Group Leader can perform this action."
+
+fun AppStrings.deleteExpenseBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xóa khoản chi" else "Delete Expense"
+
+fun AppStrings.cancelBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hủy" else "Cancel"
+
+fun AppStrings.groupFundPayer(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quỹ chung đoàn" else "Group Fund"
+
+fun AppStrings.memberDefaultName(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên" else "Member"
+
+fun AppStrings.fundPaidBadge(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quỹ chi" else "Fund Paid"
+
+fun AppStrings.memberPaidBadge(payerName: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chi hộ: $payerName" else "Paid by: $payerName"
+
+fun AppStrings.editExpenseCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Sửa khoản chi" else "Edit expense"
+
+fun AppStrings.deleteExpenseCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xóa khoản chi" else "Delete expense"
+
+fun AppStrings.groupFundDirectDeduct(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quỹ chung của đoàn (Trừ thẳng vào quỹ)"
+    else "Group Fund (Deducted directly from fund)"
+
+fun AppStrings.roleAdmin(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Trưởng đoàn" else "Leader"
+
+fun AppStrings.roleTreasurer(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thủ quỹ" else "Treasurer"
+
+fun AppStrings.categoryHotelAccommodation(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Khách sạn / Lưu trú" else "Hotel / Accommodation"
+
+fun AppStrings.categoryOtherExpenses(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chi phí khác" else "Other Expenses"
+
+fun AppStrings.splitEqualAll(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chia đều cho tất cả thành viên" else "Split equally among all members"
+
+fun AppStrings.splitCustomParticipants(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chọn danh sách người tham gia" else "Custom participant roster"
+
+fun AppStrings.splitRatioPercentage(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chia theo tỷ lệ %" else "Split by percentage %"
+
+fun AppStrings.splitCustomExactAmount(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tùy nhập số tiền từng người" else "Custom exact amount per person"
+
+fun AppStrings.expenseTimeLabel(timeStr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thời gian: $timeStr" else "Time: $timeStr"
+
+fun AppStrings.convertedTotalAmountLabel(currency: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tổng số tiền quy đổi ($currency)" else "Converted Total Amount ($currency)"
+
+fun AppStrings.originalAmountAndRate(amount: Double, curr: String, rate: Double, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tiền gốc: $amount $curr • Tỷ giá: $rate"
+    else "Original: $amount $curr • Rate: $rate"
+
+fun AppStrings.expenseCategoryRow(category: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Danh mục: $category" else "• Category: $category"
+
+fun AppStrings.expensePayerRow(payer: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Người xuất tiền: $payer" else "• Payer: $payer"
+
+fun AppStrings.expenseSplitMethodRow(splitMethod: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Cách phân bổ: $splitMethod" else "• Split Method: $splitMethod"
+
+fun AppStrings.expenseNoteRow(note: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Ghi chú: $note" else "• Note: $note"
+
+fun AppStrings.participantsCountTitle(count: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Danh Sách Người Tham Gia ($count người):"
+    else "Participants Breakdown ($count members):"
+
+fun AppStrings.tripSettledBannerLocked(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "🔒 Chuyến đi đã khóa sổ. Dữ liệu chi tiêu được niêm phong, không thể sửa hoặc xóa."
+    else "🔒 Trip ledger is closed. Expense records are sealed and cannot be edited or deleted."
+
+fun AppStrings.adminOnlyEditNotice(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "ℹ️ Chỉ Trưởng đoàn (Admin) mới có quyền sửa hoặc xóa khoản chi này."
+    else "ℹ️ Only the Group Leader (Admin) can edit or delete this expense."
+
+fun AppStrings.editAction(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Sửa" else "Edit"
+
+fun AppStrings.deleteAction(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xóa" else "Delete"
+
+fun AppStrings.closeAction(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đóng" else "Close"

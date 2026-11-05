@@ -51,8 +51,8 @@ import java.util.*
 @Composable
 fun MembersAndSettingsScreen(
     uiState: UiState,
-    onAddMember: (name: String, role: String, bankName: String?, bankAccount: String?, holder: String?) -> Unit,
-    onEditMember: (member: TripMemberEntity, name: String, role: String, bankName: String?, bankAccount: String?, holder: String?) -> Unit = { _, _, _, _, _, _ -> },
+    onAddMember: (name: String, role: String) -> Unit,
+    onEditMember: (member: TripMemberEntity, name: String, role: String) -> Unit = { _, _, _ -> },
     onUpdateRole: (TripMemberEntity, String) -> Unit,
     onRemoveOrDeactivate: (TripMemberEntity) -> Unit,
     onUpdateRate: (currencyCode: String, rate: Double) -> Unit,
@@ -695,8 +695,8 @@ fun MembersAndSettingsScreen(
         EditMemberDialog(
             member = mem,
             onDismiss = { memberToEdit = null },
-            onSave = { name, role, bankName, bankAccount, holder ->
-                onEditMember(mem, name, role, bankName, bankAccount, holder)
+            onSave = { name, role ->
+                onEditMember(mem, name, role)
                 memberToEdit = null
             }
         )
@@ -747,8 +747,8 @@ fun MembersAndSettingsScreen(
     if (showAddMemberDialog) {
         AddMemberDialog(
             onDismiss = { showAddMemberDialog = false },
-            onSave = { name, role, bankName, bankAccount, holder ->
-                onAddMember(name, role, bankName, bankAccount, holder)
+            onSave = { name, role ->
+                onAddMember(name, role)
                 showAddMemberDialog = false
             }
         )
@@ -814,7 +814,7 @@ fun MembersAndSettingsScreen(
 @Composable
 fun AddMemberDialog(
     onDismiss: () -> Unit,
-    onSave: (name: String, role: String, bankName: String?, bankAccount: String?, holder: String?) -> Unit
+    onSave: (name: String, role: String) -> Unit
 ) {
     val lang = LocalAppLanguage.current
     var name by remember { mutableStateOf("") }
@@ -876,7 +876,7 @@ fun AddMemberDialog(
                 onClick = {
                     focusManager.clearFocus()
                     keyboardController?.hide()
-                    onSave(name, role, null, null, null)
+                    onSave(name, role)
                 },
                 enabled = name.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
@@ -1113,7 +1113,7 @@ fun AuditLogsDialog(
 fun EditMemberDialog(
     member: TripMemberEntity,
     onDismiss: () -> Unit,
-    onSave: (name: String, role: String, bankName: String?, bankAccount: String?, holder: String?) -> Unit
+    onSave: (name: String, role: String) -> Unit
 ) {
     val lang = LocalAppLanguage.current
     var name by remember { mutableStateOf(member.name) }
@@ -1180,7 +1180,7 @@ fun EditMemberDialog(
                 onClick = {
                     focusManager.clearFocus()
                     keyboardController?.hide()
-                    onSave(name, role, null, null, null)
+                    onSave(name, role)
                 },
                 enabled = name.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
@@ -1248,16 +1248,16 @@ fun PrivacyPolicyDialog(
 
                 item {
                     Text(
-                        text = if (lang == AppLanguage.VI) "2. Dữ liệu Tài chính & Số Tài Khoản Ngân Hàng" else "2. Financial Data & Bank Account Numbers",
+                        text = if (lang == AppLanguage.VI) "2. Dữ liệu Tài chính & Quyền Riêng Tư" else "2. Financial Data & User Privacy",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
                         text = if (lang == AppLanguage.VI)
-                            "Thông tin số tài khoản và ngân hàng do người dùng nhập chỉ được lưu trữ cục bộ trên máy để hỗ trợ đối soát giữa các thành viên. Hệ thống cam kết không bao giờ thu thập, bán hay chia sẻ thông tin cho bất kỳ bên thứ ba hay mạng quảng cáo nào."
+                            "Toàn bộ thông tin tài chính và chi tiêu do người dùng nhập chỉ được lưu trữ cục bộ trên thiết bị để hỗ trợ đối soát giữa các thành viên. Hệ thống cam kết không bao giờ thu thập, bán hay chia sẻ thông tin cho bất kỳ bên thứ ba hay mạng quảng cáo nào."
                         else
-                            "Bank account numbers and bank names entered by users are strictly stored locally to support bookkeeping among members. TripFinance never transmits, sells, or monetizes this financial info to third parties or ad networks.",
+                            "All financial records and expenses entered by users are strictly stored locally to support bookkeeping among members. TripFinance never transmits, sells, or monetizes this financial info to third parties or ad networks.",
                         fontSize = 12.sp,
                         color = Color(0xFF475569),
                         lineHeight = 17.sp

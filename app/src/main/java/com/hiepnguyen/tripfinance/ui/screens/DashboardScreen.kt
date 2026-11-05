@@ -102,14 +102,14 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Chưa Có Đoàn Công Tác Nào",
+                            text = AppStrings.noTripsTitle(lang),
                             fontWeight = FontWeight.Bold,
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Ứng dụng sạch sẽ và sẵn sàng sử dụng. Bắt đầu bằng cách tạo đoàn công tác mới để quản lý chi tiêu và chia tiền.",
+                            text = AppStrings.noTripsDesc(lang),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.extendedColorScheme.textMuted,
                             textAlign = TextAlign.Center
@@ -121,7 +121,7 @@ fun DashboardScreen(
                         ) {
                             Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Tạo Đoàn Công Tác Mới")
+                            Text(AppStrings.createTripBigBtn(lang))
                         }
                     }
                 }
@@ -142,20 +142,20 @@ fun DashboardScreen(
                     ) {
                         Icon(
                             Icons.Filled.Lock,
-                            contentDescription = "Đã khóa",
+                            contentDescription = AppStrings.lockedBadgeCd(lang),
                             tint = MaterialTheme.extendedColorScheme.textMuted,
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "Sổ Chuyến Đi Đã Được Khóa Quyết Toán",
+                                text = AppStrings.tripSettledTitle(lang),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Mọi khoản chi tiêu và nộp quỹ đã được niêm phong an toàn để đối soát và bù trừ công nợ.",
+                                text = AppStrings.tripSettledDesc(lang),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.extendedColorScheme.textMuted
                             )
@@ -197,7 +197,7 @@ fun DashboardScreen(
                         ) {
                             Icon(
                                 Icons.Filled.MenuBook,
-                                contentDescription = if (lang == AppLanguage.VI) "Hướng dẫn sử dụng" else "User Guide",
+                                contentDescription = AppStrings.userGuideCd(lang),
                                 tint = MaterialTheme.colorScheme.onPrimary,
                                 modifier = Modifier.size(20.dp)
                             )
@@ -205,16 +205,13 @@ fun DashboardScreen(
                         Spacer(modifier = Modifier.width(10.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = if (lang == AppLanguage.VI) "Cẩm Nang Hướng Dẫn Sử Dụng" else "User Guide & Handbook",
+                                text = AppStrings.userGuideBannerTitle(lang),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                             Text(
-                                text = if (lang == AppLanguage.VI)
-                                    "Xem quy trình 4 bước, cách chia tiền, bù trừ công nợ & ngoại tệ"
-                                else
-                                    "Learn workflows, split methods, debt netting & currency rates",
+                                text = AppStrings.userGuideBannerDesc(lang),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary,
                                 maxLines = 1,
@@ -293,13 +290,13 @@ fun DashboardScreen(
                             Spacer(modifier = Modifier.width(10.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = if (lang == AppLanguage.VI) "Gợi ý chi tiêu" else "Spending Insights",
+                                    text = AppStrings.aiSpendingInsights(lang),
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFF065F46)
                                 )
                                 Text(
-                                    text = if (lang == AppLanguage.VI) "Phân tích ngân sách, cơ cấu chi tiêu và sức khỏe quỹ ngoại tuyến" else "Analyze budget, category split & fund health offline",
+                                    text = AppStrings.aiSpendingInsightsDesc(lang),
                                     fontSize = 11.sp,
                                     color = Color(0xFF047857)
                                 )
@@ -317,7 +314,7 @@ fun DashboardScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = if (lang == AppLanguage.VI) "Phân tích" else "Analyze",
+                                    text = AppStrings.aiAnalyzeBtn(lang),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
@@ -338,7 +335,7 @@ fun DashboardScreen(
         // Financial Overview Cards
         item {
             Text(
-                text = "Tổng Quan Tài Chính",
+                text = AppStrings.financialOverviewTitle(lang),
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -377,7 +374,7 @@ fun DashboardScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = "TỔNG CHI TIÊU ĐOÀN",
+                                        text = AppStrings.totalTripExpensesLabel(lang),
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF64748B)
@@ -397,7 +394,7 @@ fun DashboardScreen(
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.height(32.dp)
                             ) {
-                                Text("Chi tiết", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                Text(AppStrings.detailsBtn(lang), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
 
@@ -412,7 +409,7 @@ fun DashboardScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = "Thành viên chi hộ (Paid)",
+                                    text = AppStrings.memberPaidSource(lang),
                                     fontSize = 11.sp,
                                     color = Color(0xFF64748B)
                                 )
@@ -425,7 +422,7 @@ fun DashboardScreen(
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
-                                    text = "Chi từ Quỹ chung",
+                                    text = AppStrings.fundPaidSource(lang),
                                     fontSize = 11.sp,
                                     color = Color(0xFF64748B)
                                 )
@@ -471,7 +468,7 @@ fun DashboardScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {
                                     Text(
-                                        text = "SỐ DƯ QUỸ CHUNG",
+                                        text = AppStrings.groupFundBalanceLabel(lang),
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF64748B)
@@ -491,7 +488,7 @@ fun DashboardScreen(
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.height(32.dp)
                             ) {
-                                Text("Quỹ đoàn", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                Text(AppStrings.groupFundBtn(lang), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                             }
                         }
 
@@ -501,12 +498,12 @@ fun DashboardScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Đã thu quỹ: ${NumberFormatUtils.formatCurrency(uiState.financialSummary.totalFundCollected, tripCurrency)}",
+                                text = AppStrings.fundCollectedPrefix(NumberFormatUtils.formatCurrency(uiState.financialSummary.totalFundCollected, tripCurrency), lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B)
                             )
                             Text(
-                                text = "Đã chi quỹ: ${NumberFormatUtils.formatCurrency(uiState.financialSummary.fundPaidExpenses, tripCurrency)}",
+                                text = AppStrings.fundPaidPrefix(NumberFormatUtils.formatCurrency(uiState.financialSummary.fundPaidExpenses, tripCurrency), lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B)
                             )
@@ -531,7 +528,7 @@ fun DashboardScreen(
                         ) {
                             Icon(
                                 imageVector = if (uiState.financialSummary.isBalanced) Icons.Filled.CheckCircle else Icons.Filled.Warning,
-                                contentDescription = if (uiState.financialSummary.isBalanced) "Cân bằng" else "Chênh lệch",
+                                contentDescription = if (uiState.financialSummary.isBalanced) AppStrings.balanceStatusBalanced(lang) else AppStrings.balanceStatusDiscrepancy(lang),
                                 tint = if (uiState.financialSummary.isBalanced) MaterialTheme.extendedColorScheme.success else MaterialTheme.extendedColorScheme.danger,
                                 modifier = Modifier.size(18.dp)
                             )
@@ -539,16 +536,16 @@ fun DashboardScreen(
                             Column {
                                 Text(
                                     text = if (uiState.financialSummary.isBalanced) {
-                                        "Đối soát hợp lệ: Tổng Balance = 0 (${tripCurrency})"
+                                        AppStrings.auditValidZeroBalance(tripCurrency, lang)
                                     } else {
-                                        "Cảnh báo: Chênh lệch ${NumberFormatUtils.formatCurrency(uiState.financialSummary.balanceDiscrepancy, tripCurrency)}"
+                                        AppStrings.auditWarningDiscrepancy(NumberFormatUtils.formatCurrency(uiState.financialSummary.balanceDiscrepancy, tripCurrency), lang)
                                     },
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = if (uiState.financialSummary.isBalanced) MaterialTheme.extendedColorScheme.onSuccessContainer else MaterialTheme.extendedColorScheme.onDangerContainer
                                 )
                                 Text(
-                                    text = "Thuật toán kiểm tra liên tục đảm bảo không thất thoát",
+                                    text = AppStrings.auditAlgorithmSafe(lang),
                                     style = MaterialTheme.typography.labelSmall,
                                     color = if (uiState.financialSummary.isBalanced) MaterialTheme.extendedColorScheme.onSuccessContainer else MaterialTheme.extendedColorScheme.onDangerContainer
                                 )
@@ -561,7 +558,7 @@ fun DashboardScreen(
                             modifier = Modifier.height(30.dp)
                         ) {
                             Text(
-                                "Quyết toán",
+                                AppStrings.settlementActionBtn(lang),
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = if (uiState.financialSummary.isBalanced) MaterialTheme.extendedColorScheme.success else MaterialTheme.extendedColorScheme.danger
@@ -596,7 +593,7 @@ fun DashboardScreen(
                         Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            if (lang == AppLanguage.VI) "Thêm Chi" else "Expense",
+                            AppStrings.quickAddExpense(lang),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1
@@ -625,7 +622,7 @@ fun DashboardScreen(
                         Icon(Icons.Filled.Savings, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            if (lang == AppLanguage.VI) "Nộp Quỹ" else "Fund",
+                            AppStrings.quickAddFund(lang),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1
@@ -653,7 +650,7 @@ fun DashboardScreen(
                         Icon(Icons.Filled.Description, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            if (lang == AppLanguage.VI) "Báo Cáo" else "Report",
+                            AppStrings.quickExportReport(lang),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1
@@ -681,7 +678,7 @@ fun DashboardScreen(
                         Icon(Icons.Filled.MenuBook, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color(0xFF2563EB))
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            if (lang == AppLanguage.VI) "Hướng Dẫn" else "Guide",
+                            AppStrings.quickUserGuide(lang),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1D4ED8),
@@ -701,13 +698,13 @@ fun DashboardScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (lang == AppLanguage.VI) "Phân Loại Chi Tiêu" else "Category Breakdown",
+                        text = AppStrings.categoryBreakdownTitle(lang),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                     Text(
-                        text = "${uiState.expenses.size} ${if (lang == AppLanguage.VI) "khoản chi" else "expenses"}",
+                        text = AppStrings.expensesCountLabel(uiState.expenses.size, lang),
                         fontSize = 12.sp,
                         color = Color(0xFF64748B)
                     )
@@ -775,13 +772,13 @@ fun DashboardScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Bảng Số Dư Thành Viên",
+                    text = AppStrings.memberBalancesTableTitle(lang),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
                 TextButton(onClick = onNavigateToSettlement) {
-                    Text("Xem quyết toán", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(AppStrings.viewSettlementBtn(lang), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -814,7 +811,7 @@ fun DashboardScreen(
                             ) {
                                 BalanceChip(balance = status.balance, status = status.status, currency = tripCurrency)
                                 Text(
-                                    text = "Đã chi: ${NumberFormatUtils.formatCurrency(status.totalPaid, tripCurrency)} • Phải trả: ${NumberFormatUtils.formatCurrency(status.totalOwed, tripCurrency)}",
+                                    text = AppStrings.memberPaidAndOwed(NumberFormatUtils.formatCurrency(status.totalPaid, tripCurrency), NumberFormatUtils.formatCurrency(status.totalOwed, tripCurrency), lang),
                                     fontSize = 11.sp,
                                     color = Color(0xFF64748B)
                                 )
@@ -835,7 +832,7 @@ fun DashboardScreen(
             onDismissRequest = { showUserPicker = false },
             title = {
                 Text(
-                    text = "Chuyển Đổi Người Dùng / Vai Trò",
+                    text = AppStrings.switchUserRoleTitle(lang),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -843,7 +840,7 @@ fun DashboardScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "Chọn nhân vật để trải nghiệm phân quyền đầy đủ (Admin, Thủ quỹ, Thành viên, Người xem):",
+                        text = AppStrings.switchUserRoleDesc(lang),
                         fontSize = 12.sp,
                         color = Color(0xFF64748B)
                     )
@@ -887,7 +884,7 @@ fun DashboardScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showUserPicker = false }) {
-                    Text("Đóng")
+                    Text(AppStrings.closeDialogBtn(lang))
                 }
             }
         )
@@ -957,7 +954,7 @@ fun TripHeaderCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (lang == AppLanguage.VI) "DỮ LIỆU OFFLINE CỤC BỘ" else "LOCAL OFFLINE STORAGE",
+                            text = AppStrings.localOfflineStorageBadge(lang),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -977,7 +974,7 @@ fun TripHeaderCard(
                                 .size(32.dp)
                                 .testTag("dashboard_edit_active_trip_button")
                         ) {
-                            Icon(Icons.Filled.Edit, contentDescription = "Chỉnh sửa thông tin đoàn", modifier = Modifier.size(15.dp))
+                            Icon(Icons.Filled.Edit, contentDescription = AppStrings.editTripInfoCd(lang), modifier = Modifier.size(15.dp))
                         }
 
                         Spacer(modifier = Modifier.width(6.dp))
@@ -992,7 +989,7 @@ fun TripHeaderCard(
                                 .size(32.dp)
                                 .testTag("dashboard_delete_active_trip_button")
                         ) {
-                            Icon(Icons.Filled.Delete, contentDescription = "Xóa đoàn này", modifier = Modifier.size(15.dp))
+                            Icon(Icons.Filled.Delete, contentDescription = AppStrings.deleteThisTripCd(lang), modifier = Modifier.size(15.dp))
                         }
 
                         Spacer(modifier = Modifier.width(6.dp))
@@ -1008,7 +1005,7 @@ fun TripHeaderCard(
                             .size(32.dp)
                             .testTag("dashboard_create_trip_button")
                     ) {
-                        Icon(Icons.Filled.Add, contentDescription = "Tạo đoàn mới", modifier = Modifier.size(16.dp))
+                        Icon(Icons.Filled.Add, contentDescription = AppStrings.createNewTripCd(lang), modifier = Modifier.size(16.dp))
                     }
                 }
             }
@@ -1054,14 +1051,14 @@ fun TripHeaderCard(
                             Spacer(modifier = Modifier.width(10.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = if (lang == AppLanguage.VI) "ĐOÀN CÔNG TÁC ĐANG CHỌN" else "SELECTED TRIP",
+                                    text = AppStrings.selectedTripBadge(lang),
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFCCFBF1)
                                 )
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
-                                        text = uiState.currentTrip?.title ?: if (lang == AppLanguage.VI) "Chưa chọn đoàn nào" else "No trip selected",
+                                        text = uiState.currentTrip?.title ?: AppStrings.noTripSelected(lang),
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color.White,
@@ -1086,7 +1083,7 @@ fun TripHeaderCard(
                                     }
                                 }
                                 Text(
-                                    text = uiState.currentTrip?.description ?: if (lang == AppLanguage.VI) "Chạm để đổi đoàn công tác" else "Tap to switch trip",
+                                    text = uiState.currentTrip?.description ?: AppStrings.tapToSwitchTrip(lang),
                                     fontSize = 11.sp,
                                     color = Color(0xCCFFFFFF),
                                     maxLines = 1,
@@ -1105,7 +1102,7 @@ fun TripHeaderCard(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = if (lang == AppLanguage.VI) "Đổi đoàn" else "Switch",
+                                    text = AppStrings.switchTripBtn(lang),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
@@ -1113,7 +1110,7 @@ fun TripHeaderCard(
                                 Spacer(modifier = Modifier.width(2.dp))
                                 Icon(
                                     Icons.Filled.ArrowDropDown,
-                                    contentDescription = "Danh sách xổ xuống",
+                                    contentDescription = AppStrings.dropdownListCd(lang),
                                     tint = Color.White,
                                     modifier = Modifier.size(18.dp)
                                 )
@@ -1139,13 +1136,13 @@ fun TripHeaderCard(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = if (lang == AppLanguage.VI) "Chọn Đoàn Công Tác" else "Select Business Trip",
+                            text = AppStrings.selectBusinessTripTitle(lang),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "${uiState.allTrips.size} ${if (lang == AppLanguage.VI) "đoàn" else "trips"}",
+                            text = AppStrings.tripsCountLabel(uiState.allTrips.size, lang),
                             fontSize = 12.sp,
                             color = Color(0xFF64748B)
                         )
@@ -1156,7 +1153,7 @@ fun TripHeaderCard(
                         DropdownMenuItem(
                             text = {
                                 Text(
-                                    text = if (lang == AppLanguage.VI) "Chưa có đoàn nào trong danh sách" else "No trips available",
+                                    text = AppStrings.noTripsInList(lang),
                                     fontSize = 13.sp,
                                     color = Color(0xFF64748B)
                                 )
@@ -1198,7 +1195,7 @@ fun TripHeaderCard(
                                                 }
                                             }
                                             Text(
-                                                text = if (trip.description.isNotBlank()) trip.description else if (lang == AppLanguage.VI) "Lưu trữ cục bộ" else "Local storage",
+                                                text = if (trip.description.isNotBlank()) trip.description else AppStrings.localStorageFallback(lang),
                                                 fontSize = 11.sp,
                                                 color = Color(0xFF64748B),
                                                 maxLines = 1,
@@ -1214,7 +1211,7 @@ fun TripHeaderCard(
                                                 },
                                                 modifier = Modifier.size(28.dp).testTag("dropdown_edit_trip_${trip.id}")
                                             ) {
-                                                Icon(Icons.Filled.Edit, contentDescription = "Sửa đoàn", tint = Color(0xFF64748B), modifier = Modifier.size(15.dp))
+                                                Icon(Icons.Filled.Edit, contentDescription = AppStrings.editTripCd(lang), tint = Color(0xFF64748B), modifier = Modifier.size(15.dp))
                                             }
 
                                             IconButton(
@@ -1224,14 +1221,14 @@ fun TripHeaderCard(
                                                 },
                                                 modifier = Modifier.size(28.dp).testTag("dropdown_delete_trip_${trip.id}")
                                             ) {
-                                                Icon(Icons.Filled.Delete, contentDescription = "Xóa đoàn", tint = DangerRed, modifier = Modifier.size(15.dp))
+                                                Icon(Icons.Filled.Delete, contentDescription = AppStrings.deleteTripCd(lang), tint = DangerRed, modifier = Modifier.size(15.dp))
                                             }
 
                                             if (isSelected) {
                                                 Spacer(modifier = Modifier.width(4.dp))
                                                 Icon(
                                                     Icons.Filled.CheckCircle,
-                                                    contentDescription = "Đang chọn",
+                                                    contentDescription = AppStrings.selectedTripCd(lang),
                                                     tint = EmeraldPrimary,
                                                     modifier = Modifier.size(18.dp)
                                                 )
@@ -1264,7 +1261,7 @@ fun TripHeaderCard(
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = if (lang == AppLanguage.VI) "+ Tạo đoàn công tác mới" else "+ Create New Trip",
+                                text = AppStrings.createNewTripDropdownItem(lang),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = EmeraldPrimary
@@ -1304,7 +1301,7 @@ fun TripHeaderCard(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Bạn: ${uiState.currentMember?.name ?: "Khách"}",
+                        text = AppStrings.youUserPrefix(uiState.currentMember?.name ?: AppStrings.guestName(lang), lang),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
@@ -1313,7 +1310,7 @@ fun TripHeaderCard(
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "Đổi vai trò",
+                        text = AppStrings.switchRoleAction(lang),
                         fontSize = 11.sp,
                         color = Color(0xFFCCFBF1),
                         fontWeight = FontWeight.Bold
@@ -1329,3 +1326,194 @@ fun TripHeaderCard(
         }
     }
 }
+
+
+// =========================================================================
+// AppStrings Localization Extensions for DashboardScreen
+// =========================================================================
+
+fun AppStrings.noTripsTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chưa Có Đoàn Công Tác Nào" else "No Business Trips Yet"
+
+fun AppStrings.noTripsDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ứng dụng sạch sẽ và sẵn sàng sử dụng. Bắt đầu bằng cách tạo đoàn công tác mới để quản lý chi tiêu và chia tiền."
+    else "Clean and ready to use. Start by creating a new business trip to manage expenses and splitting."
+
+fun AppStrings.createTripBigBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tạo Đoàn Công Tác Mới" else "Create New Business Trip"
+
+fun AppStrings.lockedBadgeCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã khóa" else "Locked"
+
+fun AppStrings.tripSettledTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Sổ Chuyến Đi Đã Được Khóa Quyết Toán" else "Trip Ledger Has Been Settled & Locked"
+
+fun AppStrings.tripSettledDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mọi khoản chi tiêu và nộp quỹ đã được niêm phong an toàn để đối soát và bù trừ công nợ."
+    else "All expenses and fund contributions are securely sealed for reconciliation and debt settlement."
+
+fun AppStrings.userGuideCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hướng dẫn sử dụng" else "User Guide"
+
+fun AppStrings.userGuideBannerTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Cẩm Nang Hướng Dẫn Sử Dụng" else "User Guide & Handbook"
+
+fun AppStrings.userGuideBannerDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xem quy trình 4 bước, cách chia tiền, bù trừ công nợ & ngoại tệ"
+    else "Learn workflows, split methods, debt netting & currency rates"
+
+fun AppStrings.aiSpendingInsights(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Gợi ý chi tiêu" else "Spending Insights"
+
+fun AppStrings.aiSpendingInsightsDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Phân tích ngân sách, cơ cấu chi tiêu và sức khỏe quỹ ngoại tuyến"
+    else "Analyze budget, category split & fund health offline"
+
+fun AppStrings.aiAnalyzeBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Phân tích" else "Analyze"
+
+fun AppStrings.financialOverviewTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tổng Quan Tài Chính" else "Financial Overview"
+
+fun AppStrings.totalTripExpensesLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "TỔNG CHI TIÊU ĐOÀN" else "TOTAL TRIP EXPENSES"
+
+fun AppStrings.detailsBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chi tiết" else "Details"
+
+fun AppStrings.memberPaidSource(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên chi hộ (Paid)" else "Member Paid"
+
+fun AppStrings.fundPaidSource(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chi từ Quỹ chung" else "Fund Paid"
+
+fun AppStrings.groupFundBalanceLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "SỐ DƯ QUỸ CHUNG" else "GROUP FUND BALANCE"
+
+fun AppStrings.groupFundBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quỹ đoàn" else "Group Fund"
+
+fun AppStrings.fundCollectedPrefix(amountStr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã thu quỹ: $amountStr" else "Fund Collected: $amountStr"
+
+fun AppStrings.fundPaidPrefix(amountStr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã chi quỹ: $amountStr" else "Fund Spent: $amountStr"
+
+fun AppStrings.balanceStatusBalanced(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Cân bằng" else "Balanced"
+
+fun AppStrings.balanceStatusDiscrepancy(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chênh lệch" else "Discrepancy"
+
+fun AppStrings.auditValidZeroBalance(currency: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đối soát hợp lệ: Tổng Balance = 0 ($currency)"
+    else "Reconciled: Total Balance = 0 ($currency)"
+
+fun AppStrings.auditWarningDiscrepancy(discrepancyStr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Cảnh báo: Chênh lệch $discrepancyStr"
+    else "Warning: Discrepancy $discrepancyStr"
+
+fun AppStrings.auditAlgorithmSafe(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thuật toán kiểm tra liên tục đảm bảo không thất thoát"
+    else "Continuous audit algorithm ensures zero loss"
+
+fun AppStrings.settlementActionBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quyết toán" else "Settlement"
+
+fun AppStrings.quickAddExpense(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thêm Chi" else "Expense"
+
+fun AppStrings.quickAddFund(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nộp Quỹ" else "Fund"
+
+fun AppStrings.quickExportReport(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Báo Cáo" else "Report"
+
+fun AppStrings.quickUserGuide(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hướng Dẫn" else "Guide"
+
+fun AppStrings.categoryBreakdownTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Phân Loại Chi Tiêu" else "Category Breakdown"
+
+fun AppStrings.expensesCountLabel(count: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "$count khoản chi" else "$count expenses"
+
+fun AppStrings.memberBalancesTableTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bảng Số Dư Thành Viên" else "Member Balances Ledger"
+
+fun AppStrings.viewSettlementBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xem quyết toán" else "View Settlement"
+
+fun AppStrings.memberPaidAndOwed(paidStr: String, owedStr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã chi: $paidStr • Phải trả: $owedStr"
+    else "Paid: $paidStr • Owed: $owedStr"
+
+fun AppStrings.switchUserRoleTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyển Đổi Người Dùng / Vai Trò" else "Switch User / Role"
+
+fun AppStrings.switchUserRoleDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chọn nhân vật để trải nghiệm phân quyền đầy đủ (Admin, Thủ quỹ, Thành viên, Người xem):"
+    else "Select persona to test role permissions (Admin, Treasurer, Member, Viewer):"
+
+fun AppStrings.closeDialogBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đóng" else "Close"
+
+fun AppStrings.localOfflineStorageBadge(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "DỮ LIỆU OFFLINE CỤC BỘ" else "LOCAL OFFLINE STORAGE"
+
+fun AppStrings.editTripInfoCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉnh sửa thông tin đoàn" else "Edit trip info"
+
+fun AppStrings.deleteThisTripCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xóa đoàn này" else "Delete this trip"
+
+fun AppStrings.createNewTripCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tạo đoàn mới" else "Create new trip"
+
+fun AppStrings.selectedTripBadge(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "ĐOÀN CÔNG TÁC ĐANG CHỌN" else "SELECTED TRIP"
+
+fun AppStrings.noTripSelected(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chưa chọn đoàn nào" else "No trip selected"
+
+fun AppStrings.tapToSwitchTrip(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chạm để đổi đoàn công tác" else "Tap to switch trip"
+
+fun AppStrings.switchTripBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đổi đoàn" else "Switch"
+
+fun AppStrings.dropdownListCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Danh sách xổ xuống" else "Dropdown menu"
+
+fun AppStrings.selectBusinessTripTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chọn Đoàn Công Tác" else "Select Business Trip"
+
+fun AppStrings.tripsCountLabel(count: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "$count đoàn" else "$count trips"
+
+fun AppStrings.noTripsInList(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chưa có đoàn nào trong danh sách" else "No trips available"
+
+fun AppStrings.localStorageFallback(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lưu trữ cục bộ" else "Local storage"
+
+fun AppStrings.editTripCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Sửa đoàn" else "Edit trip"
+
+fun AppStrings.deleteTripCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xóa đoàn" else "Delete trip"
+
+fun AppStrings.selectedTripCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đang chọn" else "Selected"
+
+fun AppStrings.createNewTripDropdownItem(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "+ Tạo đoàn công tác mới" else "+ Create New Trip"
+
+fun AppStrings.youUserPrefix(name: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bạn: $name" else "You: $name"
+
+fun AppStrings.guestName(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Khách" else "Guest"
+
+fun AppStrings.switchRoleAction(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đổi vai trò" else "Switch role"

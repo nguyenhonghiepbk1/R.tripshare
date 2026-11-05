@@ -162,9 +162,6 @@ class TripFinanceRepository(private val db: AppDatabase) {
         tripId: String,
         name: String,
         role: String,
-        bankName: String? = null,
-        bankAccount: String? = null,
-        bankAccountHolder: String? = null,
         actor: TripMemberEntity
     ): String {
         return db.withTransaction {

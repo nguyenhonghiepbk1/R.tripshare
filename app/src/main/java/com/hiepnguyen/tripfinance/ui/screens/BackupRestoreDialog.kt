@@ -461,7 +461,7 @@ fun BackupRestoreDialog(
                             if (encryptBackupCheck) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    "Mã hóa giúp bảo vệ an toàn tuyệt đối cho số tài khoản ngân hàng và dữ liệu tài chính cá nhân của các thành viên đoàn.",
+                                    "Mã hóa giúp bảo vệ an toàn tuyệt đối cho toàn bộ dữ liệu tài chính và chi tiêu cá nhân của các thành viên đoàn.",
                                     fontSize = 10.5.sp,
                                     color = Color(0xFF64748B),
                                     lineHeight = 14.sp
@@ -499,7 +499,7 @@ fun BackupRestoreDialog(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        "Cảnh báo: Bản sao lưu không mã hóa sẽ tự động ẩn số tài khoản ngân hàng (******1234) để bảo vệ an toàn khi chia sẻ qua mạng.",
+                                        "Lưu ý: Bản sao lưu không mã hóa có thể đọc được bằng trình soạn thảo văn bản. Nên đặt mật khẩu nếu tệp chứa dữ liệu chi tiêu nội bộ.",
                                         color = Color(0xFF92400E),
                                         fontSize = 11.sp,
                                         modifier = Modifier.padding(8.dp),
@@ -684,7 +684,7 @@ fun BackupRestoreDialog(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            "Lưu ý an toàn: Để bảo vệ tài chính cá nhân của các thành viên đoàn, hệ thống đã tự động che mờ số tài khoản ngân hàng (dạng ******1234) trong tệp không mã hóa này.",
+                            "Lưu ý an toàn: Tệp này ở định dạng văn bản rõ không mã hóa. Hãy đảm bảo bạn chỉ chia sẻ với các thành viên trong đoàn.",
                             color = Color(0xFF92400E),
                             fontSize = 11.sp,
                             modifier = Modifier.padding(10.dp),

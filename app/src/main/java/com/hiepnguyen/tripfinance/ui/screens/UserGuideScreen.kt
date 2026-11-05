@@ -92,13 +92,13 @@ fun UserGuideScreen(
                 summaryEn = "Complete lifecycle from trip kickoff to final debt settlement.",
                 stepsVi = listOf(
                     "Bước 1: Tạo đoàn công tác mới trên thiết bị của bạn.",
-                    "Bước 2: Cài đặt danh sách thành viên, phân vai trò (Trưởng đoàn, Thủ quỹ, Thành viên) và thiết lập tài khoản nhận tiền.",
+                    "Bước 2: Cài đặt danh sách thành viên và phân vai trò (Trưởng đoàn, Thủ quỹ, Thành viên).",
                     "Bước 3: Thu quỹ đoàn đầu chuyến (nếu có) và liên tục ghi lại mọi khoản chi tiêu phát sinh trong chuyến đi.",
                     "Bước 4: Vào tab 'Quyết toán' vào cuối chuyến, hệ thống tự tính bù trừ tối ưu min-transfers và thanh toán bù trừ là xong!"
                 ),
                 stepsEn = listOf(
                     "Step 1: Create a new trip on your device.",
-                    "Step 2: Setup member roster, assign roles (Leader, Treasurer, Member), and configure member details.",
+                    "Step 2: Setup member roster and assign roles (Leader, Treasurer, Member).",
                     "Step 3: Collect group fund up-front (if applicable) and log all trip expenses as they occur.",
                     "Step 4: Navigate to 'Settlement' tab at the end of the trip to view optimal min-transfers & clear all debts!"
                 ),
@@ -214,17 +214,19 @@ fun UserGuideScreen(
                     "Hệ thống tự động phân tích: Ai chi nhiều hơn mức phải chịu sẽ 'Cần nhận lại', ai chi ít hơn sẽ 'Cần đóng thêm'.",
                     "Thuật toán Tối Ưu Hóa Giao Dịch tự động tính toán số lượt bù trừ ít nhất (Ví dụ 10 người chỉ cần 3-4 giao dịch bù trừ là xong nợ).",
                     "Chạm vào từng khoản bù trừ để xem chi tiết số tiền và nội dung thanh toán chuẩn đối soát.",
-                    "Sau khi tất cả thành viên hoàn tất thanh toán bù trừ, bấm 'Chốt quyết toán đoàn' để lưu trữ lịch sử."
+                    "Lưu ý quan trọng: Ứng dụng chỉ gợi ý phương án bù trừ tối ưu, không thực hiện giao dịch tài chính hoặc chuyển khoản ngân hàng.",
+                    "Sau khi các thành viên tự thỏa thuận và hoàn tất thanh toán bù trừ bên ngoài, bấm 'Chốt quyết toán đoàn' để lưu trữ lịch sử."
                 ),
                 stepsEn = listOf(
                     "At the end of the trip, switch to 'Settlement' tab.",
                     "The app calculates net balances: who paid more receives refund, who paid less settles the difference.",
                     "The Min-Transfers Algorithm condenses complex group debts into the minimal number of direct settlements.",
                     "Tap any settlement item to view amount and standardized memo details.",
-                    "Tap 'Finalize Settlement' to archive the completed settlement cycle."
+                    "Important Note: The app only provides optimal settlement suggestions and does not execute financial transactions.",
+                    "Once members settle among themselves, tap 'Finalize Settlement' to archive the completed settlement cycle."
                 ),
-                tipsVi = "Thuật toán bù trừ triệt tiêu các khoản lớn trước, giúp cả đoàn giải quyết công nợ nhanh gọn, minh bạch.",
-                tipsEn = "The algorithm eliminates major debts first, ensuring transparent and minimal settlements for the group.",
+                tipsVi = "Ứng dụng chỉ gợi ý, không thực hiện giao dịch. Thuật toán bù trừ triệt tiêu các khoản lớn trước, giúp cả đoàn giải quyết công nợ nhanh gọn, minh bạch.",
+                tipsEn = "The app only provides suggestions and does not execute transactions. The algorithm eliminates major debts first, ensuring transparent and minimal settlements.",
                 icon = Icons.Filled.AccountBalance
             ),
             GuideItem(
@@ -253,24 +255,26 @@ fun UserGuideScreen(
             GuideItem(
                 id = "export_report_guide",
                 category = GuideCategory.EXPORT,
-                titleVi = "8. Xuất Báo Cáo Tài Chính & Bảng Kê Excel (.xlsx)",
-                titleEn = "8. Financial Report Export & Excel (.xlsx)",
-                summaryVi = "Xuất dữ liệu chi tiết phục vụ thanh quyết toán công tác phí với cơ quan/doanh nghiệp.",
-                summaryEn = "Export detailed breakdown for company expense reimbursement.",
+                titleVi = "8. Xuất Báo Cáo Tài Chính Excel (.xlsx) & PDF Chuẩn In",
+                titleEn = "8. Export Reports: Excel (.xlsx) & Print-Ready PDF",
+                summaryVi = "Xuất file bảng kê Excel (.xlsx) chuyên nghiệp và báo cáo PDF chuẩn in phục vụ quyết toán minh bạch.",
+                summaryEn = "Export professional Excel (.xlsx) workbooks and print-ready PDF reports for transparent reimbursement.",
                 stepsVi = listOf(
                     "Tại Dashboard hoặc tab Quyết toán, bấm nút 'Báo Cáo' / biểu tượng Tài liệu trên thanh tiêu đề.",
-                    "Chọn định dạng xuất mong muốn: 'PDF chuẩn in', 'Báo cáo văn bản' hoặc 'Bảng kê chi tiết Excel (.xlsx)'.",
-                    "Xem trước nội dung bảng tổng hợp chi phí, phân loại danh mục, đối soát từng người.",
-                    "Bấm 'Xuất & Gửi File Excel', 'Xuất & Gửi File PDF', hoặc 'Sao chép' để gửi trực tiếp qua Zalo, Messenger, Email hoặc mở bằng Microsoft Excel."
+                    "Chọn định dạng xuất mong muốn: Bảng kê chi tiết Excel (.xlsx), PDF chuẩn in, hoặc Báo cáo văn bản tóm tắt.",
+                    "Tùy chọn loại báo cáo: Quyết toán toàn diện, Nhật ký chi tiêu & nguồn quỹ, Danh sách gợi ý chuyển khoản bù trừ, hoặc Báo cáo theo từng thành viên.",
+                    "File Excel (.xlsx) được tạo chuẩn OpenXML gồm 5 sheet chi tiết: Tổng quan, Chi tiêu, Theo thành viên, Quỹ chung, Gợi ý chuyển khoản.",
+                    "Bấm 'Xuất & Gửi File Excel', 'Xuất & Gửi File PDF', hoặc 'Sao chép văn bản' để chia sẻ qua Zalo, Messenger, Email hoặc mở bằng Microsoft Excel."
                 ),
                 stepsEn = listOf(
                     "From Dashboard or Settlement tab, tap 'Report' / Document icon on the top bar.",
-                    "Choose format: 'Print PDF', 'Summary Text Report', or 'Detailed Excel (.xlsx)'.",
-                    "Preview the consolidated financial statement, category breakdown, and member ledger.",
-                    "Tap 'Export & Share Excel', 'Export & Share PDF', or 'Copy' to send via Zalo, Email, or open directly in Microsoft Excel."
+                    "Choose desired format: Detailed Excel (.xlsx) workbook, Print-Ready PDF, or Text summary report.",
+                    "Select report type: Full Settlement, Expense & Fund Ledger, Transfer Settlement Instructions, or Member Breakdown.",
+                    "The generated Excel (.xlsx) workbook features 5 formatted sheets: Overview, Expenses, By Member, Group Fund, and Suggested Transfers.",
+                    "Tap 'Export & Share Excel', 'Export & Share PDF', or 'Copy Text' to share via messaging apps, Email, or open directly in Microsoft Excel."
                 ),
-                tipsVi = "File Excel (.xlsx) gồm 5 sheet chi tiết, định dạng số chuẩn, hiển thị tiếng Việt hoàn hảo trên mọi phiên bản Excel máy tính và điện thoại.",
-                tipsEn = "Excel (.xlsx) exports feature 5 detailed sheets with formatted numbers and full Vietnamese support.",
+                tipsVi = "Báo cáo Excel (.xlsx) và PDF được tạo 100% trên thiết bị ngoại tuyến, số liệu khớp hoàn toàn với sổ quỹ và không chứa bất kỳ thông tin nhạy cảm nào.",
+                tipsEn = "Excel (.xlsx) and PDF reports are generated 100% locally offline, matching group ledgers perfectly without any sensitive data.",
                 icon = Icons.Filled.Description
             ),
             GuideItem(
@@ -304,18 +308,18 @@ fun UserGuideScreen(
                 summaryVi = "Cam kết bảo vệ dữ liệu cá nhân theo chuẩn Google Play và tuyên bố miễn trừ trách nhiệm pháp lý.",
                 summaryEn = "Google Play data safety compliance, local sandbox isolation, and legal disclaimers.",
                 stepsVi = listOf(
-                    "1. Lưu trữ cục bộ an toàn: 100% dữ liệu số tài khoản, danh sách thành viên và các khoản chi được mã hóa và lưu trữ trong bộ nhớ nội bộ (App Sandbox), không tải lên máy chủ ngoài trái phép.",
+                    "1. Lưu trữ cục bộ an toàn: 100% dữ liệu tài chính, danh sách thành viên và các khoản chi được mã hóa và lưu trữ an toàn trong bộ nhớ nội bộ (App Sandbox), không tải lên máy chủ ngoài trái phép.",
                     "2. Quyền riêng tư thông tin tài chính: Mọi thông tin của thành viên chỉ lưu cục bộ trên máy, hoàn toàn không được bán, khai thác hay gửi cho bên thứ ba.",
                     "3. Gợi ý chi tiêu ngoại tuyến: Tính năng phân tích và gợi ý chi tiêu hoạt động 100% cục bộ trên thiết bị, không cần mạng, không gửi dữ liệu ra bên ngoài.",
                     "4. Tính tham khảo: Các gợi ý và phân tích tài chính chỉ mang tính tham khảo hỗ trợ Trưởng đoàn và Thủ quỹ đối soát sổ sách.",
-                    "5. Tuyên bố miễn trừ giao dịch: Ứng dụng là công cụ ghi chép và tính toán hỗ trợ; việc thanh toán bù trừ thực tế do người dùng tự thỏa thuận và thực hiện."
+                    "5. Tuyên bố miễn trừ giao dịch: Ứng dụng chỉ gợi ý phương án bù trừ tối ưu, không thực hiện giao dịch tài chính hoặc chuyển khoản ngân hàng. Việc thanh toán bù trừ thực tế do người dùng tự thỏa thuận và thực hiện bên ngoài."
                 ),
                 stepsEn = listOf(
-                    "1. Secure Local Storage: 100% financial records, member bank accounts, and splits are isolated in local App Sandbox, completely offline without external transmission.",
+                    "1. Secure Local Storage: 100% financial records, member profiles, and splits are isolated in local App Sandbox, completely offline without external transmission.",
                     "2. Financial Information Privacy: Member information is stored solely on-device and never shared or monetized.",
                     "3. Offline Spending Insights: Spending analysis operates 100% locally on-device with zero network usage and zero external transmission.",
                     "4. Advisory Nature: Financial insights are advisory recommendations to assist the trip organizer and treasurer in bookkeeping.",
-                    "5. Payment Disclaimer: The app is an accounting assistant; actual balance settlements are handled directly by members."
+                    "5. Transaction Disclaimer: The app only provides settlement suggestions and does not execute financial transactions. Actual balance settlements are handled directly by members outside the app."
                 ),
                 tipsVi = "Bạn có thể nhấn vào nút 'Xem Chính Sách Công Khai' để đọc bản đầy đủ trên trang web nhà phát triển.",
                 tipsEn = "You can tap 'View Online Privacy Policy' to read the full policy hosted on the developer website.",
@@ -558,9 +562,9 @@ fun UserGuideScreen(
 
                             Text(
                                 text = if (lang == AppLanguage.VI)
-                                    "TripFinance là ứng dụng Local-First 100% ngoại tuyến. Dữ liệu thành viên, số tài khoản ngân hàng và các khoản chi tiêu được lưu trữ an toàn trong sandbox thiết bị của bạn, không kết nối Internet và không chia sẻ dữ liệu với bên thứ ba."
+                                    "TripFinance là ứng dụng Local-First 100% ngoại tuyến. Dữ liệu thành viên và các khoản chi tiêu được lưu trữ an toàn trong sandbox thiết bị của bạn, không kết nối Internet và không chia sẻ dữ liệu với bên thứ ba. Ứng dụng chỉ gợi ý phương án bù trừ công nợ, không thực hiện giao dịch tài chính."
                                 else
-                                    "TripFinance is a 100% offline Local-First app. Member details, bank accounts, and splits stay securely isolated in your device sandbox without any Internet connection or third-party sharing.",
+                                    "TripFinance is a 100% offline Local-First app. Member details and expenses stay securely isolated in your device sandbox without any Internet connection or third-party sharing. The app only suggests debt settlements and does not execute financial transactions.",
                                 fontSize = 11.5.sp,
                                 color = Color(0xFF1E293B),
                                 lineHeight = 16.sp

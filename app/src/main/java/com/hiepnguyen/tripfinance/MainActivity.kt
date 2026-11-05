@@ -360,11 +360,11 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
                     )
                     NavigationTab.MEMBERS -> MembersAndSettingsScreen(
                         uiState = uiState,
-                        onAddMember = { name, role, bank, acc, holder ->
-                            viewModel.addMember(name, role, bank, acc, holder)
+                        onAddMember = { name, role ->
+                            viewModel.addMember(name, role)
                         },
-                        onEditMember = { member, name, role, bank, acc, holder ->
-                            viewModel.editMember(member, name, role, bank, acc, holder)
+                        onEditMember = { member, name, role ->
+                            viewModel.editMember(member, name, role)
                         },
                         onUpdateRole = { member, newRole ->
                             viewModel.updateMemberRole(member, newRole)

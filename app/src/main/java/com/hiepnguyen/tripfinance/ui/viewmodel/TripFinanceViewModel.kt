@@ -858,10 +858,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
     // Members & Roles
     fun addMember(
         name: String,
-        role: String,
-        bankName: String?,
-        bankAccount: String?,
-        bankAccountHolder: String?
+        role: String
     ) {
         val currentTrip = uiState.value.currentTrip ?: return
         val currentMember = uiState.value.currentMember ?: return
@@ -882,9 +879,6 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     tripId = currentTrip.id,
                     name = name,
                     role = role,
-                    bankName = bankName,
-                    bankAccount = bankAccount,
-                    bankAccountHolder = bankAccountHolder,
                     actor = currentMember
                 )
                 showSuccess("Đã thêm thành viên '$name' ($role)")
@@ -897,10 +891,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
     fun editMember(
         member: TripMemberEntity,
         newName: String,
-        newRole: String,
-        newBankName: String?,
-        newBankAccount: String?,
-        newBankAccountHolder: String?
+        newRole: String
     ) {
         val currentTrip = uiState.value.currentTrip ?: return
         val currentMember = uiState.value.currentMember ?: return
