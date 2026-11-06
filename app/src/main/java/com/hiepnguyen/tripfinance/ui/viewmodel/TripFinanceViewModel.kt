@@ -11,6 +11,7 @@ import com.hiepnguyen.tripfinance.domain.engine.SplitCalculator
 import com.hiepnguyen.tripfinance.domain.model.*
 import com.hiepnguyen.tripfinance.domain.export.PdfReportExporter
 import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.AppStrings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -60,7 +61,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _repositoryFlow = MutableStateFlow<TripFinanceRepository?>(null)
     private val repository: TripFinanceRepository
-        get() = _repositoryFlow.value ?: error("Cơ sở dữ liệu chưa sẵn sàng")
+        get() = _repositoryFlow.value ?: error(if (_language.value == AppLanguage.VI) "Cơ sở dữ liệu chưa sẵn sàng" else "Database is not ready")
 
     private val sharedPrefs = application.getSharedPreferences("trip_finance_prefs", Context.MODE_PRIVATE)
 
@@ -346,14 +347,14 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             _repositoryFlow.value = null
             _databaseInitState.value = DatabaseInitState.Error(
                 errorType = e.errorType,
-                message = e.message ?: "Lỗi bảo mật khi mở cơ sở dữ liệu",
+                message = e.message ?: if (_language.value == AppLanguage.VI) "Lỗi bảo mật khi mở cơ sở dữ liệu" else "Security error when opening database",
                 details = e.cause?.message
             )
         } catch (e: Throwable) {
             _repositoryFlow.value = null
             _databaseInitState.value = DatabaseInitState.Error(
                 errorType = com.hiepnguyen.tripfinance.data.security.DatabaseSecurityErrorType.UNKNOWN,
-                message = "Không thể khởi tạo cơ sở dữ liệu: ${e.message}",
+                message = if (_language.value == AppLanguage.VI) "Không thể khởi tạo cơ sở dữ liệu: ${e.message}" else "Cannot initialize database: ${e.message}",
                 details = e.message
             )
         }
@@ -364,9 +365,9 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             try {
                 AppDatabase.resetDatabase(getApplication())
                 initDatabase()
-                showSuccess("Đã xóa và tạo mới cơ sở dữ liệu an toàn.")
+                showSuccess(AppStrings.vmDbResetSuccess(_language.value))
             } catch (e: Throwable) {
-                showError("Lỗi khi tạo mới cơ sở dữ liệu: ${e.message}")
+                showError(AppStrings.vmDbResetError(e.message, _language.value))
             }
         }
     }
@@ -376,8 +377,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             try {
                 val parseResult = com.hiepnguyen.tripfinance.data.backup.BackupRestoreManager.parseAndValidateBackup(jsonContent, password)
                 if (parseResult.isFailure) {
-                    val err = parseResult.exceptionOrNull()?.message ?: "Tệp sao lưu không hợp lệ hoặc sai mật khẩu"
-                    showError("Khôi phục thất bại: $err")
+                    val err = parseResult.exceptionOrNull()?.message ?: AppStrings.vmInvalidBackupOrPassword(_language.value)
+                    showError(AppStrings.vmRestoreFailed(err, _language.value))
                     return@launch
                 }
                 val backupData = parseResult.getOrThrow()
@@ -398,13 +399,13 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
 
                 if (restoreResult.isSuccess) {
                     _databaseInitState.value = DatabaseInitState.Ready
-                    showSuccess("Khôi phục thành công ${backupData.trips.size} đoàn từ bản sao lưu!")
+                    showSuccess(AppStrings.vmRestoreEmergencySuccess(backupData.trips.size, _language.value))
                 } else {
-                    val err = restoreResult.exceptionOrNull()?.message ?: "Lỗi khi nạp dữ liệu"
-                    showError("Lỗi nạp dữ liệu: $err")
+                    val err = restoreResult.exceptionOrNull()?.message ?: AppStrings.vmDataLoadError(_language.value)
+                    showError(AppStrings.vmDataLoadErrorDetail(err, _language.value))
                 }
             } catch (e: Throwable) {
-                showError("Lỗi khôi phục khẩn cấp: ${e.message}")
+                showError(AppStrings.vmEmergencyRestoreError(e.message, _language.value))
             }
         }
     }
@@ -463,7 +464,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                 )
                 _aiInsight.value = insight
             } catch (e: Exception) {
-                _aiInsight.value = "Lỗi khi phân tích: ${e.message}"
+                _aiInsight.value = AppStrings.vmAiAnalysisError(e.message, _language.value)
             } finally {
                 _isLoadingAi.value = false
             }
@@ -504,9 +505,9 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     baseCurrency = baseCurrency
                 )
                 _currentTripId.value = newTripId
-                showSuccess("Tạo đoàn '$title' thành công!")
+                showSuccess(AppStrings.vmCreateTripSuccess(title, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi khi tạo đoàn: ${e.message}")
+                showError(AppStrings.vmCreateTripError(e.message, _language.value))
             }
         }
     }
@@ -521,7 +522,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
     ) {
         val currentMember = uiState.value.currentMember
         if (currentMember != null && currentMember.role != "ADMIN") {
-            showError("Chỉ Trưởng đoàn (Admin) mới có quyền chỉnh sửa thông tin đoàn!")
+            showError(AppStrings.vmAdminOnlyEditTrip(_language.value))
             return
         }
 
@@ -531,7 +532,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                 val members = repository.getMembers(tripId).first()
                 val adminActor = members.find { it.role == "ADMIN" } ?: currentMember ?: members.firstOrNull()
                 if (adminActor == null) {
-                    showError("Không tìm thấy thông tin thành viên quản trị đoàn")
+                    showError(AppStrings.vmAdminMemberNotFound(_language.value))
                     return@launch
                 }
 
@@ -544,9 +545,9 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     baseCurrency = baseCurrency,
                     actor = adminActor
                 )
-                showSuccess("Đã cập nhật thông tin đoàn '$title' thành công!")
+                showSuccess(AppStrings.vmUpdateTripSuccess(title, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi cập nhật đoàn: ${e.message}")
+                showError(AppStrings.vmUpdateTripError(e.message, _language.value))
             }
         }
     }
@@ -554,7 +555,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
     fun deleteTrip(tripId: String) {
         val currentMember = uiState.value.currentMember
         if (currentMember != null && currentMember.role != "ADMIN" && _currentTripId.value == tripId) {
-            showError("Chỉ Trưởng đoàn (Admin) mới có quyền xóa đoàn!")
+            showError(AppStrings.vmAdminOnlyDeleteTrip(_language.value))
             return
         }
 
@@ -568,9 +569,9 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     val remaining = trips.filter { it.id != tripId }
                     _currentTripId.value = remaining.firstOrNull()?.id
                 }
-                showSuccess("Đã xóa đoàn '${targetTrip?.title ?: tripId}' thành công!")
+                showSuccess(AppStrings.vmDeleteTripSuccess(targetTrip?.title ?: tripId, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi khi xóa đoàn: ${e.message}")
+                showError(AppStrings.vmDeleteTripError(e.message, _language.value))
             }
         }
     }
@@ -593,28 +594,28 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (currentTrip.isSettled) {
-            showError("Chuyến đi '${currentTrip.title}' đã được khóa sổ quyết toán. Không thể thêm khoản chi mới!")
+            showError(AppStrings.vmTripLockedCannotAddExpense(currentTrip.title, _language.value))
             return
         }
 
         if (!totalAmount.isFinite() || totalAmount.isNaN() || totalAmount <= 0.0 || totalAmount > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
-            showError("Số tiền chi tiêu không hợp lệ hoặc vượt quá hạn mức cho phép.")
+            showError(AppStrings.vmInvalidExpenseAmount(_language.value))
             return
         }
         if (!exchangeRate.isFinite() || exchangeRate.isNaN() || exchangeRate <= 0.0 || exchangeRate > FinancialLimits.MAX_EXCHANGE_RATE) {
-            showError("Tỷ giá quy đổi không hợp lệ.")
+            showError(AppStrings.vmInvalidExchangeRate(_language.value))
             return
         }
 
         val convertedTotal = FinancialInputValidator.convertToVnd(totalAmount, exchangeRate)
         val totalSplitSum = splits.sumOfSafe { it.second }
         if (totalSplitSum != convertedTotal) {
-            showError("Tổng tiền phân bổ ($totalSplitSum VND) không bằng tổng khoản chi ($convertedTotal VND). Vui lòng kiểm tra lại!")
+            showError(AppStrings.vmSplitSumMismatch(totalSplitSum, convertedTotal, _language.value))
             return
         }
 
         if (splits.any { it.second < 0 }) {
-            showError("Số tiền phân bổ không được âm. Vui lòng kiểm tra lại tỷ lệ chia!")
+            showError(AppStrings.vmNegativeSplitAmount(_language.value))
             return
         }
 
@@ -650,9 +651,9 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                 }
 
                 repository.addExpenseWithSplits(expense, splitEntities, currentMember)
-                showSuccess("Đã thêm khoản chi '$title' thành công!")
+                showSuccess(AppStrings.vmAddExpenseSuccess(title, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi thêm chi tiêu: ${e.message}")
+                showError(AppStrings.vmAddExpenseError(e.message, _language.value))
             }
         }
     }
@@ -675,34 +676,34 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (currentTrip.isSettled) {
-            showError("Chuyến đi '${currentTrip.title}' đã được khóa sổ quyết toán. Không thể chỉnh sửa khoản chi!")
+            showError(AppStrings.vmTripLockedCannotEditExpense(currentTrip.title, _language.value))
             return
         }
 
         // Strict RBAC: Only Admin can edit expenses
         if (currentMember.role != "ADMIN") {
-            showError("Chỉ Trưởng đoàn (Admin) mới có quyền chỉnh sửa các khoản chi!")
+            showError(AppStrings.vmAdminOnlyEditExpense(_language.value))
             return
         }
 
         if (!totalAmount.isFinite() || totalAmount.isNaN() || totalAmount <= 0.0 || totalAmount > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
-            showError("Số tiền chi tiêu không hợp lệ hoặc vượt quá hạn mức cho phép.")
+            showError(AppStrings.vmInvalidExpenseAmount(_language.value))
             return
         }
         if (!exchangeRate.isFinite() || exchangeRate.isNaN() || exchangeRate <= 0.0 || exchangeRate > FinancialLimits.MAX_EXCHANGE_RATE) {
-            showError("Tỷ giá quy đổi không hợp lệ.")
+            showError(AppStrings.vmInvalidExchangeRate(_language.value))
             return
         }
 
         val convertedTotal = FinancialInputValidator.convertToVnd(totalAmount, exchangeRate)
         val totalSplitSum = splits.sumOfSafe { it.second }
         if (totalSplitSum != convertedTotal) {
-            showError("Tổng tiền phân bổ ($totalSplitSum VND) không bằng tổng khoản chi ($convertedTotal VND). Vui lòng kiểm tra lại!")
+            showError(AppStrings.vmSplitSumMismatch(totalSplitSum, convertedTotal, _language.value))
             return
         }
 
         if (splits.any { it.second < 0 }) {
-            showError("Số tiền phân bổ không được âm. Vui lòng kiểm tra lại tỷ lệ chia!")
+            showError(AppStrings.vmNegativeSplitAmount(_language.value))
             return
         }
 
@@ -741,9 +742,9 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                 }
 
                 repository.updateExpenseWithSplits(updatedExpense, splitEntities, currentMember)
-                showSuccess("Đã cập nhật khoản chi '$title' thành công!")
+                showSuccess(AppStrings.vmUpdateExpenseSuccess(title, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi cập nhật chi tiêu: ${e.message}")
+                showError(AppStrings.vmUpdateExpenseError(e.message, _language.value))
             }
         }
     }
@@ -753,22 +754,22 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (currentTrip.isSettled) {
-            showError("Chuyến đi '${currentTrip.title}' đã được khóa sổ quyết toán. Không thể xóa khoản chi!")
+            showError(AppStrings.vmTripLockedCannotDeleteExpense(currentTrip.title, _language.value))
             return
         }
 
         // Strict RBAC: Only Admin can delete expenses
         if (currentMember.role != "ADMIN") {
-            showError("Chỉ Trưởng đoàn (Admin) mới có quyền xóa các khoản chi!")
+            showError(AppStrings.vmAdminOnlyDeleteExpense(_language.value))
             return
         }
 
         viewModelScope.launch {
             try {
                 repository.deleteExpense(expense, currentMember)
-                showSuccess("Đã xóa khoản chi '${expense.title}'")
+                showSuccess(AppStrings.vmDeleteExpenseSuccess(expense.title, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi xóa khoản chi: ${e.message}")
+                showError(AppStrings.vmDeleteExpenseError(e.message, _language.value))
             }
         }
     }
@@ -785,7 +786,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (currentTrip.isSettled) {
-            showError("Chuyến đi '${currentTrip.title}' đã được khóa sổ quyết toán. Không thể nộp thêm quỹ!")
+            showError(AppStrings.vmTripLockedCannotContributeFund(currentTrip.title, _language.value))
             return
         }
 
@@ -793,16 +794,16 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val contributor = members.find { it.id == memberId }
 
         if (currentMember.role != "ADMIN" && currentMember.role != "TREASURER") {
-            showError("Chỉ Trưởng đoàn hoặc Thủ quỹ mới có quyền ghi nhận thu quỹ!")
+            showError(AppStrings.vmAdminOrTreasurerOnlyFund(_language.value))
             return
         }
 
         if (amount <= 0L || amount > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
-            showError("Số tiền nộp quỹ không hợp lệ (phải từ 1 đến 100 tỷ).")
+            showError(AppStrings.vmInvalidFundAmount(_language.value))
             return
         }
         if (!exchangeRate.isFinite() || exchangeRate.isNaN() || exchangeRate <= 0.0 || exchangeRate > FinancialLimits.MAX_EXCHANGE_RATE) {
-            showError("Tỷ giá quy đổi không hợp lệ.")
+            showError(AppStrings.vmInvalidExchangeRate(_language.value))
             return
         }
 
@@ -822,10 +823,11 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
 
         viewModelScope.launch {
             try {
-                repository.addFundContribution(contribution, contributor?.name ?: "Thành viên", currentMember)
-                showSuccess("Đã ghi nhận nộp quỹ $convertedAmount VND cho ${contributor?.name}!")
+                val defaultMemberName = if (_language.value == AppLanguage.VI) "Thành viên" else "Member"
+                repository.addFundContribution(contribution, contributor?.name ?: defaultMemberName, currentMember)
+                showSuccess(AppStrings.vmFundContributionSuccess(convertedAmount, contributor?.name ?: "", _language.value))
             } catch (e: Exception) {
-                showError("Lỗi nộp quỹ: ${e.message}")
+                showError(AppStrings.vmFundContributionError(e.message, _language.value))
             }
         }
     }
@@ -835,22 +837,23 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (currentTrip.isSettled) {
-            showError("Chuyến đi '${currentTrip.title}' đã được khóa sổ quyết toán. Không thể xóa khoản nộp quỹ!")
+            showError(AppStrings.vmTripLockedCannotDeleteFund(currentTrip.title, _language.value))
             return
         }
 
         if (currentMember.role != "ADMIN") {
-            showError("Chỉ Trưởng đoàn (Admin) mới có quyền xóa khoản đóng góp quỹ!")
+            showError(AppStrings.vmAdminOnlyDeleteFund(_language.value))
             return
         }
 
-        val contributorName = uiState.value.members.find { it.id == contribution.memberId }?.name ?: "Thành viên"
+        val defaultMemberName = if (_language.value == AppLanguage.VI) "Thành viên" else "Member"
+        val contributorName = uiState.value.members.find { it.id == contribution.memberId }?.name ?: defaultMemberName
         viewModelScope.launch {
             try {
                 repository.deleteFundContribution(contribution, contributorName, currentMember)
-                showSuccess("Đã xóa khoản nộp quỹ của $contributorName")
+                showSuccess(AppStrings.vmDeleteFundSuccess(contributorName, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi xóa khoản nộp quỹ: ${e.message}")
+                showError(AppStrings.vmDeleteFundError(e.message, _language.value))
             }
         }
     }
@@ -864,12 +867,12 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (currentTrip.isSettled) {
-            showError("Chuyến đi '${currentTrip.title}' đã được khóa sổ quyết toán. Không thể thêm thành viên mới!")
+            showError(AppStrings.vmTripLockedCannotAddMember(currentTrip.title, _language.value))
             return
         }
 
         if (currentMember.role != "ADMIN" && currentMember.role != "TREASURER") {
-            showError("Chỉ Trưởng đoàn hoặc Thủ quỹ mới có quyền thêm thành viên!")
+            showError(AppStrings.vmAdminOrTreasurerOnlyAddMember(_language.value))
             return
         }
 
@@ -881,9 +884,9 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     role = role,
                     actor = currentMember
                 )
-                showSuccess("Đã thêm thành viên '$name' ($role)")
+                showSuccess(AppStrings.vmAddMemberSuccess(name, role, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi thêm thành viên: ${e.message}")
+                showError(AppStrings.vmAddMemberError(e.message, _language.value))
             }
         }
     }
@@ -897,12 +900,12 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (currentTrip.isSettled) {
-            showError("Chuyến đi '${currentTrip.title}' đã được khóa sổ quyết toán. Không thể sửa thông tin thành viên!")
+            showError(AppStrings.vmTripLockedCannotEditMember(currentTrip.title, _language.value))
             return
         }
 
         if (currentMember.role != "ADMIN") {
-            showError("Chỉ Trưởng đoàn (Admin) mới có quyền chỉnh sửa thông tin thành viên!")
+            showError(AppStrings.vmAdminOnlyEditMember(_language.value))
             return
         }
 
@@ -913,9 +916,9 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     role = newRole
                 )
                 repository.updateMember(updated, currentMember)
-                showSuccess("Đã cập nhật thông tin thành viên '$newName' thành công!")
+                showSuccess(AppStrings.vmUpdateMemberSuccess(newName, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi cập nhật thành viên: ${e.message}")
+                showError(AppStrings.vmUpdateMemberError(e.message, _language.value))
             }
         }
     }
@@ -925,21 +928,21 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (currentTrip.isSettled) {
-            showError("Chuyến đi '${currentTrip.title}' đã được khóa sổ quyết toán. Không thể thay đổi vai trò thành viên!")
+            showError(AppStrings.vmTripLockedCannotChangeRole(currentTrip.title, _language.value))
             return
         }
 
         if (currentMember.role != "ADMIN") {
-            showError("Chỉ Trưởng đoàn (Admin) mới có quyền thay đổi vai trò thành viên!")
+            showError(AppStrings.vmAdminOnlyChangeRole(_language.value))
             return
         }
 
         viewModelScope.launch {
             try {
                 repository.updateMember(member.copy(role = newRole), currentMember)
-                showSuccess("Đã đổi vai trò của ${member.name} thành $newRole")
+                showSuccess(AppStrings.vmChangeRoleSuccess(member.name, newRole, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi cập nhật vai trò: ${e.message}")
+                showError(AppStrings.vmChangeRoleError(e.message, _language.value))
             }
         }
     }
@@ -949,21 +952,21 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (currentTrip.isSettled) {
-            showError("Chuyến đi '${currentTrip.title}' đã được khóa sổ quyết toán. Không thể xóa hoặc ngừng hoạt động thành viên!")
+            showError(AppStrings.vmTripLockedCannotDeleteMember(currentTrip.title, _language.value))
             return
         }
 
         if (currentMember.role != "ADMIN") {
-            showError("Chỉ Trưởng đoàn (Admin) mới có quyền xóa/ngừng hoạt động thành viên!")
+            showError(AppStrings.vmAdminOnlyDeleteMember(_language.value))
             return
         }
 
         viewModelScope.launch {
             try {
                 repository.removeOrDeactivateMember(member, currentMember)
-                showSuccess("Đã xử lý trạng thái thành viên ${member.name}")
+                showSuccess(AppStrings.vmProcessMemberStatusSuccess(member.name, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi xóa/vô hiệu hóa thành viên: ${e.message}")
+                showError(AppStrings.vmProcessMemberStatusError(e.message, _language.value))
             }
         }
     }
@@ -974,12 +977,12 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (currentTrip.isSettled) {
-            showError("Chuyến đi '${currentTrip.title}' đã được khóa sổ quyết toán. Không thể thay đổi tỷ giá!")
+            showError(AppStrings.vmTripLockedCannotUpdateRate(currentTrip.title, _language.value))
             return
         }
 
         if (currentMember.role != "ADMIN" && currentMember.role != "TREASURER") {
-            showError("Chỉ Trưởng đoàn hoặc Thủ quỹ mới có quyền cập nhật tỷ giá!")
+            showError(AppStrings.vmAdminOrTreasurerOnlyRate(_language.value))
             return
         }
 
@@ -994,9 +997,9 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             try {
                 repository.updateExchangeRate(rateEntity, currentMember)
-                showSuccess("Đã cập nhật tỷ giá 1 $currencyCode = $rateToBase VND")
+                showSuccess(AppStrings.vmUpdateRateSuccess(currencyCode, rateToBase, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi cập nhật tỷ giá: ${e.message}")
+                showError(AppStrings.vmUpdateRateError(e.message, _language.value))
             }
         }
     }
@@ -1008,22 +1011,22 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val state = uiState.value
 
         if (currentTrip.isSettled) {
-            showError("Chuyến đi này đã được khóa sổ quyết toán từ trước!")
+            showError(AppStrings.vmTripAlreadySettled(_language.value))
             return
         }
 
         if (currentMember.role != "ADMIN") {
-            showError("Chỉ Trưởng đoàn (Admin) mới có quyền khóa sổ và quyết toán chuyến đi!")
+            showError(AppStrings.vmAdminOnlyLockSettlement(_language.value))
             return
         }
 
         if (state.members.isEmpty()) {
-            showError("Đoàn không có thành viên nào! Không thể thực hiện quyết toán và khóa sổ.")
+            showError(AppStrings.vmNoMembersCannotSettle(_language.value))
             return
         }
 
         if (!state.financialSummary.isBalanced || state.financialSummary.balanceDiscrepancy != 0L) {
-            showError("Hệ thống phát hiện chênh lệch đối soát (${state.financialSummary.balanceDiscrepancy} VND). Toàn bộ chi tiêu phải được phân bổ cân bằng tuyệt đối để khóa sổ!")
+            showError(AppStrings.vmDiscrepancyCannotSettle(state.financialSummary.balanceDiscrepancy, _language.value))
             return
         }
 
@@ -1077,14 +1080,14 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             try {
                 repository.finalizeSettlement(
                     trip = currentTrip,
-                    snapshotTitle = snapshotTitle.ifBlank { "Quyết toán ngày ${System.currentTimeMillis()}" },
+                    snapshotTitle = snapshotTitle.ifBlank { AppStrings.vmDefaultSnapshotTitle(System.currentTimeMillis(), _language.value) },
                     summary = state.financialSummary,
                     settlementJson = settlementJson,
                     actor = currentMember
                 )
-                showSuccess("Đã khóa sổ và lưu Snapshot quyết toán thành công!")
+                showSuccess(AppStrings.vmLockSettlementSuccess(_language.value))
             } catch (e: Exception) {
-                showError("Lỗi khóa sổ quyết toán: ${e.message}")
+                showError(AppStrings.vmLockSettlementError(e.message, _language.value))
             }
         }
     }
@@ -1094,21 +1097,21 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (!currentTrip.isSettled) {
-            showError("Chuyến đi hiện chưa khóa sổ!")
+            showError(AppStrings.vmTripNotSettledYet(_language.value))
             return
         }
 
         if (currentMember.role != "ADMIN") {
-            showError("Chỉ Trưởng đoàn (Admin) mới có quyền mở khóa sổ chuyến đi!")
+            showError(AppStrings.vmAdminOnlyReopenTrip(_language.value))
             return
         }
 
         viewModelScope.launch {
             try {
                 repository.reopenSettlement(currentTrip, currentMember)
-                showSuccess("Đã mở khóa sổ chuyến đi '${currentTrip.title}' thành công! Bạn có thể tiếp tục cập nhật dữ liệu.")
+                showSuccess(AppStrings.vmReopenTripSuccess(currentTrip.title, _language.value))
             } catch (e: Exception) {
-                showError("Lỗi mở khóa sổ: ${e.message}")
+                showError(AppStrings.vmReopenTripError(e.message, _language.value))
             }
         }
     }
@@ -1132,14 +1135,14 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                 val file = repository.createLocalBackup(context, password)
                 refreshLocalBackups(context)
                 val msg = if (!password.isNullOrBlank()) {
-                    "Đã tạo bản sao lưu mã hóa AES-256-GCM: ${file.name}"
+                    AppStrings.vmBackupCreatedEncrypted(file.name, _language.value)
                 } else {
-                    "Đã tạo bản sao lưu an toàn: ${file.name}"
+                    AppStrings.vmBackupCreatedPlain(file.name, _language.value)
                 }
                 showSuccess(msg)
                 onCompleted?.invoke(file)
             } catch (e: Exception) {
-                showError("Lỗi tạo sao lưu: ${e.message}")
+                showError(AppStrings.vmCreateBackupError(e.message, _language.value))
             }
         }
     }
@@ -1150,16 +1153,16 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                 val result = repository.exportBackupToUri(context, uri, password)
                 if (result.isSuccess) {
                     val msg = if (!password.isNullOrBlank()) {
-                        "Đã xuất tệp sao lưu mã hóa AES-256-GCM thành công!"
+                        AppStrings.vmExportBackupEncryptedSuccess(_language.value)
                     } else {
-                        "Đã xuất tệp sao lưu thành công!"
+                        AppStrings.vmExportBackupPlainSuccess(_language.value)
                     }
                     showSuccess(msg)
                 } else {
-                    showError("Lỗi xuất tệp: ${result.exceptionOrNull()?.message}")
+                    showError(AppStrings.vmExportFileError(result.exceptionOrNull()?.message, _language.value))
                 }
             } catch (e: Exception) {
-                showError("Lỗi xuất sao lưu: ${e.message}")
+                showError(AppStrings.vmExportBackupError(e.message, _language.value))
             }
         }
     }
@@ -1173,14 +1176,14 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     showSuccess(report.message)
                     refreshLocalBackups(context)
                 } else {
-                    val err = result.exceptionOrNull()?.message ?: "Lỗi không xác định"
-                    val userMsg = if (err.contains("ENCRYPTED_BACKUP_PASSWORD_REQUIRED") || err.contains("mật khẩu")) {
-                        "Tệp sao lưu yêu cầu mật khẩu giải mã chính xác."
+                    val err = result.exceptionOrNull()?.message ?: AppStrings.vmUnknownError(_language.value)
+                    val userMsg = if (err.contains("ENCRYPTED_BACKUP_PASSWORD_REQUIRED") || err.contains("mật khẩu") || err.contains("password")) {
+                        AppStrings.vmPasswordRequiredForRestore(_language.value)
                     } else err
-                    showError("Lỗi khôi phục sao lưu: $userMsg")
+                    showError(AppStrings.vmRestoreBackupError(userMsg, _language.value))
                 }
             } catch (e: Exception) {
-                showError("Lỗi khôi phục: ${e.message}")
+                showError(AppStrings.vmGeneralRestoreError(e.message, _language.value))
             }
         }
     }
@@ -1194,14 +1197,14 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     showSuccess(report.message)
                     refreshLocalBackups(context)
                 } else {
-                    val err = result.exceptionOrNull()?.message ?: "Lỗi không xác định"
-                    val userMsg = if (err.contains("ENCRYPTED_BACKUP_PASSWORD_REQUIRED") || err.contains("mật khẩu")) {
-                        "Tệp sao lưu yêu cầu mật khẩu giải mã chính xác."
+                    val err = result.exceptionOrNull()?.message ?: AppStrings.vmUnknownError(_language.value)
+                    val userMsg = if (err.contains("ENCRYPTED_BACKUP_PASSWORD_REQUIRED") || err.contains("mật khẩu") || err.contains("password")) {
+                        AppStrings.vmPasswordRequiredForRestore(_language.value)
                     } else err
-                    showError("Lỗi khôi phục tệp: $userMsg")
+                    showError(AppStrings.vmRestoreFileError(userMsg, _language.value))
                 }
             } catch (e: Exception) {
-                showError("Lỗi khôi phục: ${e.message}")
+                showError(AppStrings.vmGeneralRestoreError(e.message, _language.value))
             }
         }
     }
@@ -1213,7 +1216,269 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         try {
             repository.shareBackupFile(context, file)
         } catch (e: Exception) {
-            showError("Lỗi chia sẻ tệp sao lưu: ${e.message}")
+            showError(AppStrings.vmShareBackupError(e.message, _language.value))
         }
     }
 }
+
+// --- AppStrings Localized Extensions for TripFinanceViewModel ---
+
+fun AppStrings.vmDbResetSuccess(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã xóa và tạo mới cơ sở dữ liệu an toàn." else "Database reset and recreated securely."
+
+fun AppStrings.vmDbResetError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi khi tạo mới cơ sở dữ liệu: ${err ?: ""}" else "Failed to reset database: ${err ?: ""}"
+
+fun AppStrings.vmInvalidBackupOrPassword(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tệp sao lưu không hợp lệ hoặc sai mật khẩu" else "Invalid backup file or incorrect password"
+
+fun AppStrings.vmRestoreFailed(err: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Khôi phục thất bại: $err" else "Restore failed: $err"
+
+fun AppStrings.vmRestoreEmergencySuccess(count: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Khôi phục thành công $count đoàn từ bản sao lưu!" else "Successfully restored $count trip(s) from backup!"
+
+fun AppStrings.vmDataLoadError(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi khi nạp dữ liệu" else "Data loading error"
+
+fun AppStrings.vmDataLoadErrorDetail(err: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi nạp dữ liệu: $err" else "Failed to load data: $err"
+
+fun AppStrings.vmEmergencyRestoreError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi khôi phục khẩn cấp: ${err ?: ""}" else "Emergency restore error: ${err ?: ""}"
+
+fun AppStrings.vmAiAnalysisError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi khi phân tích: ${err ?: ""}" else "Analysis error: ${err ?: ""}"
+
+fun AppStrings.vmCreateTripSuccess(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tạo đoàn '$title' thành công!" else "Trip '$title' created successfully!"
+
+fun AppStrings.vmCreateTripError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi khi tạo đoàn: ${err ?: ""}" else "Failed to create trip: ${err ?: ""}"
+
+fun AppStrings.vmAdminOnlyEditTrip(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn (Admin) mới có quyền chỉnh sửa thông tin đoàn!" else "Only Trip Leader (Admin) can edit trip information!"
+
+fun AppStrings.vmAdminMemberNotFound(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Không tìm thấy thông tin thành viên quản trị đoàn" else "Admin member information not found"
+
+fun AppStrings.vmUpdateTripSuccess(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã cập nhật thông tin đoàn '$title' thành công!" else "Trip '$title' updated successfully!"
+
+fun AppStrings.vmUpdateTripError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi cập nhật đoàn: ${err ?: ""}" else "Failed to update trip: ${err ?: ""}"
+
+fun AppStrings.vmAdminOnlyDeleteTrip(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn (Admin) mới có quyền xóa đoàn!" else "Only Trip Leader (Admin) can delete trip!"
+
+fun AppStrings.vmDeleteTripSuccess(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã xóa đoàn '$title' thành công!" else "Trip '$title' deleted successfully!"
+
+fun AppStrings.vmDeleteTripError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi khi xóa đoàn: ${err ?: ""}" else "Failed to delete trip: ${err ?: ""}"
+
+fun AppStrings.vmTripLockedCannotAddExpense(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi '$title' đã được khóa sổ quyết toán. Không thể thêm khoản chi mới!" else "Trip '$title' is settled & locked. Cannot add new expenses!"
+
+fun AppStrings.vmInvalidExpenseAmount(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Số tiền chi tiêu không hợp lệ hoặc vượt quá hạn mức cho phép." else "Invalid expense amount or exceeds maximum limit."
+
+fun AppStrings.vmInvalidExchangeRate(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tỷ giá quy đổi không hợp lệ." else "Invalid exchange rate."
+
+fun AppStrings.vmSplitSumMismatch(splitSum: Long, total: Long, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tổng tiền phân bổ ($splitSum VND) không bằng tổng khoản chi ($total VND). Vui lòng kiểm tra lại!"
+    else "Split total ($splitSum VND) does not match expense total ($total VND). Please check again!"
+
+fun AppStrings.vmNegativeSplitAmount(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Số tiền phân bổ không được âm. Vui lòng kiểm tra lại tỷ lệ chia!" else "Split amount cannot be negative. Please check split ratios!"
+
+fun AppStrings.vmAddExpenseSuccess(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã thêm khoản chi '$title' thành công!" else "Expense '$title' added successfully!"
+
+fun AppStrings.vmAddExpenseError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi thêm chi tiêu: ${err ?: ""}" else "Failed to add expense: ${err ?: ""}"
+
+fun AppStrings.vmTripLockedCannotEditExpense(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi '$title' đã được khóa sổ quyết toán. Không thể chỉnh sửa khoản chi!" else "Trip '$title' is settled & locked. Cannot edit expenses!"
+
+fun AppStrings.vmAdminOnlyEditExpense(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn (Admin) mới có quyền chỉnh sửa các khoản chi!" else "Only Trip Leader (Admin) can edit expenses!"
+
+fun AppStrings.vmUpdateExpenseSuccess(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã cập nhật khoản chi '$title' thành công!" else "Expense '$title' updated successfully!"
+
+fun AppStrings.vmUpdateExpenseError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi cập nhật chi tiêu: ${err ?: ""}" else "Failed to update expense: ${err ?: ""}"
+
+fun AppStrings.vmTripLockedCannotDeleteExpense(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi '$title' đã được khóa sổ quyết toán. Không thể xóa khoản chi!" else "Trip '$title' is settled & locked. Cannot delete expenses!"
+
+fun AppStrings.vmAdminOnlyDeleteExpense(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn (Admin) mới có quyền xóa các khoản chi!" else "Only Trip Leader (Admin) can delete expenses!"
+
+fun AppStrings.vmDeleteExpenseSuccess(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã xóa khoản chi '$title'" else "Expense '$title' deleted"
+
+fun AppStrings.vmDeleteExpenseError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi xóa khoản chi: ${err ?: ""}" else "Failed to delete expense: ${err ?: ""}"
+
+fun AppStrings.vmTripLockedCannotContributeFund(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi '$title' đã được khóa sổ quyết toán. Không thể nộp thêm quỹ!" else "Trip '$title' is settled & locked. Cannot contribute to fund!"
+
+fun AppStrings.vmAdminOrTreasurerOnlyFund(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn hoặc Thủ quỹ mới có quyền ghi nhận thu quỹ!" else "Only Leader or Treasurer can record fund contributions!"
+
+fun AppStrings.vmInvalidFundAmount(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Số tiền nộp quỹ không hợp lệ (phải từ 1 đến 100 tỷ)." else "Invalid contribution amount (must be from 1 to 100B)."
+
+fun AppStrings.vmFundContributionSuccess(amount: Long, contributorName: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã ghi nhận nộp quỹ $amount VND cho $contributorName!" else "Recorded fund contribution of $amount VND for $contributorName!"
+
+fun AppStrings.vmFundContributionError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi nộp quỹ: ${err ?: ""}" else "Failed to record contribution: ${err ?: ""}"
+
+fun AppStrings.vmTripLockedCannotDeleteFund(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi '$title' đã được khóa sổ quyết toán. Không thể xóa khoản nộp quỹ!" else "Trip '$title' is settled & locked. Cannot delete fund entry!"
+
+fun AppStrings.vmAdminOnlyDeleteFund(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn (Admin) mới có quyền xóa khoản đóng góp quỹ!" else "Only Trip Leader (Admin) can delete fund entries!"
+
+fun AppStrings.vmDeleteFundSuccess(name: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã xóa khoản nộp quỹ của $name" else "Deleted fund contribution of $name"
+
+fun AppStrings.vmDeleteFundError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi xóa khoản nộp quỹ: ${err ?: ""}" else "Failed to delete fund contribution: ${err ?: ""}"
+
+fun AppStrings.vmTripLockedCannotAddMember(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi '$title' đã được khóa sổ quyết toán. Không thể thêm thành viên mới!" else "Trip '$title' is settled & locked. Cannot add members!"
+
+fun AppStrings.vmAdminOrTreasurerOnlyAddMember(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn hoặc Thủ quỹ mới có quyền thêm thành viên!" else "Only Leader or Treasurer can add members!"
+
+fun AppStrings.vmAddMemberSuccess(name: String, role: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã thêm thành viên '$name' ($role)" else "Added member '$name' ($role)"
+
+fun AppStrings.vmAddMemberError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi thêm thành viên: ${err ?: ""}" else "Failed to add member: ${err ?: ""}"
+
+fun AppStrings.vmTripLockedCannotEditMember(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi '$title' đã được khóa sổ quyết toán. Không thể sửa thông tin thành viên!" else "Trip '$title' is settled & locked. Cannot edit members!"
+
+fun AppStrings.vmAdminOnlyEditMember(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn (Admin) mới có quyền chỉnh sửa thông tin thành viên!" else "Only Trip Leader (Admin) can edit members!"
+
+fun AppStrings.vmUpdateMemberSuccess(name: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã cập nhật thông tin thành viên '$name' thành công!" else "Member '$name' updated successfully!"
+
+fun AppStrings.vmUpdateMemberError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi cập nhật thành viên: ${err ?: ""}" else "Failed to update member: ${err ?: ""}"
+
+fun AppStrings.vmTripLockedCannotChangeRole(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi '$title' đã được khóa sổ quyết toán. Không thể thay đổi vai trò thành viên!" else "Trip '$title' is settled & locked. Cannot change member role!"
+
+fun AppStrings.vmAdminOnlyChangeRole(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn (Admin) mới có quyền thay đổi vai trò thành viên!" else "Only Trip Leader (Admin) can change member roles!"
+
+fun AppStrings.vmChangeRoleSuccess(name: String, role: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã đổi vai trò của $name thành $role" else "Changed role of $name to $role"
+
+fun AppStrings.vmChangeRoleError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi cập nhật vai trò: ${err ?: ""}" else "Failed to update role: ${err ?: ""}"
+
+fun AppStrings.vmTripLockedCannotDeleteMember(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi '$title' đã được khóa sổ quyết toán. Không thể xóa hoặc ngừng hoạt động thành viên!" else "Trip '$title' is settled & locked. Cannot modify members!"
+
+fun AppStrings.vmAdminOnlyDeleteMember(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn (Admin) mới có quyền xóa/ngừng hoạt động thành viên!" else "Only Trip Leader (Admin) can deactivate/delete members!"
+
+fun AppStrings.vmProcessMemberStatusSuccess(name: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã xử lý trạng thái thành viên $name" else "Processed member status for $name"
+
+fun AppStrings.vmProcessMemberStatusError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi xóa/vô hiệu hóa thành viên: ${err ?: ""}" else "Failed to update member status: ${err ?: ""}"
+
+fun AppStrings.vmTripLockedCannotUpdateRate(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi '$title' đã được khóa sổ quyết toán. Không thể thay đổi tỷ giá!" else "Trip '$title' is settled & locked. Cannot update rates!"
+
+fun AppStrings.vmAdminOrTreasurerOnlyRate(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn hoặc Thủ quỹ mới có quyền cập nhật tỷ giá!" else "Only Leader or Treasurer can update exchange rates!"
+
+fun AppStrings.vmUpdateRateSuccess(code: String, rate: Double, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã cập nhật tỷ giá 1 $code = $rate VND" else "Updated rate: 1 $code = $rate VND"
+
+fun AppStrings.vmUpdateRateError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi cập nhật tỷ giá: ${err ?: ""}" else "Failed to update exchange rate: ${err ?: ""}"
+
+fun AppStrings.vmTripAlreadySettled(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi này đã được khóa sổ quyết toán từ trước!" else "This trip has already been settled and locked!"
+
+fun AppStrings.vmAdminOnlyLockSettlement(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn (Admin) mới có quyền khóa sổ và quyết toán chuyến đi!" else "Only Trip Leader (Admin) can finalize and lock settlement!"
+
+fun AppStrings.vmNoMembersCannotSettle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đoàn không có thành viên nào! Không thể thực hiện quyết toán và khóa sổ." else "No members in group! Cannot settle or lock trip."
+
+fun AppStrings.vmDiscrepancyCannotSettle(discrepancy: Long, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hệ thống phát hiện chênh lệch đối soát ($discrepancy VND). Toàn bộ chi tiêu phải được phân bổ cân bằng tuyệt đối để khóa sổ!"
+    else "Discrepancy detected ($discrepancy VND). All expenses must be fully balanced to lock!"
+
+fun AppStrings.vmDefaultSnapshotTitle(timestamp: Long, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quyết toán ngày $timestamp" else "Settlement on $timestamp"
+
+fun AppStrings.vmLockSettlementSuccess(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã khóa sổ và lưu Snapshot quyết toán thành công!" else "Trip settled and snapshot saved successfully!"
+
+fun AppStrings.vmLockSettlementError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi khóa sổ quyết toán: ${err ?: ""}" else "Failed to lock settlement: ${err ?: ""}"
+
+fun AppStrings.vmTripNotSettledYet(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi hiện chưa khóa sổ!" else "Trip is not locked yet!"
+
+fun AppStrings.vmAdminOnlyReopenTrip(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn (Admin) mới có quyền mở khóa sổ chuyến đi!" else "Only Trip Leader (Admin) can reopen the trip ledger!"
+
+fun AppStrings.vmReopenTripSuccess(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã mở khóa sổ chuyến đi '$title' thành công! Bạn có thể tiếp tục cập nhật dữ liệu." else "Trip '$title' ledger reopened! You can resume updating data."
+
+fun AppStrings.vmReopenTripError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi mở khóa sổ: ${err ?: ""}" else "Failed to reopen trip: ${err ?: ""}"
+
+fun AppStrings.vmBackupCreatedEncrypted(fileName: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã tạo bản sao lưu mã hóa AES-256-GCM: $fileName" else "Created AES-256-GCM encrypted backup: $fileName"
+
+fun AppStrings.vmBackupCreatedPlain(fileName: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã tạo bản sao lưu an toàn: $fileName" else "Created secure backup: $fileName"
+
+fun AppStrings.vmCreateBackupError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi tạo sao lưu: ${err ?: ""}" else "Failed to create backup: ${err ?: ""}"
+
+fun AppStrings.vmExportBackupEncryptedSuccess(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã xuất tệp sao lưu mã hóa AES-256-GCM thành công!" else "Exported AES-256-GCM encrypted backup successfully!"
+
+fun AppStrings.vmExportBackupPlainSuccess(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã xuất tệp sao lưu thành công!" else "Exported backup file successfully!"
+
+fun AppStrings.vmExportFileError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi xuất tệp: ${err ?: ""}" else "Failed to export file: ${err ?: ""}"
+
+fun AppStrings.vmExportBackupError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi xuất sao lưu: ${err ?: ""}" else "Backup export error: ${err ?: ""}"
+
+fun AppStrings.vmUnknownError(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi không xác định" else "Unknown error"
+
+fun AppStrings.vmPasswordRequiredForRestore(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tệp sao lưu yêu cầu mật khẩu giải mã chính xác." else "Backup file requires a valid decryption password."
+
+fun AppStrings.vmRestoreBackupError(msg: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi khôi phục sao lưu: $msg" else "Restore error: $msg"
+
+fun AppStrings.vmRestoreFileError(msg: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi khôi phục tệp: $msg" else "File restore error: $msg"
+
+fun AppStrings.vmGeneralRestoreError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi khôi phục: ${err ?: ""}" else "Failed to restore: ${err ?: ""}"
+
+fun AppStrings.vmShareBackupError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi chia sẻ tệp sao lưu: ${err ?: ""}" else "Failed to share backup file: ${err ?: ""}"
