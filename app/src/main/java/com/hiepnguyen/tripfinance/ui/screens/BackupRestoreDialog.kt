@@ -30,6 +30,9 @@ import androidx.compose.ui.unit.sp
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.AppStrings
+import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
 import com.hiepnguyen.tripfinance.ui.theme.EmeraldPrimary
 import com.hiepnguyen.tripfinance.ui.theme.IndigoSecondary
 import com.hiepnguyen.tripfinance.ui.viewmodel.TripFinanceViewModel
@@ -43,6 +46,7 @@ fun BackupRestoreDialog(
     onDismiss: () -> Unit
 ) {
     BackHandler { onDismiss() }
+    val lang = LocalAppLanguage.current
     val context = LocalContext.current
     val localBackups by viewModel.localBackups.collectAsState()
     val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()) }
@@ -136,13 +140,13 @@ fun BackupRestoreDialog(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Sao Lưu & Phục Hồi",
+                                text = AppStrings.backupRestoreDialogTitle(lang),
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Bảo vệ toàn vẹn dữ liệu khi nâng cấp ứng dụng",
+                                text = AppStrings.backupIntegritySubtitle(lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B)
                             )
@@ -150,7 +154,7 @@ fun BackupRestoreDialog(
                     }
 
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Filled.Close, contentDescription = "Đóng")
+                        Icon(Icons.Filled.Close, contentDescription = AppStrings.closeBackupDialogCd(lang))
                     }
                 }
 
@@ -175,7 +179,7 @@ fun BackupRestoreDialog(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "CSDL đã được bảo vệ nâng cấp (Anti-destructive migration). Bạn có thể sao lưu ra tệp JSON để gửi qua Google Drive, Zalo hoặc lưu trữ dự phòng.",
+                            text = AppStrings.backupMigrationInfo(lang),
                             fontSize = 11.sp,
                             color = Color(0xFF166534),
                             lineHeight = 16.sp
@@ -204,7 +208,7 @@ fun BackupRestoreDialog(
                     ) {
                         Icon(Icons.Filled.Save, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Tạo sao lưu", fontSize = 12.sp)
+                        Text(AppStrings.createLocalBackupBtn(lang), fontSize = 12.sp)
                     }
 
                     OutlinedButton(
@@ -220,7 +224,7 @@ fun BackupRestoreDialog(
                     ) {
                         Icon(Icons.Filled.FileUpload, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Xuất tệp", fontSize = 12.sp)
+                        Text(AppStrings.exportBackupFileBtn(lang), fontSize = 12.sp)
                     }
 
                     FilledTonalButton(
@@ -231,7 +235,7 @@ fun BackupRestoreDialog(
                     ) {
                         Icon(Icons.Filled.FileDownload, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Nhập tệp", fontSize = 12.sp)
+                        Text(AppStrings.importBackupFileBtn(lang), fontSize = 12.sp)
                     }
                 }
 
@@ -239,7 +243,7 @@ fun BackupRestoreDialog(
 
                 // List of local backup files
                 Text(
-                    text = "BẢN SAO LƯU TRÊN THIẾT BỊ (${localBackups.size})",
+                    text = AppStrings.localBackupsHeaderWithCount(localBackups.size, lang),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF64748B)
@@ -263,12 +267,12 @@ fun BackupRestoreDialog(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                "Chưa có bản sao lưu nội bộ nào",
+                                AppStrings.noLocalBackupsYet(lang),
                                 fontSize = 13.sp,
                                 color = Color(0xFF94A3B8)
                             )
                             Text(
-                                "Nhấn 'Tạo sao lưu' ở trên để lưu snapshot toàn bộ CSDL",
+                                AppStrings.tapCreateBackupHint(lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF94A3B8)
                             )
@@ -319,7 +323,7 @@ fun BackupRestoreDialog(
                                                     ) {
                                                         Icon(
                                                             Icons.Filled.Lock,
-                                                            contentDescription = "Mã hóa AES-256",
+                                                            contentDescription = AppStrings.aes256EncryptedCd(lang),
                                                             tint = Color(0xFF2563EB),
                                                             modifier = Modifier.size(11.dp)
                                                         )
@@ -357,7 +361,7 @@ fun BackupRestoreDialog(
                                         ) {
                                             Icon(
                                                 Icons.Filled.Share,
-                                                contentDescription = "Chia sẻ",
+                                                contentDescription = AppStrings.shareBackupFileCd(lang),
                                                 tint = IndigoSecondary,
                                                 modifier = Modifier.size(18.dp)
                                             )
@@ -379,7 +383,7 @@ fun BackupRestoreDialog(
                                         ) {
                                             Icon(Icons.Filled.Restore, contentDescription = null, modifier = Modifier.size(14.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
-                                            Text("Nạp lại", fontSize = 11.sp)
+                                            Text(AppStrings.restoreBackupBtn(lang), fontSize = 11.sp)
                                         }
                                     }
                                 }
@@ -397,7 +401,7 @@ fun BackupRestoreDialog(
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Đóng", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(AppStrings.closeBackupBtn(lang), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -405,7 +409,7 @@ fun BackupRestoreDialog(
 
     // Dialog for creating / exporting backup with optional AES-GCM password encryption
     if (showCreateOptionsDialog) {
-        val titleText = if (isCreateExportMode) "Tùy Chọn Xuất Tệp Sao Lưu" else "Tùy Chọn Tạo Bản Sao Lưu"
+        val titleText = if (isCreateExportMode) AppStrings.exportBackupOptionsTitle(lang) else AppStrings.createBackupOptionsTitle(lang)
         AlertDialog(
             onDismissRequest = { showCreateOptionsDialog = false },
             icon = {
@@ -421,7 +425,7 @@ fun BackupRestoreDialog(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        "Bản sao lưu sẽ đóng gói toàn bộ danh sách đoàn, thành viên, các khoản chi, quỹ và lịch sử đối soát.",
+                        AppStrings.backupScopeExplanation(lang),
                         fontSize = 12.sp,
                         color = Color(0xFF475569)
                     )
@@ -444,13 +448,13 @@ fun BackupRestoreDialog(
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Column {
                                     Text(
-                                        "Mã hóa bảo vệ bằng mật khẩu",
+                                        AppStrings.encryptWithPasswordLabel(lang),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 12.5.sp,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        "Chuẩn AES-256-GCM + PBKDF2 (Khuyến nghị)",
+                                        AppStrings.aesGcmRecommendedLabel(lang),
                                         fontSize = 10.5.sp,
                                         color = Color(0xFF2563EB),
                                         fontWeight = FontWeight.Medium
@@ -461,7 +465,7 @@ fun BackupRestoreDialog(
                             if (encryptBackupCheck) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    "Mã hóa giúp bảo vệ an toàn tuyệt đối cho toàn bộ dữ liệu tài chính và chi tiêu cá nhân của các thành viên đoàn.",
+                                    AppStrings.encryptionBenefitsExplanation(lang),
                                     fontSize = 10.5.sp,
                                     color = Color(0xFF64748B),
                                     lineHeight = 14.sp
@@ -470,13 +474,13 @@ fun BackupRestoreDialog(
                                 OutlinedTextField(
                                     value = backupPasswordField,
                                     onValueChange = { backupPasswordField = it },
-                                    label = { Text("Mật khẩu bảo vệ sao lưu (tối thiểu 6 ký tự)", fontSize = 12.sp) },
-                                    placeholder = { Text("Nhập mật khẩu tự chọn (>= 6 ký tự)", fontSize = 11.sp) },
+                                    label = { Text(AppStrings.backupPasswordLabel(lang), fontSize = 12.sp) },
+                                    placeholder = { Text(AppStrings.backupPasswordPlaceholder(lang), fontSize = 11.sp) },
                                     singleLine = true,
                                     isError = backupPasswordField.isNotEmpty() && backupPasswordField.length < 6,
                                     supportingText = {
                                         if (backupPasswordField.isNotEmpty() && backupPasswordField.length < 6) {
-                                            Text("Mật khẩu phải có tối thiểu 6 ký tự", color = Color(0xFFDC2626), fontSize = 11.sp)
+                                            Text(AppStrings.passwordMinLengthError(lang), color = Color(0xFFDC2626), fontSize = 11.sp)
                                         }
                                     },
                                     visualTransformation = if (backupPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -499,7 +503,7 @@ fun BackupRestoreDialog(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Text(
-                                        "Lưu ý: Bản sao lưu không mã hóa có thể đọc được bằng trình soạn thảo văn bản. Nên đặt mật khẩu nếu tệp chứa dữ liệu chi tiêu nội bộ.",
+                                        AppStrings.unencryptedNotice(lang),
                                         color = Color(0xFF92400E),
                                         fontSize = 11.sp,
                                         modifier = Modifier.padding(8.dp),
@@ -528,12 +532,12 @@ fun BackupRestoreDialog(
                     enabled = isConfirmEnabled,
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                 ) {
-                    Text(if (isCreateExportMode) "Tiếp tục xuất" else "Tạo sao lưu ngay")
+                    Text(if (isCreateExportMode) AppStrings.proceedExportBtn(lang) else AppStrings.createBackupNowBtn(lang))
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showCreateOptionsDialog = false }) {
-                    Text("Hủy bỏ")
+                    Text(AppStrings.cancelBackupActionBtn(lang))
                 }
             }
         )
@@ -541,7 +545,7 @@ fun BackupRestoreDialog(
 
     // Confirmation dialog before restoring
     if (showConfirmRestoreDialog) {
-        val targetName = pendingRestoreFile?.name ?: pendingRestoreUri?.lastPathSegment ?: "Tệp sao lưu"
+        val targetName = pendingRestoreFile?.name ?: pendingRestoreUri?.lastPathSegment ?: AppStrings.defaultBackupFileName(lang)
         val canConfirm = !isPendingEncrypted || restorePasswordField.trim().length >= 6
 
         AlertDialog(
@@ -555,13 +559,13 @@ fun BackupRestoreDialog(
             },
             title = {
                 Text(
-                    text = if (isPendingEncrypted) "Nhập Mật Khẩu Khôi Phục" else "Xác nhận khôi phục CSDL",
+                    text = if (isPendingEncrypted) AppStrings.enterRestorePasswordTitle(lang) else AppStrings.confirmRestoreDatabaseTitle(lang),
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Bạn sắp nạp dữ liệu từ: $targetName.", fontSize = 12.5.sp)
+                    Text(AppStrings.aboutToRestorePrompt(targetName, lang), fontSize = 12.5.sp)
 
                     if (isPendingEncrypted) {
                         Surface(
@@ -577,7 +581,7 @@ fun BackupRestoreDialog(
                                 Icon(Icons.Filled.Lock, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(20.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    "Tệp sao lưu này được mã hóa bảo vệ (AES-256-GCM). Vui lòng nhập đúng mật khẩu để giải mã.",
+                                    AppStrings.encryptedRestoreNotice(lang),
                                     fontSize = 11.sp,
                                     color = Color(0xFF1E40AF)
                                 )
@@ -587,12 +591,12 @@ fun BackupRestoreDialog(
                         OutlinedTextField(
                             value = restorePasswordField,
                             onValueChange = { restorePasswordField = it },
-                            label = { Text("Mật khẩu giải mã (tối thiểu 6 ký tự)", fontSize = 12.sp) },
+                            label = { Text(AppStrings.decryptPasswordLabel(lang), fontSize = 12.sp) },
                             singleLine = true,
                             isError = restorePasswordField.isNotEmpty() && restorePasswordField.trim().length < 6,
                             supportingText = {
                                 if (restorePasswordField.isNotEmpty() && restorePasswordField.trim().length < 6) {
-                                    Text("Mật khẩu phải có tối thiểu 6 ký tự", color = Color(0xFFDC2626), fontSize = 11.sp)
+                                    Text(AppStrings.passwordMinLengthError(lang), color = Color(0xFFDC2626), fontSize = 11.sp)
                                 }
                             },
                             visualTransformation = if (restorePasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -609,7 +613,7 @@ fun BackupRestoreDialog(
                         )
                     }
 
-                    Text("Dữ liệu các chuyến đi, thành viên, quỹ và khoản chi sẽ được tích hợp vào ứng dụng.", fontSize = 11.5.sp, color = Color(0xFF64748B))
+                    Text(AppStrings.restoreIntegrationExplanation(lang), fontSize = 11.5.sp, color = Color(0xFF64748B))
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -621,7 +625,7 @@ fun BackupRestoreDialog(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            "Xóa sạch dữ liệu hiện tại trước khi khôi phục (Khuyến nghị nếu chuyển máy mới)",
+                            AppStrings.clearExistingBeforeRestoreCheckbox(lang),
                             fontSize = 11.sp,
                             color = Color(0xFF475569)
                         )
@@ -642,12 +646,12 @@ fun BackupRestoreDialog(
                     enabled = canConfirm,
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                 ) {
-                    Text("Tiến hành khôi phục")
+                    Text(AppStrings.proceedRestoreBtn(lang))
                 }
             },
             dismissButton = {
                 OutlinedButton(onClick = { showConfirmRestoreDialog = false }) {
-                    Text("Hủy bỏ")
+                    Text(AppStrings.cancelBackupActionBtn(lang))
                 }
             }
         )
@@ -669,12 +673,12 @@ fun BackupRestoreDialog(
                 )
             },
             title = {
-                Text("Chia Sẻ Bản Sao Lưu Không Mã Hóa", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Text(AppStrings.shareUnencryptedBackupTitle(lang), fontWeight = FontWeight.Bold, fontSize = 16.sp)
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Tệp '${fileToShare.name}' không được bảo vệ bằng mật khẩu mã hóa.",
+                        AppStrings.fileNotEncryptedWarning(fileToShare.name, lang),
                         fontSize = 12.5.sp,
                         color = Color(0xFF1E293B)
                     )
@@ -684,7 +688,7 @@ fun BackupRestoreDialog(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            "Lưu ý an toàn: Tệp này ở định dạng văn bản rõ không mã hóa. Hãy đảm bảo bạn chỉ chia sẻ với các thành viên trong đoàn.",
+                            AppStrings.plainTextSecurityNotice(lang),
                             color = Color(0xFF92400E),
                             fontSize = 11.sp,
                             modifier = Modifier.padding(10.dp),
@@ -692,7 +696,7 @@ fun BackupRestoreDialog(
                         )
                     }
                     Text(
-                        "Bạn có muốn tiếp tục gửi tệp này qua ứng dụng khác không?",
+                        AppStrings.continueSharingPrompt(lang),
                         fontSize = 12.sp,
                         color = Color(0xFF475569)
                     )
@@ -707,7 +711,7 @@ fun BackupRestoreDialog(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                 ) {
-                    Text("Tiếp tục chia sẻ")
+                    Text(AppStrings.continueSharingBtn(lang))
                 }
             },
             dismissButton = {
@@ -717,9 +721,144 @@ fun BackupRestoreDialog(
                         pendingShareFile = null
                     }
                 ) {
-                    Text("Hủy bỏ")
+                    Text(AppStrings.cancelBackupActionBtn(lang))
                 }
             }
         )
     }
 }
+
+// --- AppStrings Localized Extensions for BackupRestoreDialog ---
+
+fun AppStrings.backupRestoreDialogTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Sao Lưu & Phục Hồi" else "Backup & Recovery"
+
+fun AppStrings.backupIntegritySubtitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bảo vệ toàn vẹn dữ liệu khi nâng cấp ứng dụng" else "Preserve data integrity across app updates"
+
+fun AppStrings.closeBackupDialogCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đóng" else "Close"
+
+fun AppStrings.backupMigrationInfo(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "CSDL đã được bảo vệ nâng cấp (Anti-destructive migration). Bạn có thể sao lưu ra tệp JSON để gửi qua Google Drive, Zalo hoặc lưu trữ dự phòng."
+    else "Database protected by anti-destructive migration. Back up to JSON files for Google Drive, messaging apps, or offline safety."
+
+fun AppStrings.createLocalBackupBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tạo sao lưu" else "Create Backup"
+
+fun AppStrings.exportBackupFileBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xuất tệp" else "Export File"
+
+fun AppStrings.importBackupFileBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nhập tệp" else "Import File"
+
+fun AppStrings.localBackupsHeaderWithCount(count: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "BẢN SAO LƯU TRÊN THIẾT BỊ ($count)" else "DEVICE LOCAL BACKUPS ($count)"
+
+fun AppStrings.noLocalBackupsYet(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chưa có bản sao lưu nội bộ nào" else "No local backups found"
+
+fun AppStrings.tapCreateBackupHint(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nhấn 'Tạo sao lưu' ở trên để lưu snapshot toàn bộ CSDL" else "Tap 'Create Backup' above to snapshot current database"
+
+fun AppStrings.aes256EncryptedCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mã hóa AES-256" else "AES-256 Encrypted"
+
+fun AppStrings.shareBackupFileCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chia sẻ" else "Share"
+
+fun AppStrings.restoreBackupBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nạp lại" else "Restore"
+
+fun AppStrings.closeBackupBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đóng" else "Close"
+
+fun AppStrings.exportBackupOptionsTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tùy Chọn Xuất Tệp Sao Lưu" else "Export Backup Options"
+
+fun AppStrings.createBackupOptionsTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tùy Chọn Tạo Bản Sao Lưu" else "Create Backup Options"
+
+fun AppStrings.backupScopeExplanation(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bản sao lưu sẽ đóng gói toàn bộ danh sách đoàn, thành viên, các khoản chi, quỹ và lịch sử đối soát."
+    else "The backup packages all trips, members, expenses, group funds, and audit history."
+
+fun AppStrings.encryptWithPasswordLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mã hóa bảo vệ bằng mật khẩu" else "Password-protected encryption"
+
+fun AppStrings.aesGcmRecommendedLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuẩn AES-256-GCM + PBKDF2 (Khuyến nghị)" else "AES-256-GCM + PBKDF2 standard (Recommended)"
+
+fun AppStrings.encryptionBenefitsExplanation(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mã hóa giúp bảo vệ an toàn tuyệt đối cho toàn bộ dữ liệu tài chính và chi tiêu cá nhân của các thành viên đoàn."
+    else "Encryption secures all financial transactions and private member spendings."
+
+fun AppStrings.backupPasswordLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mật khẩu bảo vệ sao lưu (tối thiểu 6 ký tự)" else "Backup encryption password (min 6 chars)"
+
+fun AppStrings.backupPasswordPlaceholder(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nhập mật khẩu tự chọn (>= 6 ký tự)" else "Enter custom password (>= 6 chars)"
+
+fun AppStrings.passwordMinLengthError(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mật khẩu phải có tối thiểu 6 ký tự" else "Password must be at least 6 characters"
+
+fun AppStrings.unencryptedNotice(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lưu ý: Bản sao lưu không mã hóa có thể đọc được bằng trình soạn thảo văn bản. Nên đặt mật khẩu nếu tệp chứa dữ liệu chi tiêu nội bộ."
+    else "Note: Unencrypted backups are readable via text editors. A password is recommended for private trip data."
+
+fun AppStrings.proceedExportBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tiếp tục xuất" else "Proceed to Export"
+
+fun AppStrings.createBackupNowBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tạo sao lưu ngay" else "Create Backup Now"
+
+fun AppStrings.cancelBackupActionBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hủy bỏ" else "Cancel"
+
+fun AppStrings.defaultBackupFileName(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tệp sao lưu" else "Backup File"
+
+fun AppStrings.enterRestorePasswordTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nhập Mật Khẩu Khôi Phục" else "Enter Decryption Password"
+
+fun AppStrings.confirmRestoreDatabaseTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xác nhận khôi phục CSDL" else "Confirm Database Restore"
+
+fun AppStrings.aboutToRestorePrompt(targetName: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bạn sắp nạp dữ liệu từ: $targetName." else "You are restoring data from: $targetName."
+
+fun AppStrings.encryptedRestoreNotice(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tệp sao lưu này được mã hóa bảo vệ (AES-256-GCM). Vui lòng nhập đúng mật khẩu để giải mã."
+    else "This backup is password-protected (AES-256-GCM). Please enter the correct password to decrypt."
+
+fun AppStrings.decryptPasswordLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mật khẩu giải mã (tối thiểu 6 ký tự)" else "Decryption password (min 6 chars)"
+
+fun AppStrings.restoreIntegrationExplanation(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Dữ liệu các chuyến đi, thành viên, quỹ và khoản chi sẽ được tích hợp vào ứng dụng."
+    else "All trips, members, funds, and expenses will be integrated into the app."
+
+fun AppStrings.clearExistingBeforeRestoreCheckbox(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xóa sạch dữ liệu hiện tại trước khi khôi phục (Khuyến nghị nếu chuyển máy mới)"
+    else "Wipe existing data before restore (Recommended when migrating to a new device)"
+
+fun AppStrings.proceedRestoreBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tiến hành khôi phục" else "Proceed with Restore"
+
+fun AppStrings.shareUnencryptedBackupTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chia Sẻ Bản Sao Lưu Không Mã Hóa" else "Share Unencrypted Backup"
+
+fun AppStrings.fileNotEncryptedWarning(fileName: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tệp '$fileName' không được bảo vệ bằng mật khẩu mã hóa."
+    else "File '$fileName' is not password-protected."
+
+fun AppStrings.plainTextSecurityNotice(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lưu ý an toàn: Tệp này ở định dạng văn bản rõ không mã hóa. Hãy đảm bảo bạn chỉ chia sẻ với các thành viên trong đoàn."
+    else "Safety notice: This file is in plain text format. Only share it with trusted trip members."
+
+fun AppStrings.continueSharingPrompt(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bạn có muốn tiếp tục gửi tệp này qua ứng dụng khác không?"
+    else "Do you wish to continue sharing this file via external apps?"
+
+fun AppStrings.continueSharingBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tiếp tục chia sẻ" else "Continue Sharing"

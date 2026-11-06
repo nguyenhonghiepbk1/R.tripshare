@@ -37,6 +37,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
+import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.AppStrings
+import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
 import com.hiepnguyen.tripfinance.data.entity.ExchangeRateEntity
 import com.hiepnguyen.tripfinance.data.entity.TripMemberEntity
 import com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator
@@ -78,6 +81,7 @@ fun AddExpenseDialog(
         timestamp: Long
     ) -> Unit
 ) {
+    val lang = LocalAppLanguage.current
     val isEditMode = initialExpense != null
 
     // Basic Information
@@ -324,12 +328,12 @@ fun AddExpenseDialog(
                     Spacer(modifier = Modifier.width(10.dp))
                     Column {
                         Text(
-                            text = if (isEditMode) "Chỉnh Sửa Khoản Chi" else "Thêm Khoản Chi Mới",
+                            text = if (isEditMode) AppStrings.editExpenseDialogTitle(lang) else AppStrings.addExpenseDialogTitle(lang),
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (isEditMode) "Cập nhật chi tiết & phân bổ lại người tham gia" else "Nhập chi tiết thu chi và phân bổ đoàn",
+                            text = if (isEditMode) AppStrings.editExpenseDialogSubtitle(lang) else AppStrings.addExpenseDialogSubtitle(lang),
                             fontSize = 11.sp,
                             color = Color(0xFF64748B)
                         )
@@ -337,7 +341,7 @@ fun AddExpenseDialog(
                 }
 
                 IconButton(onClick = safeDismiss) {
-                    Icon(Icons.Filled.Close, contentDescription = "Đóng", tint = Color(0xFF94A3B8))
+                    Icon(Icons.Filled.Close, contentDescription = AppStrings.closeExpenseDialogCd(lang), tint = Color(0xFF94A3B8))
                 }
             }
         },
@@ -352,7 +356,7 @@ fun AddExpenseDialog(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "1. Tên & Danh mục khoản chi",
+                            text = AppStrings.section1ExpenseNameCategory(lang),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF334155)
@@ -361,7 +365,7 @@ fun AddExpenseDialog(
                         OutlinedTextField(
                             value = title,
                             onValueChange = { title = it },
-                            label = { Text("Tên khoản chi * (VD: Ăn trưa hải sản, Vé cáp treo...)") },
+                            label = { Text(AppStrings.expenseNamePlaceholder(lang)) },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                             modifier = Modifier
@@ -371,13 +375,13 @@ fun AddExpenseDialog(
 
                         // Category Selection Chips
                         val categories = listOf(
-                            "FOOD" to "Ăn uống",
-                            "TRANSPORT" to "Di chuyển",
-                            "HOTEL" to "Khách sạn",
+                            "FOOD" to AppStrings.categoryFood(lang),
+                            "TRANSPORT" to AppStrings.categoryTransport(lang),
+                            "HOTEL" to AppStrings.categoryHotel(lang),
                             "SIGHTSEEING" to "Tham quan",
-                            "ENTERTAINMENT" to "Giải trí",
-                            "SHOPPING" to "Mua sắm",
-                            "OTHER" to "Khác"
+                            "ENTERTAINMENT" to AppStrings.categoryEntertainment(lang),
+                            "SHOPPING" to AppStrings.categoryShopping(lang),
+                            "OTHER" to AppStrings.categoryOther(lang)
                         )
 
                         Row(
@@ -402,7 +406,7 @@ fun AddExpenseDialog(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "2. Số tiền & Loại tiền tệ",
+                            text = AppStrings.section2AmountAndCurrency(lang),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF334155)
@@ -433,7 +437,7 @@ fun AddExpenseDialog(
                                         Text(amountValidation.message, color = DangerRed, fontSize = 11.sp)
                                     }
                                 },
-                                label = { Text("Số tiền *") },
+                                label = { Text(AppStrings.amountFieldLabel(lang)) },
                                 placeholder = { Text(if (selectedCurrency == "VND") "0" else "0.00") },
                                 keyboardOptions = KeyboardOptions(
                                     keyboardType = if (selectedCurrency == "VND") KeyboardType.Number else KeyboardType.Decimal,
@@ -518,7 +522,7 @@ fun AddExpenseDialog(
                             if (amountText.isNotEmpty()) {
                                 SuggestionChip(
                                     onClick = { amountText = "" },
-                                    label = { Text("Xóa", fontSize = 11.sp, color = DangerRed) }
+                                    label = { Text(AppStrings.clearExpenseInputCd(lang), fontSize = 11.sp, color = DangerRed) }
                                 )
                             }
                         }
@@ -542,7 +546,7 @@ fun AddExpenseDialog(
                                         },
                                         label = {
                                             Text(
-                                                "Tỷ giá quy đổi (1 $selectedCurrency = ? $baseCurrency)",
+                                                AppStrings.exchangeRateHelpText(selectedCurrency, baseCurrency, lang),
                                                 color = Color(0xFFDC2626)
                                             )
                                         },
@@ -572,7 +576,7 @@ fun AddExpenseDialog(
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text("Quy đổi $baseCurrency tương đương:", fontSize = 12.sp, color = Color(0xFF475569))
+                                        Text(AppStrings.convertedBaseEquivalentLabel(baseCurrency, lang), fontSize = 12.sp, color = Color(0xFF475569))
                                         Text(
                                             text = NumberFormatUtils.formatCurrency(convertedTotalVnd, baseCurrency),
                                             fontSize = 14.sp,
@@ -584,7 +588,7 @@ fun AddExpenseDialog(
                             }
                         } else if (parsedAmount > 0) {
                             Text(
-                                text = "Bằng chữ: ${NumberFormatUtils.formatVnd(parsedAmount)}",
+                                text = AppStrings.inWordsLabel(NumberFormatUtils.formatVnd(parsedAmount), lang),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = EmeraldPrimary
@@ -602,13 +606,13 @@ fun AddExpenseDialog(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "3. Thời gian chi",
+                                text = AppStrings.section3ExpenseTime(lang),
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF334155)
                             )
                             Text(
-                                text = "Nhập tay hoặc bấm lịch",
+                                text = AppStrings.manualOrCalendarHint(lang),
                                 fontSize = 11.sp,
                                 color = IndigoSecondary,
                                 fontWeight = FontWeight.Medium
@@ -654,7 +658,7 @@ fun AddExpenseDialog(
                                         }
                                     }
                                 },
-                                label = { Text("Ngày & Giờ (dd/MM/yyyy HH:mm)") },
+                                label = { Text(AppStrings.dateTimeFormatLabel(lang)) },
                                 placeholder = { Text("VD: 21/08/2026 14:30") },
                                 isError = dateInputError && dateInputText.isNotBlank(),
                                 singleLine = true,
@@ -691,11 +695,11 @@ fun AddExpenseDialog(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Filled.CalendarMonth,
-                                        contentDescription = "Chọn lịch",
+                                        contentDescription = AppStrings.pickCalendarCd(lang),
                                         modifier = Modifier.size(18.dp)
                                     )
                                     Text(
-                                        text = "Bảng lịch",
+                                        text = AppStrings.calendarTableBtn(lang),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -705,7 +709,7 @@ fun AddExpenseDialog(
 
                         if (dateInputError && dateInputText.isNotBlank()) {
                             Text(
-                                text = "Định dạng không hợp lệ. Vui lòng nhập: ngày/tháng/năm giờ:phút (VD: 21/08/2026 15:30) hoặc bấm nút Bảng lịch.",
+                                text = AppStrings.invalidDateTimeFormatError(lang),
                                 fontSize = 11.sp,
                                 color = DangerRed
                             )
@@ -720,7 +724,7 @@ fun AddExpenseDialog(
                         ) {
                             SuggestionChip(
                                 onClick = { updateTimestamp(System.currentTimeMillis()) },
-                                label = { Text("⚡ Bây giờ", fontSize = 11.sp) }
+                                label = { Text(AppStrings.timeChipNow(lang), fontSize = 11.sp) }
                             )
 
                             SuggestionChip(
@@ -730,7 +734,7 @@ fun AddExpenseDialog(
                                     }
                                     updateTimestamp(cal.timeInMillis)
                                 },
-                                label = { Text("Hôm qua", fontSize = 11.sp) }
+                                label = { Text(AppStrings.timeChipYesterday(lang), fontSize = 11.sp) }
                             )
 
                             SuggestionChip(
@@ -742,7 +746,7 @@ fun AddExpenseDialog(
                                     }
                                     updateTimestamp(cal.timeInMillis)
                                 },
-                                label = { Text("Sáng nay (08:00)", fontSize = 11.sp) }
+                                label = { Text(AppStrings.timeChipMorning(lang), fontSize = 11.sp) }
                             )
 
                             SuggestionChip(
@@ -754,7 +758,7 @@ fun AddExpenseDialog(
                                     }
                                     updateTimestamp(cal.timeInMillis)
                                 },
-                                label = { Text("Trưa nay (12:30)", fontSize = 11.sp) }
+                                label = { Text(AppStrings.timeChipNoon(lang), fontSize = 11.sp) }
                             )
 
                             SuggestionChip(
@@ -766,7 +770,7 @@ fun AddExpenseDialog(
                                     }
                                     updateTimestamp(cal.timeInMillis)
                                 },
-                                label = { Text("Tối nay (19:00)", fontSize = 11.sp) }
+                                label = { Text(AppStrings.timeChipEvening(lang), fontSize = 11.sp) }
                             )
 
                             SuggestionChip(
@@ -776,7 +780,7 @@ fun AddExpenseDialog(
                                     }
                                     updateTimestamp(cal.timeInMillis)
                                 },
-                                label = { Text("+1 ngày", fontSize = 11.sp) }
+                                label = { Text(AppStrings.timeChipPlusOneDay(lang), fontSize = 11.sp) }
                             )
                         }
                     }
@@ -786,7 +790,7 @@ fun AddExpenseDialog(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
-                            text = "4. Người xuất tiền (Nguồn thanh toán) *",
+                            text = AppStrings.section4PayerSource(lang),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF334155)
@@ -799,7 +803,7 @@ fun AddExpenseDialog(
                             FilterChip(
                                 selected = payerType == "MEMBER",
                                 onClick = { payerType = "MEMBER" },
-                                label = { Text("Thành viên chi trước", fontSize = 12.sp) },
+                                label = { Text(AppStrings.memberPaidInAdvanceTab(lang), fontSize = 12.sp) },
                                 leadingIcon = {
                                     Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(16.dp))
                                 },
@@ -808,7 +812,7 @@ fun AddExpenseDialog(
                             FilterChip(
                                 selected = payerType == "FUND",
                                 onClick = { payerType = "FUND" },
-                                label = { Text("Quỹ chung của đoàn", fontSize = 12.sp) },
+                                label = { Text(AppStrings.groupFundTab(lang), fontSize = 12.sp) },
                                 leadingIcon = {
                                     Icon(Icons.Filled.Savings, contentDescription = null, modifier = Modifier.size(16.dp))
                                 },
@@ -859,16 +863,16 @@ fun AddExpenseDialog(
                                             Spacer(modifier = Modifier.width(10.dp))
                                             Column {
                                                 Text(
-                                                    text = selectedMember?.name ?: "Chưa chọn người chi",
+                                                    text = selectedMember?.name ?: AppStrings.noPayerSelected(lang),
                                                     fontSize = 14.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = Color(0xFF1E293B)
                                                 )
                                                 Text(
                                                     text = when (selectedMember?.role) {
-                                                        "ADMIN" -> "Trưởng đoàn"
-                                                        "TREASURER" -> "Thủ quỹ đoàn"
-                                                        else -> "Thành viên"
+                                                        "ADMIN" -> AppStrings.roleLeaderBadge(lang)
+                                                        "TREASURER" -> AppStrings.roleTreasurerBadge(lang)
+                                                        else -> AppStrings.roleMemberBadge(lang)
                                                     },
                                                     fontSize = 11.sp,
                                                     color = Color(0xFF64748B)
@@ -878,7 +882,7 @@ fun AddExpenseDialog(
 
                                         Icon(
                                             imageVector = Icons.Filled.ArrowDropDown,
-                                            contentDescription = "Chọn người chi",
+                                            contentDescription = AppStrings.selectPayerCd(lang),
                                             tint = Color(0xFF64748B)
                                         )
                                     }
@@ -890,7 +894,7 @@ fun AddExpenseDialog(
                                     modifier = Modifier.fillMaxWidth(0.85f)
                                 ) {
                                     Text(
-                                        text = "Chọn thành viên xuất tiền:",
+                                        text = AppStrings.selectPayingMemberHeader(lang),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF64748B),
@@ -912,9 +916,9 @@ fun AddExpenseDialog(
                                                         )
                                                         Text(
                                                             text = when (member.role) {
-                                                                "ADMIN" -> "Trưởng đoàn"
-                                                                "TREASURER" -> "Thủ quỹ"
-                                                                else -> "Thành viên"
+                                                                "ADMIN" -> AppStrings.roleLeaderBadge(lang)
+                                                                "TREASURER" -> AppStrings.roleTreasurerBadge(lang)
+                                                                else -> AppStrings.roleMemberBadge(lang)
                                                             },
                                                             fontSize = 11.sp,
                                                             color = Color(0xFF64748B)
@@ -967,7 +971,7 @@ fun AddExpenseDialog(
                                     Icon(Icons.Filled.Info, contentDescription = null, tint = AmberTertiary, modifier = Modifier.size(18.dp))
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
-                                        text = "Khoản chi này sẽ được trừ trực tiếp vào Quỹ chung của đoàn.",
+                                        text = AppStrings.fundDirectDeductNotice(lang),
                                         fontSize = 12.sp,
                                         color = Color(0xFF92400E)
                                     )
@@ -982,17 +986,17 @@ fun AddExpenseDialog(
                     HorizontalDivider(color = Color(0xFFE2E8F0))
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "5. Phương thức phân bổ chi phí (Split)",
+                        text = AppStrings.section5SplitMethod(lang),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF334155)
                     )
 
                     val splitModes = listOf(
-                        "EQUAL" to "Chia đều",
-                        "CUSTOM_PARTICIPANT" to "Chọn người",
-                        "RATIO" to "Tỷ lệ %",
-                        "CUSTOM_AMOUNT" to "Tùy nhập"
+                        "EQUAL" to AppStrings.splitTabEqual(lang),
+                        "CUSTOM_PARTICIPANT" to AppStrings.splitTabCustomRoster(lang),
+                        "RATIO" to AppStrings.splitTabRatio(lang),
+                        "CUSTOM_AMOUNT" to AppStrings.splitTabCustomAmount(lang)
                     )
 
                     Row(
@@ -1014,7 +1018,7 @@ fun AddExpenseDialog(
                 item {
                     when (splitType) {
                         "CUSTOM_PARTICIPANT" -> {
-                            Text("Tích chọn những người cùng chịu chi phí khoản này:", fontSize = 11.sp, color = Color(0xFF64748B))
+                            Text(AppStrings.selectParticipantsPrompt(lang), fontSize = 11.sp, color = Color(0xFF64748B))
                             Column {
                                 members.forEach { m ->
                                     Row(
@@ -1044,7 +1048,7 @@ fun AddExpenseDialog(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "Nhập tỷ lệ % chia từng người:",
+                                        text = AppStrings.enterRatioPrompt(lang),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = Color(0xFF334155)
@@ -1067,7 +1071,7 @@ fun AddExpenseDialog(
                                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                                             modifier = Modifier.height(30.dp)
                                         ) {
-                                            Text("Chia đều", fontSize = 11.sp)
+                                            Text(AppStrings.splitEquallyBtn(lang), fontSize = 11.sp)
                                         }
 
                                         Button(
@@ -1084,7 +1088,7 @@ fun AddExpenseDialog(
                                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                                             modifier = Modifier.height(30.dp)
                                         ) {
-                                            Text("⚡ Cân bằng 100%", fontSize = 11.sp)
+                                            Text(AppStrings.balance100PercentBtn(lang), fontSize = 11.sp)
                                         }
                                     }
                                 }
@@ -1102,7 +1106,7 @@ fun AddExpenseDialog(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = if (isRatioValid) "✓ Tổng tỷ lệ: 100.0% (Chuẩn xác)" else "⚠️ Tổng tỷ lệ: ${String.format(Locale.US, "%.1f", totalRatio)}% (Bắt buộc phải đúng 100.0%)",
+                                            text = if (isRatioValid) AppStrings.totalRatioValidExact(lang) else AppStrings.totalRatioMustBe100(String.format(Locale.US, "%.1f", totalRatio), lang),
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = if (isRatioValid) Color(0xFF15803D) else Color(0xFFB91C1C)
@@ -1110,7 +1114,7 @@ fun AddExpenseDialog(
                                         if (!isRatioValid) {
                                             val diffPercent = 100.0 - totalRatio
                                             Text(
-                                                text = if (diffPercent > 0) "Thiếu ${String.format(Locale.US, "%.1f", diffPercent)}%" else "Thừa ${String.format(Locale.US, "%.1f", -diffPercent)}%",
+                                                text = if (diffPercent > 0) AppStrings.ratioShortage(String.format(Locale.US, "%.1f", diffPercent), lang) else AppStrings.ratioSurplus(String.format(Locale.US, "%.1f", -diffPercent), lang),
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color(0xFFB91C1C)
@@ -1142,7 +1146,7 @@ fun AddExpenseDialog(
                             }
                         }
                         "CUSTOM_AMOUNT" -> {
-                            Text("Nhập số tiền VND cụ thể cho từng thành viên:", fontSize = 11.sp, color = Color(0xFF64748B))
+                            Text(AppStrings.customAmountPrompt(baseCurrency, lang), fontSize = 11.sp, color = Color(0xFF64748B))
                             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 members.forEach { m ->
                                     Row(
@@ -1165,7 +1169,7 @@ fun AddExpenseDialog(
                         }
                         else -> {
                             Text(
-                                "Toàn bộ thành viên sẽ được chia đều số tiền. Phần dư chia tự động bù người chi.",
+                                AppStrings.equalSplitExplanation(lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B)
                             )
@@ -1189,13 +1193,13 @@ fun AddExpenseDialog(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    "XEM TRƯỚC PHÂN BỔ (PREVIEW)",
+                                    AppStrings.previewAllocationHeader(lang),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isAllocationExact) Color(0xFF15803D) else Color(0xFFB91C1C)
                                 )
                                 Text(
-                                    text = if (isAllocationExact) "✓ Hợp lệ" else if (splitType == "RATIO" && !isRatioValid) "⚠ Tổng % khác 100%" else "⚠ Lệch ${NumberFormatUtils.formatVnd(diff)}",
+                                    text = if (isAllocationExact) AppStrings.allocationValidBadge(lang) else if (splitType == "RATIO" && !isRatioValid) AppStrings.allocationRatioNot100Badge(lang) else AppStrings.allocationDiffBadge(NumberFormatUtils.formatVnd(diff), lang),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isAllocationExact) Color(0xFF15803D) else Color(0xFFDC2626)
@@ -1204,7 +1208,7 @@ fun AddExpenseDialog(
                             if (splitType == "RATIO" && !isRatioValid) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Lưu ý: Tổng tỷ lệ hiện tại là ${String.format(Locale.US, "%.1f", totalRatio)}%. Vui lòng bấm 'Cân bằng 100%' hoặc chỉnh sửa để tổng đúng 100.0% trước khi lưu.",
+                                    text = AppStrings.ratioWarningNotice(String.format(Locale.US, "%.1f", totalRatio), lang),
                                     fontSize = 11.sp,
                                     color = DangerRed
                                 )
@@ -1228,7 +1232,7 @@ fun AddExpenseDialog(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Tổng phân bổ:", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                Text(AppStrings.totalAllocatedLabel(lang), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 Text(
                                     "${NumberFormatUtils.formatVnd(currentAllocatedSum)} / ${NumberFormatUtils.formatVnd(convertedTotalVnd)}",
                                     fontSize = 12.sp,
@@ -1244,7 +1248,7 @@ fun AddExpenseDialog(
                 item {
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
-                            text = "6. Nội dung chi tiết khoản chi & Ghi chú",
+                            text = AppStrings.section6NotesAndDetails(lang),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF334155)
@@ -1253,7 +1257,7 @@ fun AddExpenseDialog(
                         OutlinedTextField(
                             value = note,
                             onValueChange = { note = it },
-                            label = { Text("Chi tiết các món ăn, địa điểm, số hóa đơn đỏ, ghi chú...") },
+                            label = { Text(AppStrings.notesAndDetailsPlaceholder(lang)) },
                             minLines = 2,
                             maxLines = 4,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -1293,13 +1297,217 @@ fun AddExpenseDialog(
             ) {
                 Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text(if (isEditMode) "Lưu Thay Đổi" else "Lưu Khoản Chi")
+                Text(if (isEditMode) AppStrings.saveChangesBtn(lang) else AppStrings.saveExpenseBtn(lang))
             }
         },
         dismissButton = {
             TextButton(onClick = safeDismiss) {
-                Text("Hủy")
+                Text(AppStrings.cancelExpenseDialogBtn(lang))
             }
         }
     )
 }
+
+
+// =========================================================================
+// AppStrings Localization Extensions for AddExpenseDialog
+// =========================================================================
+
+fun AppStrings.editExpenseDialogTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉnh Sửa Khoản Chi" else "Edit Expense"
+
+fun AppStrings.addExpenseDialogTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thêm Khoản Chi Mới" else "Add New Expense"
+
+fun AppStrings.editExpenseDialogSubtitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Cập nhật chi tiết & phân bổ lại người tham gia"
+    else "Update details & re-allocate participants"
+
+fun AppStrings.addExpenseDialogSubtitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nhập chi tiết thu chi và phân bổ đoàn"
+    else "Record trip expense and allocate among members"
+
+fun AppStrings.closeExpenseDialogCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đóng" else "Close"
+
+fun AppStrings.section1ExpenseNameCategory(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "1. Tên & Danh mục khoản chi" else "1. Expense Name & Category"
+
+fun AppStrings.expenseNamePlaceholder(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tên khoản chi * (VD: Ăn trưa hải sản, Vé cáp treo...)"
+    else "Expense title * (e.g. Seafood Lunch, Cable Car...)"
+
+fun AppStrings.section2AmountAndCurrency(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "2. Số tiền & Loại tiền tệ" else "2. Amount & Currency"
+
+fun AppStrings.amountFieldLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Số tiền *" else "Amount *"
+
+fun AppStrings.clearExpenseInputCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xóa" else "Clear"
+
+fun AppStrings.exchangeRateHelpText(selectedCurr: String, baseCurr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tỷ giá quy đổi (1 $selectedCurr = ? $baseCurr)"
+    else "Exchange rate (1 $selectedCurr = ? $baseCurr)"
+
+fun AppStrings.convertedBaseEquivalentLabel(baseCurr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quy đổi $baseCurr tương đương:"
+    else "Converted equivalent in $baseCurr:"
+
+fun AppStrings.inWordsLabel(words: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bằng chữ: $words" else "In words: $words"
+
+fun AppStrings.section3ExpenseTime(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "3. Thời gian chi" else "3. Expense Date & Time"
+
+fun AppStrings.manualOrCalendarHint(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nhập tay hoặc bấm lịch" else "Manual entry or pick calendar"
+
+fun AppStrings.dateTimeFormatLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ngày & Giờ (dd/MM/yyyy HH:mm)" else "Date & Time (dd/MM/yyyy HH:mm)"
+
+fun AppStrings.pickCalendarCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chọn lịch" else "Pick calendar"
+
+fun AppStrings.calendarTableBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bảng lịch" else "Calendar"
+
+fun AppStrings.invalidDateTimeFormatError(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Định dạng không hợp lệ. Vui lòng nhập: ngày/tháng/năm giờ:phút (VD: 21/08/2026 15:30) hoặc bấm nút Bảng lịch."
+    else "Invalid format. Please enter dd/MM/yyyy HH:mm (e.g. 21/08/2026 15:30) or use Calendar picker."
+
+fun AppStrings.timeChipNow(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "⚡ Bây giờ" else "⚡ Now"
+
+fun AppStrings.timeChipYesterday(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hôm qua" else "Yesterday"
+
+fun AppStrings.timeChipMorning(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Sáng nay (08:00)" else "This Morning (08:00)"
+
+fun AppStrings.timeChipNoon(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Trưa nay (12:30)" else "Lunch Time (12:30)"
+
+fun AppStrings.timeChipEvening(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tối nay (19:00)" else "Evening (19:00)"
+
+fun AppStrings.timeChipPlusOneDay(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "+1 ngày" else "+1 Day"
+
+fun AppStrings.section4PayerSource(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "4. Người xuất tiền (Nguồn thanh toán) *"
+    else "4. Payer (Funding Source) *"
+
+fun AppStrings.memberPaidInAdvanceTab(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên chi trước" else "Member Paid"
+
+fun AppStrings.groupFundTab(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quỹ chung của đoàn" else "Group Fund"
+
+fun AppStrings.noPayerSelected(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chưa chọn người chi" else "No payer selected"
+
+fun AppStrings.roleLeaderBadge(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Trưởng đoàn" else "Leader"
+
+fun AppStrings.roleTreasurerBadge(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thủ quỹ đoàn" else "Treasurer"
+
+fun AppStrings.roleMemberBadge(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên" else "Member"
+
+fun AppStrings.selectPayerCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chọn người chi" else "Select payer"
+
+fun AppStrings.selectPayingMemberHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chọn thành viên xuất tiền:" else "Select paying member:"
+
+fun AppStrings.fundDirectDeductNotice(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Khoản chi này sẽ được trừ trực tiếp vào Quỹ chung của đoàn."
+    else "This expense will be deducted directly from the Group Fund."
+
+fun AppStrings.section5SplitMethod(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "5. Phương thức phân bổ chi phí (Split)"
+    else "5. Expense Allocation Method (Split)"
+
+fun AppStrings.splitTabEqual(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chia đều" else "Equal"
+
+fun AppStrings.splitTabCustomRoster(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chọn người" else "By Members"
+
+fun AppStrings.splitTabRatio(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tỷ lệ %" else "Percentage %"
+
+fun AppStrings.splitTabCustomAmount(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tùy nhập" else "Exact Amount"
+
+fun AppStrings.selectParticipantsPrompt(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tích chọn những người cùng chịu chi phí khoản này:"
+    else "Select members sharing this expense:"
+
+fun AppStrings.enterRatioPrompt(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nhập tỷ lệ % chia từng người:" else "Enter percentage share for each member:"
+
+fun AppStrings.splitEquallyBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chia đều" else "Equalize"
+
+fun AppStrings.balance100PercentBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "⚡ Cân bằng 100%" else "⚡ Balance 100%"
+
+fun AppStrings.totalRatioValidExact(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "✓ Tổng tỷ lệ: 100.0% (Chuẩn xác)" else "✓ Total: 100.0% (Valid)"
+
+fun AppStrings.totalRatioMustBe100(currentRatioStr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "⚠️ Tổng tỷ lệ: $currentRatioStr% (Bắt buộc phải đúng 100.0%)"
+    else "⚠️ Total ratio: $currentRatioStr% (Must equal 100.0%)"
+
+fun AppStrings.ratioShortage(diffStr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thiếu $diffStr%" else "Remaining: $diffStr%"
+
+fun AppStrings.ratioSurplus(diffStr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thừa $diffStr%" else "Over: $diffStr%"
+
+fun AppStrings.customAmountPrompt(baseCurr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nhập số tiền $baseCurr cụ thể cho từng thành viên:"
+    else "Enter exact $baseCurr amount for each member:"
+
+fun AppStrings.equalSplitExplanation(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Toàn bộ thành viên sẽ được chia đều số tiền. Phần dư chia tự động bù người chi."
+    else "Amount is split equally among all members. Any division remainder is rounded to the payer."
+
+fun AppStrings.previewAllocationHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "XEM TRƯỚC PHÂN BỔ (PREVIEW)" else "ALLOCATION PREVIEW"
+
+fun AppStrings.allocationValidBadge(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "✓ Hợp lệ" else "✓ Valid"
+
+fun AppStrings.allocationRatioNot100Badge(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "⚠ Tổng % khác 100%" else "⚠ Total % ≠ 100%"
+
+fun AppStrings.allocationDiffBadge(diffFormatted: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "⚠ Lệch $diffFormatted" else "⚠ Difference: $diffFormatted"
+
+fun AppStrings.ratioWarningNotice(ratioStr: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lưu ý: Tổng tỷ lệ hiện tại là $ratioStr%. Vui lòng bấm 'Cân bằng 100%' hoặc chỉnh sửa để tổng đúng 100.0% trước khi lưu."
+    else "Note: Current total ratio is $ratioStr%. Please tap 'Balance 100%' or adjust so that total equals 100.0% before saving."
+
+fun AppStrings.totalAllocatedLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tổng phân bổ:" else "Total Allocated:"
+
+fun AppStrings.section6NotesAndDetails(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "6. Nội dung chi tiết khoản chi & Ghi chú"
+    else "6. Expense Details & Receipt Notes"
+
+fun AppStrings.notesAndDetailsPlaceholder(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chi tiết các món ăn, địa điểm, số hóa đơn đỏ, ghi chú..."
+    else "Itemized dishes, location, tax receipt number, memo..."
+
+fun AppStrings.saveChangesBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lưu Thay Đổi" else "Save Changes"
+
+fun AppStrings.saveExpenseBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lưu Khoản Chi" else "Save Expense"
+
+fun AppStrings.cancelExpenseDialogBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hủy" else "Cancel"

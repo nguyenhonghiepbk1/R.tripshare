@@ -127,16 +127,13 @@ fun MembersAndSettingsScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = if (lang == AppLanguage.VI) "Hướng Dẫn Sử Dụng & FAQ" else "User Guide & FAQ",
+                                text = AppStrings.userGuideAndFaqTitle(lang),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = if (lang == AppLanguage.VI)
-                                    "Cẩm nang chi tiết: tạo đoàn, chia tiền, quỹ, bù trừ công nợ, ngoại tệ"
-                                else
-                                    "Detailed handbook: trip setup, expense split, fund, debt netting, multi-currency",
+                                text = AppStrings.userGuideAndFaqDesc(lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B),
                                 maxLines = 1,
@@ -172,7 +169,7 @@ fun MembersAndSettingsScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (lang == AppLanguage.VI) "NGÔN NGỮ HIỂN THỊ (LANGUAGE)" else "DISPLAY LANGUAGE",
+                            text = AppStrings.displayLanguageHeader(lang),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF64748B)
@@ -201,7 +198,7 @@ fun MembersAndSettingsScreen(
                                 Text("🇻🇳", fontSize = 18.sp)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Tiếng Việt",
+                                    text = AppStrings.vietnameseLanguageName(lang),
                                     fontWeight = if (isVi) FontWeight.Bold else FontWeight.Medium,
                                     fontSize = 13.sp,
                                     color = if (isVi) EmeraldOnPrimaryContainer else Color(0xFF334155)
@@ -265,7 +262,7 @@ fun MembersAndSettingsScreen(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = if (lang == AppLanguage.VI) "CHẾ ĐỘ HOẠT ĐỘNG THUẦN OFFLINE" else "PURE OFFLINE OPERATION",
+                            text = AppStrings.pureOfflineModeHeader(lang),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF64748B)
@@ -274,10 +271,7 @@ fun MembersAndSettingsScreen(
                     Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
-                        text = if (lang == AppLanguage.VI)
-                            "Ứng dụng hoạt động hoàn toàn offline, 100% dữ liệu tài chính, chi tiêu và quỹ được lưu trữ cục bộ, bảo mật tuyệt đối trên thiết bị của bạn. Không cần kết nối internet hay tài khoản."
-                        else
-                            "The app operates completely offline. 100% of your financial, expense, and fund data is stored locally and securely on your device with no internet connection or accounts required.",
+                        text = AppStrings.pureOfflineModeDesc(lang),
                         fontSize = 12.sp,
                         color = Color(0xFF475569),
                         lineHeight = 18.sp
@@ -325,14 +319,14 @@ fun MembersAndSettingsScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = if (lang == AppLanguage.VI) "Sao Lưu & Khôi Phục CSDL" else "Backup & Data Recovery",
+                                text = AppStrings.backupAndRecoveryTitle(lang),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = if (lang == AppLanguage.VI) "Xuất JSON, phục hồi khi nâng cấp ứng dụng hoặc đổi máy" else "Export JSON, restore on app upgrade or device change",
+                                text = AppStrings.backupAndRecoveryDesc(lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B)
                             )
@@ -388,14 +382,14 @@ fun MembersAndSettingsScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = if (lang == AppLanguage.VI) "Chính Sách Quyền Riêng Tư & Bảo Mật" else "Privacy & Data Protection Policy",
+                                text = AppStrings.privacyPolicyAndSecurityTitle(lang),
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = if (lang == AppLanguage.VI) "Bảo vệ thông tin tài chính ngoại tuyến theo chuẩn Google Play" else "Offline financial data security per Google Play policies",
+                                text = AppStrings.privacyPolicyAndSecurityDesc(lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B)
                             )
@@ -456,7 +450,7 @@ fun MembersAndSettingsScreen(
                                         overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "${if (lang == AppLanguage.VI) "Tiền tệ gốc" else "Base currency"}: ${trip.baseCurrency} • Mã: ${trip.joinCode}",
+                                        text = "${AppStrings.baseCurrencyLabel(lang)}: ${trip.baseCurrency} • ${AppStrings.joinCodeLabel(trip.joinCode, lang)}",
                                         fontSize = 11.sp,
                                         color = Color(0xFF64748B)
                                     )
@@ -469,13 +463,13 @@ fun MembersAndSettingsScreen(
                                         onClick = { showEditTripDialog = true },
                                         modifier = Modifier.size(32.dp).testTag("settings_edit_trip_button")
                                     ) {
-                                        Icon(Icons.Filled.Edit, contentDescription = "Sửa đoàn", tint = IndigoSecondary, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Filled.Edit, contentDescription = AppStrings.editTripAction(lang), tint = IndigoSecondary, modifier = Modifier.size(18.dp))
                                     }
                                     IconButton(
                                         onClick = { showDeleteTripDialog = true },
                                         modifier = Modifier.size(32.dp).testTag("settings_delete_trip_button")
                                     ) {
-                                        Icon(Icons.Filled.DeleteOutline, contentDescription = "Xóa đoàn", tint = DangerRed, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Filled.DeleteOutline, contentDescription = AppStrings.deleteTripAction(lang), tint = DangerRed, modifier = Modifier.size(18.dp))
                                     }
                                 }
                             }
@@ -509,7 +503,7 @@ fun MembersAndSettingsScreen(
                 ) {
                     Icon(Icons.Filled.CurrencyExchange, contentDescription = null, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text("${if (lang == AppLanguage.VI) "Tỷ giá" else "Exchange Rates"} (${uiState.exchangeRates.size})", fontSize = 12.sp)
+                    Text(AppStrings.exchangeRatesHeaderWithCount(uiState.exchangeRates.size, lang), fontSize = 12.sp)
                 }
 
                 Button(
@@ -534,7 +528,7 @@ fun MembersAndSettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "${if (lang == AppLanguage.VI) "Danh Sách Thành Viên" else "Trip Members"} (${uiState.members.size})",
+                    text = AppStrings.tripMembersHeaderWithCount(uiState.members.size, lang),
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -597,7 +591,7 @@ fun MembersAndSettingsScreen(
                                 )
                                 if (!member.isActive) {
                                     Text(
-                                        text = if (lang == AppLanguage.VI) "• Đã ngừng hoạt động" else "• Deactivated",
+                                        text = AppStrings.deactivatedBadge(lang),
                                         fontSize = 10.sp,
                                         color = DangerRed
                                     )
@@ -624,10 +618,10 @@ fun MembersAndSettingsScreen(
                                 onDismissRequest = { expandedRoleMenu = false }
                             ) {
                                 listOf(
-                                    "ADMIN" to if (lang == AppLanguage.VI) "Trưởng đoàn (Admin)" else "Admin",
-                                    "TREASURER" to if (lang == AppLanguage.VI) "Thủ quỹ (Treasurer)" else "Treasurer",
-                                    "MEMBER" to if (lang == AppLanguage.VI) "Thành viên (Member)" else "Member",
-                                    "VIEWER" to if (lang == AppLanguage.VI) "Người xem (Viewer)" else "Viewer"
+                                    "ADMIN" to AppStrings.roleAdminLong(lang),
+                                    "TREASURER" to AppStrings.roleTreasurerLong(lang),
+                                    "MEMBER" to AppStrings.roleMemberLong(lang),
+                                    "VIEWER" to AppStrings.roleViewerLong(lang)
                                 ).forEach { (rKey, rLabel) ->
                                     DropdownMenuItem(
                                         text = { Text(rLabel) },
@@ -711,16 +705,13 @@ fun MembersAndSettingsScreen(
             },
             title = {
                 Text(
-                    text = if (lang == AppLanguage.VI) "Xác Nhận Xóa / Vô Hiệu Hóa Thành Viên" else "Confirm Remove / Deactivate Member",
+                    text = AppStrings.confirmDeactivateMemberTitle(lang),
                     fontWeight = FontWeight.Bold
                 )
             },
             text = {
                 Text(
-                    text = if (lang == AppLanguage.VI)
-                        "Bạn có chắc chắn muốn xử lý thành viên '${mem.name}'? Nếu thành viên đã có lịch sử chi tiêu hoặc nộp quỹ, hệ thống sẽ chuyển sang trạng thái Ngừng hoạt động để bảo toàn số liệu tài chính."
-                    else
-                        "Are you sure you want to remove '${mem.name}'? If this member has expense or fund records, their status will be set to Deactivated to preserve financial integrity."
+                    text = AppStrings.confirmDeactivateMemberPrompt(mem.name, lang)
                 )
             },
             confirmButton = {
@@ -835,7 +826,7 @@ fun AddMemberDialog(
         properties = DialogProperties(decorFitsSystemWindows = true),
         title = { 
             Text(
-                text = if (lang == AppLanguage.VI) "Thêm Thành Viên Vào Đoàn" else "Add Member To Trip",
+                text = AppStrings.addMemberToTripHeader(lang),
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Bold
             ) 
@@ -845,21 +836,21 @@ fun AddMemberDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text(if (lang == AppLanguage.VI) "Họ và tên thành viên *" else "Full Name *") },
+                    label = { Text(AppStrings.fullNameFieldLabel(lang)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 Text(
-                    text = if (lang == AppLanguage.VI) "Vai trò:" else "Role:",
+                    text = AppStrings.roleFieldLabel(lang),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     listOf(
-                        "MEMBER" to if (lang == AppLanguage.VI) "Thành viên" else "Member",
-                        "TREASURER" to if (lang == AppLanguage.VI) "Thủ quỹ" else "Treasurer",
+                        "MEMBER" to AppStrings.roleMemberShort(lang),
+                        "TREASURER" to AppStrings.roleTreasurerShort(lang),
                         "VIEWER" to if (lang == AppLanguage.VI) "Xem" else "Viewer"
                     ).forEach { (rKey, rLabel) ->
                         FilterChip(
@@ -931,7 +922,7 @@ fun ExchangeRatesDialog(
                 Icon(Icons.Filled.CurrencyExchange, contentDescription = null, tint = EmeraldPrimary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (lang == AppLanguage.VI) "Quản Lý Tỷ Giá Ngoại Tệ" else "Exchange Rates Management",
+                    text = AppStrings.exchangeRatesManagementTitle(lang),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -940,7 +931,7 @@ fun ExchangeRatesDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(
-                    text = if (lang == AppLanguage.VI) "Tỷ giá quy đổi cố định theo đoàn (Gốc: $baseCurrency):" else "Trip exchange rates against base currency ($baseCurrency):",
+                    text = AppStrings.fixedRatesDescription(baseCurrency, lang),
                     fontSize = 12.sp,
                     color = Color(0xFF64748B)
                 )
@@ -959,7 +950,7 @@ fun ExchangeRatesDialog(
                 if (canEdit) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                     Text(
-                        text = if (lang == AppLanguage.VI) "Cập nhật tỷ giá mới:" else "Update exchange rate:",
+                        text = AppStrings.updateNewRateLabel(lang),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -1030,7 +1021,7 @@ fun ExchangeRatesDialog(
                     enabled = isRateValid,
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                 ) {
-                    Text(if (lang == AppLanguage.VI) "Lưu tỷ giá" else "Save Rate")
+                    Text(AppStrings.saveRateBtn(lang))
                 }
             } else {
                 TextButton(onClick = safeDismiss) { Text(AppStrings.close(lang)) }
@@ -1060,7 +1051,7 @@ fun AuditLogsDialog(
                 Icon(Icons.Filled.HistoryEdu, contentDescription = null, tint = IndigoSecondary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (lang == AppLanguage.VI) "Nhật Ký Kiểm Toán (Audit Logs)" else "Audit Logs",
+                    text = AppStrings.auditLogsHeader(lang),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1069,7 +1060,7 @@ fun AuditLogsDialog(
         text = {
             if (logs.isEmpty()) {
                 Text(
-                    text = if (lang == AppLanguage.VI) "Chưa có bản ghi nhật ký nào." else "No audit log entries found.",
+                    text = AppStrings.noAuditLogsFound(lang),
                     fontSize = 13.sp
                 )
             } else {
@@ -1093,7 +1084,7 @@ fun AuditLogsDialog(
                                 }
                                 Text(log.description, fontSize = 12.sp, color = Color(0xFF1E293B))
                                 Text(
-                                    text = "${if (lang == AppLanguage.VI) "Thực hiện bởi" else "By"}: ${log.actorName}",
+                                    text = AppStrings.performedByLabel(log.actorName, lang),
                                     fontSize = 10.sp,
                                     color = Color(0xFF64748B)
                                 )
@@ -1137,7 +1128,7 @@ fun EditMemberDialog(
                 Icon(Icons.Filled.Edit, contentDescription = null, tint = IndigoSecondary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (lang == AppLanguage.VI) "Chỉnh Sửa Thông Tin Thành Viên" else "Edit Member Info",
+                    text = AppStrings.editMemberInfoHeader(lang),
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -1148,22 +1139,22 @@ fun EditMemberDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text(if (lang == AppLanguage.VI) "Họ và tên thành viên *" else "Full Name *") },
+                    label = { Text(AppStrings.fullNameFieldLabel(lang)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     modifier = Modifier.fillMaxWidth().testTag("edit_member_name_input")
                 )
 
                 Text(
-                    text = if (lang == AppLanguage.VI) "Vai trò:" else "Role:",
+                    text = AppStrings.roleFieldLabel(lang),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     listOf(
-                        "ADMIN" to if (lang == AppLanguage.VI) "Trưởng đoàn" else "Admin",
-                        "TREASURER" to if (lang == AppLanguage.VI) "Thủ quỹ" else "Treasurer",
-                        "MEMBER" to if (lang == AppLanguage.VI) "Thành viên" else "Member",
+                        "ADMIN" to AppStrings.roleAdminShort(lang),
+                        "TREASURER" to AppStrings.roleTreasurerShort(lang),
+                        "MEMBER" to AppStrings.roleMemberShort(lang),
                         "VIEWER" to if (lang == AppLanguage.VI) "Xem" else "Viewer"
                     ).forEach { (rKey, rLabel) ->
                         FilterChip(
@@ -1216,7 +1207,7 @@ fun PrivacyPolicyDialog(
         },
         title = {
             Text(
-                text = if (lang == AppLanguage.VI) "Chính Sách Quyền Riêng Tư & An Toàn Dữ Liệu" else "Privacy & Data Safety Policy",
+                text = AppStrings.privacyAndSafetyDialogHeader(lang),
                 fontWeight = FontWeight.Bold,
                 fontSize = 17.sp
             )
@@ -1230,16 +1221,13 @@ fun PrivacyPolicyDialog(
             ) {
                 item {
                     Text(
-                        text = if (lang == AppLanguage.VI) "1. Kiến trúc Sandbox Cục bộ (Local-First)" else "1. Local-First Sandbox Architecture",
+                        text = AppStrings.privacySection1Header(lang),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = if (lang == AppLanguage.VI)
-                            "Ứng dụng TripFinance lưu trữ 100% dữ liệu chi tiêu, danh sách thành viên và quỹ đoàn trong cơ sở dữ liệu SQLite cục bộ được mã hóa theo phân vùng bảo mật riêng của ứng dụng (Android App Sandbox). Ứng dụng đã vô hiệu hóa sao lưu đám mây tự động (allowBackup=false) để bảo vệ toàn vẹn dữ liệu cá nhân."
-                        else
-                            "TripFinance stores 100% of expense, member, and fund records inside an encrypted local SQLite database within the Android Application Sandbox. Automated cloud backup is explicitly disabled (allowBackup=false) to protect user data privacy.",
+                        text = AppStrings.privacySection1Content(lang),
                         fontSize = 12.sp,
                         color = Color(0xFF475569),
                         lineHeight = 17.sp
@@ -1248,16 +1236,13 @@ fun PrivacyPolicyDialog(
 
                 item {
                     Text(
-                        text = if (lang == AppLanguage.VI) "2. Dữ liệu Tài chính & Quyền Riêng Tư" else "2. Financial Data & User Privacy",
+                        text = AppStrings.privacySection2Header(lang),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = if (lang == AppLanguage.VI)
-                            "Toàn bộ thông tin tài chính và chi tiêu do người dùng nhập chỉ được lưu trữ cục bộ trên thiết bị để hỗ trợ đối soát giữa các thành viên. Hệ thống cam kết không bao giờ thu thập, bán hay chia sẻ thông tin cho bất kỳ bên thứ ba hay mạng quảng cáo nào."
-                        else
-                            "All financial records and expenses entered by users are strictly stored locally to support bookkeeping among members. TripFinance never transmits, sells, or monetizes this financial info to third parties or ad networks.",
+                        text = AppStrings.privacySection2Content(lang),
                         fontSize = 12.sp,
                         color = Color(0xFF475569),
                         lineHeight = 17.sp
@@ -1266,16 +1251,13 @@ fun PrivacyPolicyDialog(
 
                 item {
                     Text(
-                        text = if (lang == AppLanguage.VI) "3. Tính năng Gợi Ý Chi Tiêu Ngoại Tuyến (Local-First)" else "3. Offline Spending Insights Feature",
+                        text = AppStrings.privacySection3Header(lang),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = if (lang == AppLanguage.VI)
-                            "Tính năng 'Gợi ý chi tiêu' được phân tích hoàn toàn nội bộ và cục bộ 100% trên thiết bị của bạn bằng thuật toán đối soát tài chính trên máy. Ứng dụng không sử dụng mạng Internet, không gửi dữ liệu ra bên ngoài thiết bị. Mọi dữ liệu tài chính của đoàn luôn được bảo mật tuyệt đối."
-                        else
-                            "The 'Spending Insights' feature is computed 100% locally on your device using on-device financial algorithms. The app requires no Internet connection and transmits no data externally. Your group financial records remain completely private.",
+                        text = AppStrings.privacySection3Content(lang),
                         fontSize = 12.sp,
                         color = Color(0xFF475569),
                         lineHeight = 17.sp
@@ -1284,16 +1266,13 @@ fun PrivacyPolicyDialog(
 
                 item {
                     Text(
-                        text = if (lang == AppLanguage.VI) "4. Quyền Hạn Thiết Bị & Lưu Trữ (Zero-Permission SAF)" else "4. Permissions & Storage Policy",
+                        text = AppStrings.privacySection4Header(lang),
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = if (lang == AppLanguage.VI)
-                            "TripFinance tuân thủ chính sách bảo mật Google Play: Không yêu cầu quyền đọc/ghi bộ nhớ ngoài diện rộng (READ_EXTERNAL_STORAGE). Mọi thao tác xuất báo cáo PDF/Excel và sao lưu JSON đều sử dụng khung lưu trữ an toàn tiêu chuẩn Android Storage Access Framework (SAF)."
-                        else
-                            "TripFinance adheres to Google Play policy: No broad external storage permissions requested. All PDF/Excel export and JSON backup operations rely on the standard Android Storage Access Framework (SAF).",
+                        text = AppStrings.privacySection4Content(lang),
                         fontSize = 12.sp,
                         color = Color(0xFF475569),
                         lineHeight = 17.sp
@@ -1311,3 +1290,159 @@ fun PrivacyPolicyDialog(
         }
     )
 }
+
+
+// =========================================================================
+// AppStrings Localization Extensions for MembersAndSettingsScreen
+// =========================================================================
+
+fun AppStrings.userGuideAndFaqTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hướng Dẫn Sử Dụng & FAQ" else "User Guide & FAQ"
+
+fun AppStrings.userGuideAndFaqDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Cẩm nang chi tiết: tạo đoàn, chia tiền, quỹ, bù trừ công nợ, ngoại tệ"
+    else "Detailed handbook: create trips, split costs, group fund, debt netting, currency"
+
+fun AppStrings.displayLanguageHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "NGÔN NGỮ HIỂN THỊ (LANGUAGE)" else "DISPLAY LANGUAGE"
+
+fun AppStrings.vietnameseLanguageName(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tiếng Việt" else "Vietnamese"
+
+fun AppStrings.pureOfflineModeHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "CHẾ ĐỘ HOẠT ĐỘNG THUẦN OFFLINE" else "PURE OFFLINE OPERATION"
+
+fun AppStrings.pureOfflineModeDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ứng dụng hoạt động hoàn toàn offline, 100% dữ liệu tài chính, chi tiêu và quỹ được lưu trữ cục bộ, bảo mật tuyệt đối trên thiết bị của bạn. Không cần kết nối internet hay tài khoản."
+    else "The app works 100% offline. All financial data, expenses, and funds are stored securely on your local device without needing internet or account login."
+
+fun AppStrings.backupAndRecoveryTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Sao Lưu & Khôi Phục CSDL" else "Backup & Data Recovery"
+
+fun AppStrings.backupAndRecoveryDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xuất JSON, phục hồi khi nâng cấp ứng dụng hoặc đổi máy"
+    else "Export JSON, restore upon app upgrade or device migration"
+
+fun AppStrings.privacyPolicyAndSecurityTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chính Sách Quyền Riêng Tư & Bảo Mật" else "Privacy & Data Protection"
+
+fun AppStrings.privacyPolicyAndSecurityDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bảo vệ thông tin tài chính ngoại tuyến theo chuẩn Google Play"
+    else "Protect offline financial data following Google Play policies"
+
+fun AppStrings.baseCurrencyLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tiền tệ gốc" else "Base currency"
+
+fun AppStrings.joinCodeLabel(code: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mã: $code" else "Code: $code"
+
+fun AppStrings.editTripInfoAction(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Sửa đoàn" else "Edit Trip"
+
+fun AppStrings.editTripAction(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Sửa chuyến đi" else "Edit Trip"
+
+fun AppStrings.deleteTripAction(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xóa đoàn" else "Delete Trip"
+
+fun AppStrings.exchangeRatesHeaderWithCount(count: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tỷ giá ($count)" else "Exchange Rates ($count)"
+
+fun AppStrings.tripMembersHeaderWithCount(count: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Danh Sách Thành Viên ($count)" else "Trip Members ($count)"
+
+fun AppStrings.deactivatedBadge(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Đã ngừng hoạt động" else "• Deactivated"
+
+fun AppStrings.roleAdminLong(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Trưởng đoàn (Admin)" else "Admin"
+
+fun AppStrings.roleTreasurerLong(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thủ quỹ (Treasurer)" else "Treasurer"
+
+fun AppStrings.roleMemberLong(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên (Member)" else "Member"
+
+fun AppStrings.roleViewerLong(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Người xem (Viewer)" else "Viewer"
+
+fun AppStrings.confirmDeactivateMemberTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xác Nhận Xóa / Vô Hiệu Hóa Thành Viên" else "Confirm Remove / Deactivate Member"
+
+fun AppStrings.confirmDeactivateMemberPrompt(name: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bạn có chắc chắn muốn xử lý thành viên '$name'? Nếu thành viên đã có lịch sử chi tiêu hoặc nộp quỹ, hệ thống sẽ chuyển sang trạng thái Ngừng hoạt động để bảo toàn số liệu tài chính."
+    else "Are you sure you want to handle member '$name'? If this member has expense or fund history, status will be set to Deactivated to preserve financial data integrity."
+
+fun AppStrings.addMemberToTripHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thêm Thành Viên Vào Đoàn" else "Add Member To Trip"
+
+fun AppStrings.fullNameFieldLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Họ và tên thành viên *" else "Full Name *"
+
+fun AppStrings.roleFieldLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Vai trò:" else "Role:"
+
+fun AppStrings.roleMemberShort(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên" else "Member"
+
+fun AppStrings.roleTreasurerShort(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thủ quỹ" else "Treasurer"
+
+fun AppStrings.exchangeRatesManagementTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quản Lý Tỷ Giá Ngoại Tệ" else "Exchange Rates Management"
+
+fun AppStrings.fixedRatesDescription(baseCurrency: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tỷ giá quy đổi cố định theo đoàn (Gốc: $baseCurrency):"
+    else "Trip fixed exchange rates (Base: $baseCurrency):"
+
+fun AppStrings.updateNewRateLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Cập nhật tỷ giá mới:" else "Update exchange rate:"
+
+fun AppStrings.saveRateBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lưu tỷ giá" else "Save Rate"
+
+fun AppStrings.auditLogsHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nhật Ký Kiểm Toán (Audit Logs)" else "Audit Logs"
+
+fun AppStrings.noAuditLogsFound(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chưa có bản ghi nhật ký nào." else "No audit log entries found."
+
+fun AppStrings.performedByLabel(actorName: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thực hiện bởi: $actorName" else "By: $actorName"
+
+fun AppStrings.editMemberInfoHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chỉnh Sửa Thông Tin Thành Viên" else "Edit Member Info"
+
+fun AppStrings.roleAdminShort(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Trưởng đoàn" else "Admin"
+
+fun AppStrings.privacyAndSafetyDialogHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chính Sách Quyền Riêng Tư & An Toàn Dữ Liệu" else "Privacy & Data Safety Policy"
+
+fun AppStrings.privacySection1Header(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "1. Kiến trúc Sandbox Cục bộ (Local-First)" else "1. Local-First Sandbox Architecture"
+
+fun AppStrings.privacySection1Content(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ứng dụng TripFinance lưu trữ 100% dữ liệu chi tiêu, danh sách thành viên và quỹ đoàn trong cơ sở dữ liệu SQLite cục bộ được mã hóa theo phân vùng bảo mật riêng của ứng dụng (Android App Sandbox). Ứng dụng đã vô hiệu hóa sao lưu đám mây tự động (allowBackup=false) để bảo vệ toàn vẹn dữ liệu cá nhân."
+    else "TripFinance stores 100% of expense, member, and fund records inside an isolated local SQLite database (Android App Sandbox). Automatic cloud backup is disabled (allowBackup=false) to ensure personal financial confidentiality."
+
+fun AppStrings.privacySection2Header(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "2. Dữ liệu Tài chính & Quyền Riêng Tư" else "2. Financial Data & User Privacy"
+
+fun AppStrings.privacySection2Content(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Toàn bộ thông tin tài chính và chi tiêu do người dùng nhập chỉ được lưu trữ cục bộ trên thiết bị để hỗ trợ đối soát giữa các thành viên. Hệ thống cam kết không bao giờ thu thập, bán hay chia sẻ thông tin cho bất kỳ bên thứ ba hay mạng quảng cáo nào."
+    else "All financial records and expenses entered by users are strictly stored locally to support bookkeeping among members. TripFinance never transmits, sells, or monetizes this financial info to third parties or ad networks."
+
+fun AppStrings.privacySection3Header(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "3. Tính năng Gợi Ý Chi Tiêu Ngoại Tuyến (Local-First)" else "3. Offline Spending Insights (Local-First)"
+
+fun AppStrings.privacySection3Content(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tính năng 'Gợi ý chi tiêu' được phân tích hoàn toàn nội bộ và cục bộ 100% trên thiết bị của bạn bằng thuật toán đối soát tài chính trên máy. Ứng dụng không sử dụng mạng Internet, không gửi dữ liệu ra bên ngoài thiết bị. Mọi dữ liệu tài chính của đoàn luôn được bảo mật tuyệt đối."
+    else "Spending Insights are computed 100% locally on your device using on-device bookkeeping algorithms without Internet connection or external data transmission. All trip data remains confidential."
+
+fun AppStrings.privacySection4Header(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "4. Quyền Hạn Thiết Bị & Lưu Trữ (Zero-Permission SAF)" else "4. Device Permissions & Storage (Zero-Permission SAF)"
+
+fun AppStrings.privacySection4Content(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "TripFinance tuân thủ chính sách bảo mật Google Play: Không yêu cầu quyền đọc/ghi bộ nhớ ngoài diện rộng (READ_EXTERNAL_STORAGE). Mọi thao tác xuất báo cáo PDF/Excel và sao lưu JSON đều sử dụng khung lưu trữ an toàn tiêu chuẩn Android Storage Access Framework (SAF)."
+    else "TripFinance complies strictly with Google Play policies: Zero broad storage permissions (READ_EXTERNAL_STORAGE) required. PDF/Excel reports and JSON backup export use standard Android Storage Access Framework (SAF)."

@@ -32,6 +32,7 @@ import com.hiepnguyen.tripfinance.domain.export.PdfReportExporter
 import com.hiepnguyen.tripfinance.domain.export.ReportGenerator
 import com.hiepnguyen.tripfinance.domain.export.ReportType
 import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.AppStrings
 import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
 import com.hiepnguyen.tripfinance.ui.theme.EmeraldPrimary
 import com.hiepnguyen.tripfinance.ui.theme.IndigoSecondary
@@ -70,7 +71,7 @@ fun ExportReportDialog(
             fundContributions = uiState.fundContributions,
             splits = uiState.allSplits,
             reportType = selectedReportType,
-            creatorName = uiState.currentMember?.name ?: if (lang == AppLanguage.VI) "Thành viên" else "Member"
+            creatorName = uiState.currentMember?.name ?: AppStrings.defaultMemberCreatorName(lang)
         )
     }
 
@@ -95,7 +96,7 @@ fun ExportReportDialog(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (lang == AppLanguage.VI) "Xuất Báo Cáo Tài Chính" else "Export Financial Report",
+                        text = AppStrings.exportFinancialReportTitle(lang),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = AppFontFamily
@@ -118,7 +119,7 @@ fun ExportReportDialog(
                         onClick = { exportFormat = "PDF" },
                         label = {
                             Text(
-                                "PDF chuẩn in",
+                                AppStrings.pdfFormatChip(lang),
                                 fontSize = 11.sp,
                                 fontFamily = AppFontFamily,
                                 fontWeight = FontWeight.Bold
@@ -134,7 +135,7 @@ fun ExportReportDialog(
                         onClick = { exportFormat = "TEXT" },
                         label = {
                             Text(
-                                if (lang == AppLanguage.VI) "Văn bản" else "Text",
+                                AppStrings.textFormatChip(lang),
                                 fontSize = 11.sp,
                                 fontFamily = AppFontFamily,
                                 fontWeight = FontWeight.SemiBold
@@ -178,7 +179,7 @@ fun ExportReportDialog(
                             Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Báo cáo PDF chuẩn A4 đầy đủ: Tổng quan thu chi, Bảng quyết toán & số dư từng người, Kế hoạch bù trừ công nợ và Bản kê chi tiết các khoản chi tiêu & thu quỹ các thành viên.",
+                                text = AppStrings.pdfReportStructureDesc(lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF1E40AF),
                                 lineHeight = 15.sp,
@@ -203,7 +204,7 @@ fun ExportReportDialog(
                             Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF059669), modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Báo cáo Excel (.xlsx) gồm 5 sheet: 'Tổng quan', 'Chi tiêu' (ngày, danh mục, người trả, tiền gốc, tiền tệ, tỷ giá, quy đổi), 'Theo thành viên' (đã chi, phải chịu, số dư), 'Quỹ chung' và 'Gợi ý chuyển khoản'. Mở trực tiếp trên Microsoft Excel và Google Sheets.",
+                                text = AppStrings.xlsxReportStructureDesc(lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF065F46),
                                 lineHeight = 15.sp,
@@ -254,7 +255,7 @@ fun ExportReportDialog(
                                 }
                                 Icon(
                                     imageVector = if (reportTypeDropdownExpanded) Icons.Filled.ArrowDropUp else Icons.Filled.ArrowDropDown,
-                                    contentDescription = "Chọn loại báo cáo",
+                                    contentDescription = AppStrings.selectReportTypeCd(lang),
                                     tint = Color(0xFF475569)
                                 )
                             }
@@ -268,7 +269,7 @@ fun ExportReportDialog(
                                 .background(MaterialTheme.colorScheme.surface)
                         ) {
                             Text(
-                                text = if (lang == AppLanguage.VI) "CHỌN LOẠI BÁO CÁO:" else "SELECT REPORT TYPE:",
+                                text = AppStrings.selectReportTypeHeader(lang),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF64748B),
@@ -341,7 +342,7 @@ fun ExportReportDialog(
 
                 // Live Preview Canvas
                 Text(
-                    text = if (exportFormat == "PDF") "Xem trước nội dung văn bản trong báo cáo:" else (if (lang == AppLanguage.VI) "Xem trước nội dung báo cáo:" else "Report Preview:"),
+                    text = if (exportFormat == "PDF") AppStrings.previewTextInPdfDesc(lang) else AppStrings.previewReportDesc(lang),
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = AppFontFamily,
@@ -402,7 +403,7 @@ fun ExportReportDialog(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                if (lang == AppLanguage.VI) "Đang tạo PDF..." else "Creating PDF...",
+                                AppStrings.creatingPdfIndicator(lang),
                                 fontSize = 12.sp,
                                 fontFamily = AppFontFamily,
                                 fontWeight = FontWeight.Bold
@@ -411,7 +412,7 @@ fun ExportReportDialog(
                             Icon(Icons.Filled.PictureAsPdf, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                if (lang == AppLanguage.VI) "Xuất & Gửi File PDF" else "Export & Share PDF",
+                                AppStrings.exportAndSharePdfBtn(lang),
                                 fontSize = 12.sp,
                                 fontFamily = AppFontFamily,
                                 fontWeight = FontWeight.Bold
@@ -440,7 +441,7 @@ fun ExportReportDialog(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                if (lang == AppLanguage.VI) "Đang tạo Excel..." else "Creating Excel...",
+                                AppStrings.creatingExcelIndicator(lang),
                                 fontSize = 12.sp,
                                 fontFamily = AppFontFamily,
                                 fontWeight = FontWeight.Bold
@@ -449,7 +450,7 @@ fun ExportReportDialog(
                             Icon(Icons.Filled.TableView, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                if (lang == AppLanguage.VI) "Xuất & Gửi File Excel" else "Export & Share Excel",
+                                AppStrings.exportAndShareExcelBtn(lang),
                                 fontSize = 12.sp,
                                 fontFamily = AppFontFamily,
                                 fontWeight = FontWeight.Bold
@@ -461,7 +462,7 @@ fun ExportReportDialog(
                     OutlinedButton(
                         onClick = {
                             clipboardManager.setText(AnnotatedString(reportText))
-                            copiedNotice = if (lang == AppLanguage.VI) "Đã sao chép toàn bộ báo cáo vào bộ nhớ tạm!" else "Copied full report to clipboard!"
+                            copiedNotice = AppStrings.copiedFullReportNotice(lang)
                         },
                         shape = RoundedCornerShape(8.dp),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
@@ -469,13 +470,13 @@ fun ExportReportDialog(
                     ) {
                         Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (lang == AppLanguage.VI) "Sao chép" else "Copy", fontSize = 12.sp, fontFamily = AppFontFamily)
+                        Text(AppStrings.copyReportBtn(lang), fontSize = 12.sp, fontFamily = AppFontFamily)
                     }
 
                     // Share Button
                     Button(
                         onClick = {
-                            shareReport(context, reportText, uiState.currentTrip?.title ?: "Báo cáo đoàn")
+                            shareReport(context, reportText, uiState.currentTrip?.title ?: AppStrings.defaultTripReportTitle(lang), lang)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = IndigoSecondary),
                         shape = RoundedCornerShape(8.dp),
@@ -484,26 +485,93 @@ fun ExportReportDialog(
                     ) {
                         Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(if (lang == AppLanguage.VI) "Chia sẻ" else "Share", fontSize = 12.sp, fontFamily = AppFontFamily, fontWeight = FontWeight.Bold)
+                        Text(AppStrings.shareReportBtn(lang), fontSize = 12.sp, fontFamily = AppFontFamily, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(if (lang == AppLanguage.VI) "Đóng" else "Close", fontFamily = AppFontFamily)
+                Text(AppStrings.closeReportDialogBtn(lang), fontFamily = AppFontFamily)
             }
         }
     )
 }
 
-private fun shareReport(context: Context, reportContent: String, tripTitle: String) {
+private fun shareReport(context: Context, reportContent: String, tripTitle: String, lang: AppLanguage) {
     val sendIntent = Intent().apply {
         action = Intent.ACTION_SEND
-        putExtra(Intent.EXTRA_SUBJECT, "Báo cáo quyết toán tài chính - $tripTitle")
+        putExtra(Intent.EXTRA_SUBJECT, AppStrings.shareReportSubject(tripTitle, lang))
         putExtra(Intent.EXTRA_TEXT, reportContent)
         type = "text/plain"
     }
-    val shareIntent = Intent.createChooser(sendIntent, "Chia sẻ báo cáo tài chính qua...")
+    val shareIntent = Intent.createChooser(sendIntent, AppStrings.shareReportChooserTitle(lang))
     context.startActivity(shareIntent)
 }
+
+// --- AppStrings Localized Extensions for ExportReportDialog ---
+
+fun AppStrings.defaultMemberCreatorName(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên" else "Member"
+
+fun AppStrings.exportFinancialReportTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xuất Báo Cáo Tài Chính" else "Export Financial Report"
+
+fun AppStrings.pdfFormatChip(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "PDF chuẩn in" else "Print-ready PDF"
+
+fun AppStrings.textFormatChip(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Văn bản" else "Text"
+
+fun AppStrings.pdfReportStructureDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Báo cáo PDF chuẩn A4 đầy đủ: Tổng quan thu chi, Bảng quyết toán & số dư từng người, Kế hoạch bù trừ công nợ và Bản kê chi tiết các khoản chi tiêu & thu quỹ các thành viên."
+    else "Complete standard A4 PDF report: Income & expense overview, Member balances & settlements, Debt netting plan, and detailed itemized logs."
+
+fun AppStrings.xlsxReportStructureDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Báo cáo Excel (.xlsx) gồm 5 sheet: 'Tổng quan', 'Chi tiêu' (ngày, danh mục, người trả, tiền gốc, tiền tệ, tỷ giá, quy đổi), 'Theo thành viên' (đã chi, phải chịu, số dư), 'Quỹ chung' và 'Gợi ý chuyển khoản'. Mở trực tiếp trên Microsoft Excel và Google Sheets."
+    else "Excel (.xlsx) report with 5 sheets: 'Overview', 'Expenses' (date, category, payer, original amount, currency, rate, converted), 'By Member' (paid, share, balance), 'Group Fund', and 'Transfer Suggestions'. Opens in Microsoft Excel and Google Sheets."
+
+fun AppStrings.selectReportTypeCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chọn loại báo cáo" else "Select report type"
+
+fun AppStrings.selectReportTypeHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "CHỌN LOẠI BÁO CÁO:" else "SELECT REPORT TYPE:"
+
+fun AppStrings.previewTextInPdfDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xem trước nội dung văn bản trong báo cáo:" else "Preview report text content:"
+
+fun AppStrings.previewReportDesc(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xem trước nội dung báo cáo:" else "Report Preview:"
+
+fun AppStrings.creatingPdfIndicator(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đang tạo PDF..." else "Creating PDF..."
+
+fun AppStrings.exportAndSharePdfBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xuất & Gửi File PDF" else "Export & Share PDF"
+
+fun AppStrings.creatingExcelIndicator(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đang tạo Excel..." else "Creating Excel..."
+
+fun AppStrings.exportAndShareExcelBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xuất & Gửi File Excel" else "Export & Share Excel"
+
+fun AppStrings.copiedFullReportNotice(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã sao chép toàn bộ báo cáo vào bộ nhớ tạm!" else "Copied full report to clipboard!"
+
+fun AppStrings.copyReportBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Sao chép" else "Copy"
+
+fun AppStrings.defaultTripReportTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Báo cáo đoàn" else "Trip Report"
+
+fun AppStrings.shareReportBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chia sẻ" else "Share"
+
+fun AppStrings.closeReportDialogBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đóng" else "Close"
+
+fun AppStrings.shareReportSubject(tripTitle: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Báo cáo quyết toán tài chính - $tripTitle" else "Financial Settlement Report - $tripTitle"
+
+fun AppStrings.shareReportChooserTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chia sẻ báo cáo tài chính qua..." else "Share financial report via..."

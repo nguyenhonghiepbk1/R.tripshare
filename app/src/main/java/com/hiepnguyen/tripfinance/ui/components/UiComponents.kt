@@ -122,10 +122,10 @@ fun CategoryIcon(category: String, modifier: Modifier = Modifier, size: Int = 20
 fun RoleBadge(role: String, modifier: Modifier = Modifier) {
     val lang = LocalAppLanguage.current
     val (text, bg, textColor) = when (role) {
-        "ADMIN" -> Triple(if (lang == AppLanguage.VI) "Trưởng đoàn" else "Admin", Color(0xFFFEE2E2), Color(0xFF991B1B))
-        "TREASURER" -> Triple(if (lang == AppLanguage.VI) "Thủ quỹ" else "Treasurer", Color(0xFFCCFBF1), Color(0xFF115E59))
-        "MEMBER" -> Triple(if (lang == AppLanguage.VI) "Thành viên" else "Member", Color(0xFFE0E7FF), Color(0xFF3730A3))
-        else -> Triple(if (lang == AppLanguage.VI) "Người xem" else "Viewer", Color(0xFFF1F5F9), Color(0xFF475569))
+        "ADMIN" -> Triple(AppStrings.badgeRoleAdmin(lang), Color(0xFFFEE2E2), Color(0xFF991B1B))
+        "TREASURER" -> Triple(AppStrings.badgeRoleTreasurer(lang), Color(0xFFCCFBF1), Color(0xFF115E59))
+        "MEMBER" -> Triple(AppStrings.badgeRoleMember(lang), Color(0xFFE0E7FF), Color(0xFF3730A3))
+        else -> Triple(AppStrings.badgeRoleViewer(lang), Color(0xFFF1F5F9), Color(0xFF475569))
     }
 
     Surface(
@@ -148,17 +148,17 @@ fun BalanceChip(balance: Long, status: BalanceStatus, modifier: Modifier = Modif
     val lang = LocalAppLanguage.current
     val (text, bg, fg) = when (status) {
         BalanceStatus.RECEIVE -> Triple(
-            "+${NumberFormatUtils.formatCurrency(balance, currency)} " + if (lang == AppLanguage.VI) "(Nhận lại)" else "(To receive)",
+            "+${NumberFormatUtils.formatCurrency(balance, currency)} " + AppStrings.balanceStatusReceive(lang),
             Color(0xFFDCFCE7),
             Color(0xFF15803D)
         )
         BalanceStatus.PAY -> Triple(
-            "${NumberFormatUtils.formatCurrency(balance, currency)} " + if (lang == AppLanguage.VI) "(Cần nộp)" else "(To pay)",
+            "${NumberFormatUtils.formatCurrency(balance, currency)} " + AppStrings.balanceStatusPay(lang),
             Color(0xFFFEE2E2),
             Color(0xFFB91C1C)
         )
         BalanceStatus.BALANCED -> Triple(
-            "${NumberFormatUtils.formatCurrency(0L, currency)} " + if (lang == AppLanguage.VI) "(Cân bằng)" else "(Balanced)",
+            "${NumberFormatUtils.formatCurrency(0L, currency)} " + AppStrings.balanceStatusBalanced(lang),
             Color(0xFFF1F5F9),
             Color(0xFF475569)
         )
@@ -178,4 +178,27 @@ fun BalanceChip(balance: Long, status: BalanceStatus, modifier: Modifier = Modif
         )
     }
 }
+
+// --- AppStrings Localized Extensions for UiComponents ---
+
+fun AppStrings.badgeRoleAdmin(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Trưởng đoàn" else "Admin"
+
+fun AppStrings.badgeRoleTreasurer(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thủ quỹ" else "Treasurer"
+
+fun AppStrings.badgeRoleMember(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên" else "Member"
+
+fun AppStrings.badgeRoleViewer(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Người xem" else "Viewer"
+
+fun AppStrings.balanceStatusReceive(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "(Nhận lại)" else "(To receive)"
+
+fun AppStrings.balanceStatusPay(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "(Cần nộp)" else "(To pay)"
+
+fun AppStrings.balanceStatusBalanced(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "(Cân bằng)" else "(Balanced)"
 
