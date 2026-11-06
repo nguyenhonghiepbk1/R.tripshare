@@ -34,24 +34,23 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.AppStrings
 import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
 import com.hiepnguyen.tripfinance.ui.theme.*
 
 enum class GuideCategory(
-    val titleVi: String,
-    val titleEn: String,
     val icon: ImageVector
 ) {
-    ALL("Tất cả", "All", Icons.Filled.Apps),
-    GETTING_STARTED("Bắt đầu nhanh", "Quick Start", Icons.Filled.RocketLaunch),
-    TRIP_MGMT("Quản lý đoàn", "Trip Management", Icons.Filled.FlightTakeoff),
-    EXPENSES("Ghi nhận chi tiêu", "Expenses & Splitting", Icons.Filled.ReceiptLong),
-    FUND("Quản lý Quỹ", "Group Fund", Icons.Filled.Savings),
-    SETTLEMENT("Quyết toán & Bù trừ", "Settlement & Netting", Icons.Filled.Payments),
-    EXCHANGE_RATE("Ngoại tệ & Tỷ giá", "Multi-Currency", Icons.Filled.CurrencyExchange),
-    EXPORT("Xuất Báo Cáo", "Export Reports", Icons.Filled.FileDownload),
-    PRIVACY("Chính sách & Bảo mật", "Privacy & Security", Icons.Filled.Shield),
-    FAQ("Câu hỏi thường gặp", "FAQ", Icons.Filled.HelpOutline)
+    ALL(Icons.Filled.Apps),
+    GETTING_STARTED(Icons.Filled.RocketLaunch),
+    TRIP_MGMT(Icons.Filled.FlightTakeoff),
+    EXPENSES(Icons.Filled.ReceiptLong),
+    FUND(Icons.Filled.Savings),
+    SETTLEMENT(Icons.Filled.Payments),
+    EXCHANGE_RATE(Icons.Filled.CurrencyExchange),
+    EXPORT(Icons.Filled.FileDownload),
+    PRIVACY(Icons.Filled.Shield),
+    FAQ(Icons.Filled.HelpOutline)
 }
 
 data class GuideItem(
@@ -358,13 +357,13 @@ fun UserGuideScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Column {
                             Text(
-                                text = if (lang == AppLanguage.VI) "Hướng Dẫn Sử Dụng" else "User Guide & Help",
+                                text = AppStrings.userGuideScreenTitle(lang),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = if (lang == AppLanguage.VI) "Cẩm nang quản lý tài chính đoàn" else "Trip finance handbook",
+                                text = AppStrings.userGuideScreenSubtitle(lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B)
                             )
@@ -378,7 +377,7 @@ fun UserGuideScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = if (lang == AppLanguage.VI) "Quay lại" else "Back",
+                            contentDescription = AppStrings.backNavCd(lang),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -428,16 +427,13 @@ fun UserGuideScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = if (lang == AppLanguage.VI) "Chào mừng đến với TripFinance" else "Welcome to TripFinance",
+                                    text = AppStrings.welcomeHeroTitle(lang),
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White
                                 )
                                 Text(
-                                    text = if (lang == AppLanguage.VI)
-                                        "Giải pháp quản lý quỹ, chi tiêu minh bạch & quyết toán bù trừ tối ưu cho đoàn công tác"
-                                    else
-                                        "Transparent group expense tracking & optimal debt settlement for business trips",
+                                    text = AppStrings.welcomeHeroSubtitle(lang),
                                     fontSize = 12.sp,
                                     color = Color(0xEEFFFFFF)
                                 )
@@ -457,7 +453,7 @@ fun UserGuideScreen(
                         .testTag("user_guide_search_input"),
                     placeholder = {
                         Text(
-                            if (lang == AppLanguage.VI) "Tìm kiếm chủ đề, tính năng, từ khóa..." else "Search guide topics, keywords...",
+                            AppStrings.guideSearchPlaceholder(lang),
                             fontSize = 13.sp
                         )
                     },
@@ -493,7 +489,7 @@ fun UserGuideScreen(
                             onClick = { selectedCategory = cat },
                             label = {
                                 Text(
-                                    text = if (lang == AppLanguage.VI) cat.titleVi else cat.titleEn,
+                                    text = AppStrings.guideCategoryTitle(cat, lang),
                                     fontSize = 12.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                 )
@@ -545,13 +541,13 @@ fun UserGuideScreen(
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
-                                        text = if (lang == AppLanguage.VI) "Chính Sách Quyền Riêng Tư & An Toàn Dữ Liệu" else "Privacy & Data Safety Policy",
+                                        text = AppStrings.guidePrivacyBannerTitle(lang),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 14.sp,
                                         color = EmeraldOnPrimaryContainer
                                     )
                                     Text(
-                                        text = if (lang == AppLanguage.VI) "Tuân thủ nghiêm ngặt chính sách người dùng Google Play" else "Compliant with Google Play User Data Policies",
+                                        text = AppStrings.guidePrivacyBannerSubtitle(lang),
                                         fontSize = 11.sp,
                                         color = Color(0xFF166534)
                                     )
@@ -561,10 +557,7 @@ fun UserGuideScreen(
                             Spacer(modifier = Modifier.height(10.dp))
 
                             Text(
-                                text = if (lang == AppLanguage.VI)
-                                    "TripFinance là ứng dụng Local-First 100% ngoại tuyến. Dữ liệu thành viên và các khoản chi tiêu được lưu trữ an toàn trong sandbox thiết bị của bạn, không kết nối Internet và không chia sẻ dữ liệu với bên thứ ba. Ứng dụng chỉ gợi ý phương án bù trừ công nợ, không thực hiện giao dịch tài chính."
-                                else
-                                    "TripFinance is a 100% offline Local-First app. Member details and expenses stay securely isolated in your device sandbox without any Internet connection or third-party sharing. The app only suggests debt settlements and does not execute financial transactions.",
+                                text = AppStrings.guidePrivacyBannerBody(lang),
                                 fontSize = 11.5.sp,
                                 color = Color(0xFF1E293B),
                                 lineHeight = 16.sp
@@ -588,7 +581,7 @@ fun UserGuideScreen(
                                     Icon(Icons.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(15.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (lang == AppLanguage.VI) "Chính sách công khai" else "Public Policy Link",
+                                        text = AppStrings.publicPolicyLinkBtn(lang),
                                         fontSize = 11.5.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -603,7 +596,7 @@ fun UserGuideScreen(
                                     Icon(Icons.Filled.Description, contentDescription = null, modifier = Modifier.size(15.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (lang == AppLanguage.VI) "Đọc trong ứng dụng" else "Read in App",
+                                        text = AppStrings.readPolicyInAppBtn(lang),
                                         fontSize = 11.5.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -636,12 +629,12 @@ fun UserGuideScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = if (lang == AppLanguage.VI) "Không tìm thấy nội dung phù hợp" else "No matching guide found",
+                                text = AppStrings.noMatchingGuideFound(lang),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp
                             )
                             Text(
-                                text = if (lang == AppLanguage.VI) "Thử tìm với từ khóa khác như: 'quỹ', 'chia tiền', 'bù trừ', 'tỷ giá'" else "Try searching with 'fund', 'split', 'settle', 'rate'",
+                                text = AppStrings.searchGuideSuggestionHint(lang),
                                 fontSize = 12.sp,
                                 color = Color(0xFF64748B),
                                 textAlign = TextAlign.Center
@@ -688,16 +681,13 @@ fun UserGuideScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = if (lang == AppLanguage.VI) "Cần hỗ trợ thêm?" else "Need More Help?",
+                                text = AppStrings.needMoreHelpTitle(lang),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = if (lang == AppLanguage.VI)
-                                    "Ứng dụng tự động lưu trữ và bảo vệ dữ liệu nội bộ an toàn trên thiết bị của bạn."
-                                else
-                                    "All trip financial data is safely persisted locally on your device.",
+                                text = AppStrings.needMoreHelpSubtitle(lang),
                                 fontSize = 11.sp,
                                 color = Color(0xFF64748B)
                             )
@@ -789,7 +779,7 @@ fun GuideAccordionCard(
                 ) {
                     Icon(
                         imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                        contentDescription = if (isExpanded) "Thu gọn" else "Mở rộng",
+                        contentDescription = if (isExpanded) AppStrings.collapseGuideItemCd(lang) else AppStrings.expandGuideItemCd(lang),
                         tint = if (isExpanded) EmeraldPrimary else Color(0xFF64748B)
                     )
                 }
@@ -882,3 +872,80 @@ fun GuideAccordionCard(
         }
     }
 }
+
+// --- AppStrings Localized Extensions for UserGuideScreen ---
+
+fun AppStrings.guideCategoryTitle(category: GuideCategory, lang: AppLanguage): String {
+    return when (category) {
+        GuideCategory.ALL -> if (lang == AppLanguage.VI) "Tất cả" else "All"
+        GuideCategory.GETTING_STARTED -> if (lang == AppLanguage.VI) "Bắt đầu nhanh" else "Quick Start"
+        GuideCategory.TRIP_MGMT -> if (lang == AppLanguage.VI) "Quản lý đoàn" else "Trip Management"
+        GuideCategory.EXPENSES -> if (lang == AppLanguage.VI) "Ghi nhận chi tiêu" else "Expenses & Splitting"
+        GuideCategory.FUND -> if (lang == AppLanguage.VI) "Quản lý Quỹ" else "Group Fund"
+        GuideCategory.SETTLEMENT -> if (lang == AppLanguage.VI) "Quyết toán & Bù trừ" else "Settlement & Netting"
+        GuideCategory.EXCHANGE_RATE -> if (lang == AppLanguage.VI) "Ngoại tệ & Tỷ giá" else "Multi-Currency"
+        GuideCategory.EXPORT -> if (lang == AppLanguage.VI) "Xuất Báo Cáo" else "Export Reports"
+        GuideCategory.PRIVACY -> if (lang == AppLanguage.VI) "Chính sách & Bảo mật" else "Privacy & Security"
+        GuideCategory.FAQ -> if (lang == AppLanguage.VI) "Câu hỏi thường gặp" else "FAQ"
+    }
+}
+
+fun AppStrings.userGuideScreenTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hướng Dẫn Sử Dụng" else "User Guide & Help"
+
+fun AppStrings.userGuideScreenSubtitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Cẩm nang quản lý tài chính đoàn" else "Trip finance handbook"
+
+fun AppStrings.backNavCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quay lại" else "Back"
+
+fun AppStrings.welcomeHeroTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chào mừng đến với TripFinance" else "Welcome to TripFinance"
+
+fun AppStrings.welcomeHeroSubtitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI)
+        "Giải pháp quản lý quỹ, chi tiêu minh bạch & quyết toán bù trừ tối ưu cho đoàn công tác"
+    else
+        "Transparent group expense tracking & optimal debt settlement for business trips"
+
+fun AppStrings.guideSearchPlaceholder(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tìm kiếm chủ đề, tính năng, từ khóa..." else "Search guide topics, keywords..."
+
+fun AppStrings.guidePrivacyBannerTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chính Sách Quyền Riêng Tư & An Toàn Dữ Liệu" else "Privacy & Data Safety Policy"
+
+fun AppStrings.guidePrivacyBannerSubtitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tuân thủ nghiêm ngặt chính sách người dùng Google Play" else "Compliant with Google Play User Data Policies"
+
+fun AppStrings.guidePrivacyBannerBody(lang: AppLanguage) =
+    if (lang == AppLanguage.VI)
+        "TripFinance là ứng dụng Local-First 100% ngoại tuyến. Dữ liệu thành viên và các khoản chi tiêu được lưu trữ an toàn trong sandbox thiết bị của bạn, không kết nối Internet và không chia sẻ dữ liệu với bên thứ ba. Ứng dụng chỉ gợi ý phương án bù trừ công nợ, không thực hiện giao dịch tài chính."
+    else
+        "TripFinance is a 100% offline Local-First app. Member details and expenses stay securely isolated in your device sandbox without any Internet connection or third-party sharing. The app only suggests debt settlements and does not execute financial transactions."
+
+fun AppStrings.publicPolicyLinkBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chính sách công khai" else "Public Policy Link"
+
+fun AppStrings.readPolicyInAppBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đọc trong ứng dụng" else "Read in App"
+
+fun AppStrings.noMatchingGuideFound(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Không tìm thấy nội dung phù hợp" else "No matching guide found"
+
+fun AppStrings.searchGuideSuggestionHint(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thử tìm với từ khóa khác như: 'quỹ', 'chia tiền', 'bù trừ', 'tỷ giá'" else "Try searching with 'fund', 'split', 'settle', 'rate'"
+
+fun AppStrings.needMoreHelpTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Cần hỗ trợ thêm?" else "Need More Help?"
+
+fun AppStrings.needMoreHelpSubtitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI)
+        "Ứng dụng tự động lưu trữ và bảo vệ dữ liệu nội bộ an toàn trên thiết bị của bạn."
+    else
+        "All trip financial data is safely persisted locally on your device."
+
+fun AppStrings.collapseGuideItemCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thu gọn" else "Collapse"
+
+fun AppStrings.expandGuideItemCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mở rộng" else "Expand"

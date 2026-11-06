@@ -31,11 +31,11 @@ import com.hiepnguyen.tripfinance.ui.theme.*
 import com.hiepnguyen.tripfinance.ui.viewmodel.TripFinanceViewModel
 
 enum class NavigationTab(val tabKey: String, val defaultTitle: String, val selectedIcon: ImageVector, val unselectedIcon: ImageVector) {
-    DASHBOARD("DASHBOARD", "Tổng quan", Icons.Filled.Dashboard, Icons.Outlined.Dashboard),
-    EXPENSES("EXPENSES", "Chi tiêu", Icons.Filled.ReceiptLong, Icons.Outlined.ReceiptLong),
-    FUND("FUND", "Quỹ đoàn", Icons.Filled.Savings, Icons.Outlined.Savings),
-    SETTLEMENT("SETTLEMENT", "Quyết toán", Icons.Filled.Payments, Icons.Outlined.Payments),
-    MEMBERS("SETTINGS", "Thành viên", Icons.Filled.Group, Icons.Outlined.Group)
+    DASHBOARD("DASHBOARD", "Dashboard", Icons.Filled.Dashboard, Icons.Outlined.Dashboard),
+    EXPENSES("EXPENSES", "Expenses", Icons.Filled.ReceiptLong, Icons.Outlined.ReceiptLong),
+    FUND("FUND", "Fund", Icons.Filled.Savings, Icons.Outlined.Savings),
+    SETTLEMENT("SETTLEMENT", "Settlement", Icons.Filled.Payments, Icons.Outlined.Payments),
+    MEMBERS("SETTINGS", "Members", Icons.Filled.Group, Icons.Outlined.Group)
 }
 
 class MainActivity : ComponentActivity() {
@@ -184,7 +184,7 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
                         ) {
                             Icon(
                                 imageVector = Icons.Outlined.HelpOutline,
-                                contentDescription = if (lang == AppLanguage.VI) "Hướng dẫn sử dụng" else "User Guide",
+                                contentDescription = AppStrings.topBarUserGuideCd(lang),
                                 tint = Color(0xFF2563EB)
                             )
                         }
@@ -196,7 +196,7 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.CloudSync,
-                                contentDescription = if (lang == AppLanguage.VI) "Sao lưu & Khôi phục" else "Backup & Recover",
+                                contentDescription = AppStrings.topBarBackupRestoreCd(lang),
                                 tint = EmeraldPrimary
                             )
                         }
@@ -477,4 +477,12 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
         )
     }
 }
+
+// --- AppStrings Localized Extensions for MainActivity ---
+
+fun AppStrings.topBarUserGuideCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hướng dẫn sử dụng" else "User Guide"
+
+fun AppStrings.topBarBackupRestoreCd(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Sao lưu & Khôi phục" else "Backup & Recover"
 
