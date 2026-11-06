@@ -463,7 +463,7 @@ fun AddExpenseDialog(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 14.sp
                                     )
-                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = null)
+                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = if (lang == AppLanguage.VI) "Chọn loại tiền" else "Select currency")
                                 }
 
                                 DropdownMenu(
@@ -805,7 +805,7 @@ fun AddExpenseDialog(
                                 onClick = { payerType = "MEMBER" },
                                 label = { Text(AppStrings.memberPaidInAdvanceTab(lang), fontSize = 12.sp) },
                                 leadingIcon = {
-                                    Icon(Icons.Filled.Person, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Filled.Person, contentDescription = AppStrings.memberPaidInAdvanceTab(lang), modifier = Modifier.size(16.dp))
                                 },
                                 modifier = Modifier.weight(1f)
                             )
@@ -814,7 +814,7 @@ fun AddExpenseDialog(
                                 onClick = { payerType = "FUND" },
                                 label = { Text(AppStrings.groupFundTab(lang), fontSize = 12.sp) },
                                 leadingIcon = {
-                                    Icon(Icons.Filled.Savings, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Filled.Savings, contentDescription = AppStrings.groupFundTab(lang), modifier = Modifier.size(16.dp))
                                 },
                                 modifier = Modifier.weight(1f)
                             )
@@ -952,7 +952,7 @@ fun AddExpenseDialog(
                                             onClick = { selectedPayerMemberId = m.id },
                                             label = { Text(m.name, fontSize = 12.sp) },
                                             leadingIcon = if (selectedPayerMemberId == m.id) {
-                                                { Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(14.dp)) }
+                                                { Icon(Icons.Filled.Check, contentDescription = m.name, modifier = Modifier.size(14.dp)) }
                                             } else null
                                         )
                                     }
@@ -1295,7 +1295,7 @@ fun AddExpenseDialog(
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
                 modifier = Modifier.testTag("save_expense_button")
             ) {
-                Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(Icons.Filled.Check, contentDescription = if (isEditMode) AppStrings.saveChangesBtn(lang) else AppStrings.saveExpenseBtn(lang), modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(if (isEditMode) AppStrings.saveChangesBtn(lang) else AppStrings.saveExpenseBtn(lang))
             }

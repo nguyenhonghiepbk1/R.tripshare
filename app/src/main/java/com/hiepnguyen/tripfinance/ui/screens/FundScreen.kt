@@ -152,7 +152,7 @@ fun FundScreen(
                                     shape = RoundedCornerShape(10.dp),
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
-                                    Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Filled.Add, contentDescription = AppStrings.contributeFundBtn(lang), modifier = Modifier.size(16.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(AppStrings.contributeFundBtn(lang), fontSize = 12.sp)
                                 }

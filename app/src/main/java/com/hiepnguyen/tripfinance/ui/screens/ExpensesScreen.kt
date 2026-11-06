@@ -660,7 +660,7 @@ fun ExpenseDetailDialog(
                         onClick = onEdit,
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = IndigoSecondary)
                     ) {
-                        Icon(Icons.Filled.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Filled.Edit, contentDescription = AppStrings.editAction(lang), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(AppStrings.editAction(lang))
                     }
@@ -668,7 +668,7 @@ fun ExpenseDetailDialog(
                         onClick = onDelete,
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
-                        Icon(Icons.Filled.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Filled.Delete, contentDescription = AppStrings.deleteAction(lang), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(AppStrings.deleteAction(lang))
                     }

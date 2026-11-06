@@ -206,7 +206,7 @@ fun BackupRestoreDialog(
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Icon(Icons.Filled.Save, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Filled.Save, contentDescription = AppStrings.createLocalBackupBtn(lang), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(AppStrings.createLocalBackupBtn(lang), fontSize = 12.sp)
                     }
@@ -222,7 +222,7 @@ fun BackupRestoreDialog(
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Icon(Icons.Filled.FileUpload, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Filled.FileUpload, contentDescription = AppStrings.exportBackupFileBtn(lang), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(AppStrings.exportBackupFileBtn(lang), fontSize = 12.sp)
                     }
@@ -233,7 +233,7 @@ fun BackupRestoreDialog(
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Icon(Icons.Filled.FileDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Filled.FileDownload, contentDescription = AppStrings.importBackupFileBtn(lang), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(AppStrings.importBackupFileBtn(lang), fontSize = 12.sp)
                     }
@@ -381,7 +381,7 @@ fun BackupRestoreDialog(
                                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                                             modifier = Modifier.height(32.dp)
                                         ) {
-                                            Icon(Icons.Filled.Restore, contentDescription = null, modifier = Modifier.size(14.dp))
+                                            Icon(Icons.Filled.Restore, contentDescription = AppStrings.restoreBackupBtn(lang), modifier = Modifier.size(14.dp))
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(AppStrings.restoreBackupBtn(lang), fontSize = 11.sp)
                                         }
@@ -488,7 +488,7 @@ fun BackupRestoreDialog(
                                         IconButton(onClick = { backupPasswordVisible = !backupPasswordVisible }) {
                                             Icon(
                                                 if (backupPasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                                contentDescription = null,
+                                                contentDescription = if (backupPasswordVisible) (if (lang == AppLanguage.VI) "Ẩn mật khẩu" else "Hide password") else (if (lang == AppLanguage.VI) "Hiện mật khẩu" else "Show password"),
                                                 modifier = Modifier.size(18.dp)
                                             )
                                         }
@@ -604,7 +604,7 @@ fun BackupRestoreDialog(
                                 IconButton(onClick = { restorePasswordVisible = !restorePasswordVisible }) {
                                     Icon(
                                         if (restorePasswordVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                        contentDescription = null,
+                                        contentDescription = if (restorePasswordVisible) (if (lang == AppLanguage.VI) "Ẩn mật khẩu" else "Hide password") else (if (lang == AppLanguage.VI) "Hiện mật khẩu" else "Show password"),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }

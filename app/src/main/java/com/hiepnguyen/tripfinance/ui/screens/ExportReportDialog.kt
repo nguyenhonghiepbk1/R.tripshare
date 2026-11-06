@@ -126,7 +126,7 @@ fun ExportReportDialog(
                             )
                         },
                         leadingIcon = {
-                            Icon(Icons.Filled.PictureAsPdf, contentDescription = null, tint = Color(0xFFDC2626), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.PictureAsPdf, contentDescription = AppStrings.pdfFormatChip(lang), tint = Color(0xFFDC2626), modifier = Modifier.size(16.dp))
                         },
                         modifier = Modifier.weight(1f).testTag("format_pdf_chip")
                     )
@@ -142,7 +142,7 @@ fun ExportReportDialog(
                             )
                         },
                         leadingIcon = {
-                            Icon(Icons.Filled.Article, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.Article, contentDescription = AppStrings.textFormatChip(lang), modifier = Modifier.size(16.dp))
                         },
                         modifier = Modifier.weight(0.9f).testTag("format_text_chip")
                     )
@@ -158,7 +158,7 @@ fun ExportReportDialog(
                             )
                         },
                         leadingIcon = {
-                            Icon(Icons.Filled.TableView, contentDescription = null, tint = Color(0xFF059669), modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.TableView, contentDescription = "Excel (.xlsx)", tint = Color(0xFF059669), modifier = Modifier.size(16.dp))
                         },
                         modifier = Modifier.weight(1f).testTag("format_xlsx_chip")
                     )
@@ -232,7 +232,7 @@ fun ExportReportDialog(
                             ) {
                                 Icon(
                                     Icons.Filled.Assessment,
-                                    contentDescription = null,
+                                    contentDescription = if (lang == AppLanguage.VI) "Chọn loại báo cáo" else "Select report type",
                                     tint = IndigoSecondary,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -409,7 +409,7 @@ fun ExportReportDialog(
                                 fontWeight = FontWeight.Bold
                             )
                         } else {
-                            Icon(Icons.Filled.PictureAsPdf, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.PictureAsPdf, contentDescription = AppStrings.exportAndSharePdfBtn(lang), modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 AppStrings.exportAndSharePdfBtn(lang),
@@ -447,7 +447,7 @@ fun ExportReportDialog(
                                 fontWeight = FontWeight.Bold
                             )
                         } else {
-                            Icon(Icons.Filled.TableView, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Filled.TableView, contentDescription = AppStrings.exportAndShareExcelBtn(lang), modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 AppStrings.exportAndShareExcelBtn(lang),
@@ -468,7 +468,7 @@ fun ExportReportDialog(
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                         modifier = Modifier.testTag("copy_report_button")
                     ) {
-                        Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Filled.ContentCopy, contentDescription = AppStrings.copyReportBtn(lang), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(AppStrings.copyReportBtn(lang), fontSize = 12.sp, fontFamily = AppFontFamily)
                     }
@@ -483,7 +483,7 @@ fun ExportReportDialog(
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                         modifier = Modifier.testTag("share_report_button")
                     ) {
-                        Icon(Icons.Filled.Share, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Filled.Share, contentDescription = AppStrings.shareReportBtn(lang), modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(AppStrings.shareReportBtn(lang), fontSize = 12.sp, fontFamily = AppFontFamily, fontWeight = FontWeight.Bold)
                     }

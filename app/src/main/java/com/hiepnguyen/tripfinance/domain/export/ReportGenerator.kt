@@ -10,6 +10,8 @@ import com.hiepnguyen.tripfinance.domain.model.MemberFinancialStatus
 import com.hiepnguyen.tripfinance.domain.model.SettlementTransfer
 import com.hiepnguyen.tripfinance.domain.model.sumOfSafe
 import com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils
+import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.AppStrings
 import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
@@ -322,82 +324,98 @@ object ReportGenerator {
         settlementTransfers: List<SettlementTransfer>,
         expenses: List<ExpenseEntity>,
         funds: List<FundContributionEntity>,
-        splits: List<ExpenseSplitEntity> = emptyList()
+        splits: List<ExpenseSplitEntity> = emptyList(),
+        language: AppLanguage = AppLanguage.VI
     ) {
         val now = Date()
-        val tripTitle = trip?.title ?: "ĐOÀN CÔNG TÁC / DU LỊCH"
+        val tripTitle = trip?.title ?: AppStrings.valDefaultTripTitle(language)
         val joinCode = trip?.joinCode ?: "---"
 
         XlsxWriter(outputStream).use { writer ->
             // ==========================================
-            // Sheet 1: "Tổng quan"
+            // Sheet 1: Tổng quan / Overview
             // ==========================================
-            writer.sheet("Tổng quan") {
-                headerRow("Chỉ tiêu", "Giá trị", "Ghi chú")
-                row("Tên chuyến đi / đoàn", tripTitle, "")
-                row("Mã đoàn", joinCode, "")
-                row("Ngày xuất báo cáo", dateFormat.format(now), "")
+            writer.sheet(AppStrings.sheetOverview(language)) {
+                headerRow(
+                    AppStrings.colIndicator(language),
+                    AppStrings.colValue(language),
+                    AppStrings.colNotes(language)
+                )
+                row(AppStrings.rowTripName(language), tripTitle, "")
+                row(AppStrings.rowJoinCode(language), joinCode, "")
+                row(AppStrings.rowExportDate(language), dateFormat.format(now), "")
                 row {
-                    cell("Tổng chi tiêu đoàn (VND)")
+                    cell(AppStrings.rowTotalExpenses(language))
                     currencyCell(summary.totalExpenses)
-                    cell("Bao gồm tiền thành viên tự chi và tiền quỹ")
+                    cell(AppStrings.rowTotalExpensesNote(language))
                 }
                 row {
-                    cell("Thành viên tự chi hộ (VND)")
+                    cell(AppStrings.rowPersonalPaid(language))
                     currencyCell(summary.personalPaidExpenses)
-                    cell("Các khoản cá nhân bỏ tiền túi chi hộ")
+                    cell(AppStrings.rowPersonalPaidNote(language))
                 }
                 row {
-                    cell("Chi từ nguồn Quỹ chung (VND)")
+                    cell(AppStrings.rowFundPaid(language))
                     currencyCell(summary.fundPaidExpenses)
-                    cell("Các khoản chi xuất trực tiếp từ quỹ đoàn")
+                    cell(AppStrings.rowFundPaidNote(language))
                 }
                 row {
-                    cell("Tổng tiền đã thu vào Quỹ (VND)")
+                    cell(AppStrings.rowTotalFundCollected(language))
                     currencyCell(summary.totalFundCollected)
-                    cell("Tổng đóng góp từ các thành viên")
+                    cell(AppStrings.rowTotalFundCollectedNote(language))
                 }
                 row {
-                    cell("Số dư Quỹ chung còn lại (VND)")
+                    cell(AppStrings.rowRemainingFund(language))
                     currencyCell(summary.remainingFund)
-                    cell("Tiền quỹ còn tồn sau khi đã chi")
+                    cell(AppStrings.rowRemainingFundNote(language))
                 }
                 row {
-                    cell("Tình trạng đối soát")
-                    cell(if (summary.isBalanced) "CÂN BẰNG (0 đ)" else "CẢNH BÁO LỆCH: " + NumberFormatUtils.formatVnd(summary.balanceDiscrepancy))
-                    cell(if (summary.isBalanced) "Hợp lệ" else "Cần kiểm tra lại")
+                    cell(AppStrings.rowReconciliationStatus(language))
+                    val balancedStatus = if (summary.isBalanced) {
+                        AppStrings.rowBalancedStatus(language)
+                    } else {
+                        AppStrings.rowDiscrepancyWarning(language) + NumberFormatUtils.formatVnd(summary.balanceDiscrepancy)
+                    }
+                    cell(balancedStatus)
+                    cell(if (summary.isBalanced) AppStrings.rowStatusValid(language) else AppStrings.rowStatusNeedsCheck(language))
                 }
                 row {
-                    cell("Tổng số thành viên")
+                    cell(AppStrings.rowTotalMembers(language))
                     cell(members.size)
-                    cell("người")
+                    cell(AppStrings.rowUnitMembers(language))
                 }
             }
 
             // ==========================================
-            // Sheet 2: "Chi tiêu"
+            // Sheet 2: Chi tiêu / Expenses
             // ==========================================
-            writer.sheet("Chi tiêu") {
+            writer.sheet(AppStrings.sheetExpenses(language)) {
                 headerRow(
-                    "STT",
-                    "Ngày",
-                    "Tên khoản chi",
-                    "Danh mục",
-                    "Người trả",
-                    "Tiền gốc",
-                    "Tiền tệ",
-                    "Tỷ giá",
-                    "Quy đổi (VND)",
-                    "Kiểu phân bổ",
-                    "Ghi chú"
+                    AppStrings.colNo(language),
+                    AppStrings.colDate(language),
+                    AppStrings.colExpenseTitle(language),
+                    AppStrings.colCategory(language),
+                    AppStrings.colPayer(language),
+                    AppStrings.colOriginalAmount(language),
+                    AppStrings.colCurrency(language),
+                    AppStrings.colExchangeRate(language),
+                    AppStrings.colConvertedVnd(language),
+                    AppStrings.colSplitType(language),
+                    AppStrings.colNote(language)
                 )
                 expenses.sortedBy { it.timestamp }.forEachIndexed { i, e ->
-                    val payer = if (e.payerType == "FUND") "Quỹ chung" else (members.find { it.id == e.payerMemberId }?.name ?: "")
+                    val payer = if (e.payerType == "FUND") {
+                        AppStrings.valGroupFund(language)
+                    } else {
+                        (members.find { it.id == e.payerMemberId }?.name ?: "")
+                    }
+                    val catName = AppStrings.getCategoryName(e.category, language)
+                    val splitTypeName = AppStrings.getSplitTypeName(e.splitType, language)
                     row {
                         cell(i + 1)
                         cell(dateOnlyFormat.format(Date(e.timestamp)))
                         cell(e.title)
-                        cell(e.category)
+                        cell(catName)
                         cell(payer)
                         if (e.currency == "VND") {
                             currencyCell(e.totalAmount.toLong())
@@ -407,37 +425,38 @@ object ReportGenerator {
                         cell(e.currency)
                         cell(e.exchangeRate)
                         currencyCell(e.convertedTotalAmount)
-                        cell(e.splitType)
+                        cell(splitTypeName)
                         cell(e.note)
                     }
                 }
             }
 
             // ==========================================
-            // Sheet 3: "Theo thành viên"
+            // Sheet 3: Theo thành viên / By Member
             // ==========================================
-            writer.sheet("Theo thành viên") {
+            writer.sheet(AppStrings.sheetMembers(language)) {
                 headerRow(
-                    "STT",
-                    "Họ và tên",
-                    "Vai trò",
-                    "Chi hộ cá nhân (VND)",
-                    "Nộp quỹ (VND)",
-                    "Tổng đã chi (VND)",
-                    "Phải chịu (VND)",
-                    "Số dư (VND)",
-                    "Trạng thái quyết toán"
+                    AppStrings.colNo(language),
+                    AppStrings.colFullName(language),
+                    AppStrings.colRole(language),
+                    AppStrings.colPersonalPaidHeader(language),
+                    AppStrings.colFundContributedHeader(language),
+                    AppStrings.colTotalPaidHeader(language),
+                    AppStrings.colTotalOwedHeader(language),
+                    AppStrings.colBalanceHeader(language),
+                    AppStrings.colSettlementStatus(language)
                 )
                 statuses.forEachIndexed { i, s ->
                     val statusText = when {
-                        s.balance > 0 -> "Được nhận lại"
-                        s.balance < 0 -> "Cần nộp thêm"
-                        else -> "Đã cân bằng"
+                        s.balance > 0 -> AppStrings.valToReceive(language)
+                        s.balance < 0 -> AppStrings.valToPay(language)
+                        else -> AppStrings.valReconciled(language)
                     }
+                    val roleName = AppStrings.getRoleName(s.member.role, language)
                     row {
                         cell(i + 1)
                         cell(s.member.name)
-                        cell(s.member.role)
+                        cell(roleName)
                         currencyCell(s.outOfPocketPaid)
                         currencyCell(s.fundContributed)
                         currencyCell(s.totalPaid)
@@ -449,18 +468,18 @@ object ReportGenerator {
             }
 
             // ==========================================
-            // Sheet 4: "Quỹ chung"
+            // Sheet 4: Quỹ chung / Group Fund
             // ==========================================
-            writer.sheet("Quỹ chung") {
+            writer.sheet(AppStrings.sheetGroupFund(language)) {
                 headerRow(
-                    "STT",
-                    "Thời gian",
-                    "Người nộp",
-                    "Số tiền gốc",
-                    "Tiền tệ",
-                    "Tỷ giá",
-                    "Quy đổi (VND)",
-                    "Ghi chú"
+                    AppStrings.colNo(language),
+                    AppStrings.colTime(language),
+                    AppStrings.colContributor(language),
+                    AppStrings.colOriginalAmount(language),
+                    AppStrings.colCurrency(language),
+                    AppStrings.colExchangeRate(language),
+                    AppStrings.colConvertedVnd(language),
+                    AppStrings.colNote(language)
                 )
                 funds.sortedBy { it.timestamp }.forEachIndexed { i, f ->
                     val contributor = members.find { it.id == f.memberId }?.name ?: ""
@@ -478,19 +497,20 @@ object ReportGenerator {
             }
 
             // ==========================================
-            // Sheet 5: "Gợi ý chuyển khoản"
+            // Sheet 5: Gợi ý chuyển khoản / Settlement Suggestions
             // ==========================================
-            writer.sheet("Gợi ý chuyển khoản") {
+            writer.sheet(AppStrings.sheetSettlementSuggestions(language)) {
                 headerRow(
-                    "STT",
-                    "Người trả",
-                    "Người nhận",
-                    "Số tiền (VND)",
-                    "Nội dung gợi ý"
+                    AppStrings.colNo(language),
+                    AppStrings.colSender(language),
+                    AppStrings.colReceiver(language),
+                    AppStrings.colAmountVnd(language),
+                    AppStrings.colSuggestedNote(language)
                 )
+                val fundName = AppStrings.valGroupFundFull(language)
                 settlementTransfers.forEachIndexed { i, t ->
-                    val fromName = if (t.fromMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else t.fromMember.name
-                    val toName = if (t.toMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else t.toMember.name
+                    val fromName = if (t.fromMember.id == "FUND_ORGANIZATION") fundName else t.fromMember.name
+                    val toName = if (t.toMember.id == "FUND_ORGANIZATION") fundName else t.toMember.name
                     row {
                         cell(i + 1)
                         cell(fromName)
@@ -503,3 +523,71 @@ object ReportGenerator {
         }
     }
 }
+
+// --- AppStrings Localized Extensions for ReportGenerator (Excel Sheets & Columns) ---
+
+fun AppStrings.sheetOverview(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tổng quan" else "Overview"
+fun AppStrings.sheetExpenses(lang: AppLanguage) = if (lang == AppLanguage.VI) "Chi tiêu" else "Expenses"
+fun AppStrings.sheetMembers(lang: AppLanguage) = if (lang == AppLanguage.VI) "Theo thành viên" else "By Member"
+fun AppStrings.sheetGroupFund(lang: AppLanguage) = if (lang == AppLanguage.VI) "Quỹ chung" else "Group Fund"
+fun AppStrings.sheetSettlementSuggestions(lang: AppLanguage) = if (lang == AppLanguage.VI) "Gợi ý chuyển khoản" else "Settlement Suggestions"
+
+fun AppStrings.colIndicator(lang: AppLanguage) = if (lang == AppLanguage.VI) "Chỉ tiêu" else "Indicator"
+fun AppStrings.colValue(lang: AppLanguage) = if (lang == AppLanguage.VI) "Giá trị" else "Value"
+fun AppStrings.colNotes(lang: AppLanguage) = if (lang == AppLanguage.VI) "Ghi chú" else "Notes"
+
+fun AppStrings.rowTripName(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tên chuyến đi / đoàn" else "Trip / Group Name"
+fun AppStrings.rowJoinCode(lang: AppLanguage) = if (lang == AppLanguage.VI) "Mã đoàn" else "Trip Join Code"
+fun AppStrings.rowExportDate(lang: AppLanguage) = if (lang == AppLanguage.VI) "Ngày xuất báo cáo" else "Report Export Date"
+fun AppStrings.rowTotalExpenses(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tổng chi tiêu đoàn (VND)" else "Total Group Expenses (VND)"
+fun AppStrings.rowTotalExpensesNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Bao gồm tiền thành viên tự chi và tiền quỹ" else "Includes member out-of-pocket and fund expenses"
+fun AppStrings.rowPersonalPaid(lang: AppLanguage) = if (lang == AppLanguage.VI) "Thành viên tự chi hộ (VND)" else "Personal Out-of-Pocket (VND)"
+fun AppStrings.rowPersonalPaidNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Các khoản cá nhân bỏ tiền túi chi hộ" else "Expenses paid personally by members"
+fun AppStrings.rowFundPaid(lang: AppLanguage) = if (lang == AppLanguage.VI) "Chi từ nguồn Quỹ chung (VND)" else "Paid from Group Fund (VND)"
+fun AppStrings.rowFundPaidNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Các khoản chi xuất trực tiếp từ quỹ đoàn" else "Expenses disbursed directly from group fund"
+fun AppStrings.rowTotalFundCollected(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tổng tiền đã thu vào Quỹ (VND)" else "Total Fund Collected (VND)"
+fun AppStrings.rowTotalFundCollectedNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tổng đóng góp từ các thành viên" else "Total contributions from members"
+fun AppStrings.rowRemainingFund(lang: AppLanguage) = if (lang == AppLanguage.VI) "Số dư Quỹ chung còn lại (VND)" else "Remaining Group Fund (VND)"
+fun AppStrings.rowRemainingFundNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tiền quỹ còn tồn sau khi đã chi" else "Remaining fund balance after spending"
+fun AppStrings.rowReconciliationStatus(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tình trạng đối soát" else "Reconciliation Status"
+fun AppStrings.rowBalancedStatus(lang: AppLanguage) = if (lang == AppLanguage.VI) "CÂN BẰNG (0 đ)" else "BALANCED (0 VND)"
+fun AppStrings.rowDiscrepancyWarning(lang: AppLanguage) = if (lang == AppLanguage.VI) "CẢNH BÁO LỆCH: " else "WARNING DISCREPANCY: "
+fun AppStrings.rowStatusValid(lang: AppLanguage) = if (lang == AppLanguage.VI) "Hợp lệ" else "Valid"
+fun AppStrings.rowStatusNeedsCheck(lang: AppLanguage) = if (lang == AppLanguage.VI) "Cần kiểm tra lại" else "Needs Review"
+fun AppStrings.rowTotalMembers(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tổng số thành viên" else "Total Members"
+fun AppStrings.rowUnitMembers(lang: AppLanguage) = if (lang == AppLanguage.VI) "người" else "members"
+
+fun AppStrings.colNo(lang: AppLanguage) = if (lang == AppLanguage.VI) "STT" else "No."
+fun AppStrings.colDate(lang: AppLanguage) = if (lang == AppLanguage.VI) "Ngày" else "Date"
+fun AppStrings.colExpenseTitle(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tên khoản chi" else "Expense Title"
+fun AppStrings.colCategory(lang: AppLanguage) = if (lang == AppLanguage.VI) "Danh mục" else "Category"
+fun AppStrings.colPayer(lang: AppLanguage) = if (lang == AppLanguage.VI) "Người trả" else "Payer"
+fun AppStrings.colOriginalAmount(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tiền gốc" else "Original Amount"
+fun AppStrings.colCurrency(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tiền tệ" else "Currency"
+fun AppStrings.colExchangeRate(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tỷ giá" else "Exchange Rate"
+fun AppStrings.colConvertedVnd(lang: AppLanguage) = if (lang == AppLanguage.VI) "Quy đổi (VND)" else "Converted (VND)"
+fun AppStrings.colSplitType(lang: AppLanguage) = if (lang == AppLanguage.VI) "Kiểu phân bổ" else "Split Method"
+fun AppStrings.colNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Ghi chú" else "Notes"
+fun AppStrings.valGroupFund(lang: AppLanguage) = if (lang == AppLanguage.VI) "Quỹ chung" else "Group Fund"
+
+fun AppStrings.colFullName(lang: AppLanguage) = if (lang == AppLanguage.VI) "Họ và tên" else "Full Name"
+fun AppStrings.colRole(lang: AppLanguage) = if (lang == AppLanguage.VI) "Vai trò" else "Role"
+fun AppStrings.colPersonalPaidHeader(lang: AppLanguage) = if (lang == AppLanguage.VI) "Chi hộ cá nhân (VND)" else "Personal Out-of-Pocket (VND)"
+fun AppStrings.colFundContributedHeader(lang: AppLanguage) = if (lang == AppLanguage.VI) "Nộp quỹ (VND)" else "Fund Contributed (VND)"
+fun AppStrings.colTotalPaidHeader(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tổng đã chi (VND)" else "Total Paid (VND)"
+fun AppStrings.colTotalOwedHeader(lang: AppLanguage) = if (lang == AppLanguage.VI) "Phải chịu (VND)" else "Total Owed (VND)"
+fun AppStrings.colBalanceHeader(lang: AppLanguage) = if (lang == AppLanguage.VI) "Số dư (VND)" else "Balance (VND)"
+fun AppStrings.colSettlementStatus(lang: AppLanguage) = if (lang == AppLanguage.VI) "Trạng thái quyết toán" else "Settlement Status"
+fun AppStrings.valToReceive(lang: AppLanguage) = if (lang == AppLanguage.VI) "Được nhận lại" else "To Receive"
+fun AppStrings.valToPay(lang: AppLanguage) = if (lang == AppLanguage.VI) "Cần nộp thêm" else "To Pay"
+fun AppStrings.valReconciled(lang: AppLanguage) = if (lang == AppLanguage.VI) "Đã cân bằng" else "Reconciled"
+
+fun AppStrings.colTime(lang: AppLanguage) = if (lang == AppLanguage.VI) "Thời gian" else "Time"
+fun AppStrings.colContributor(lang: AppLanguage) = if (lang == AppLanguage.VI) "Người nộp" else "Contributor"
+fun AppStrings.colSender(lang: AppLanguage) = if (lang == AppLanguage.VI) "Người trả" else "Sender"
+fun AppStrings.colReceiver(lang: AppLanguage) = if (lang == AppLanguage.VI) "Người nhận" else "Receiver"
+fun AppStrings.colAmountVnd(lang: AppLanguage) = if (lang == AppLanguage.VI) "Số tiền (VND)" else "Amount (VND)"
+fun AppStrings.colSuggestedNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Nội dung gợi ý" else "Suggested Note"
+fun AppStrings.valGroupFundFull(lang: AppLanguage) = if (lang == AppLanguage.VI) "Quỹ chung đoàn" else "Group Fund"
+fun AppStrings.valDefaultTripTitle(lang: AppLanguage) = if (lang == AppLanguage.VI) "ĐOÀN CÔNG TÁC / DU LỊCH" else "BUSINESS TRIP / TOUR"
+

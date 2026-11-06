@@ -200,7 +200,7 @@ fun EmergencyDatabaseRecoveryScreen(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
             ) {
-                Icon(Icons.Filled.Refresh, contentDescription = null)
+                Icon(Icons.Filled.Refresh, contentDescription = "Thử Lại Mở Khóa")
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Thử Lại Mở Khóa", fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
@@ -217,7 +217,7 @@ fun EmergencyDatabaseRecoveryScreen(
                 if (isReadingFile) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
-                    Icon(Icons.Filled.CloudUpload, contentDescription = null)
+                    Icon(Icons.Filled.CloudUpload, contentDescription = "Khôi Phục Từ Tệp Sao Lưu")
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Khôi Phục Từ Tệp Sao Lưu (.json)", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
@@ -228,7 +228,7 @@ fun EmergencyDatabaseRecoveryScreen(
                 onClick = { showResetConfirmDialog = true },
                 colors = ButtonDefaults.textButtonColors(contentColor = DangerRed)
             ) {
-                Icon(Icons.Filled.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.DeleteForever, contentDescription = "Xóa CSDL Hỏng & Tạo Mới Từ Đầu", modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
                 Text("Xóa CSDL Hỏng & Tạo Mới Từ Đầu", fontSize = 13.sp)
             }

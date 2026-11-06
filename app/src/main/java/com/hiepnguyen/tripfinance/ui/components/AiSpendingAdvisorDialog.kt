@@ -23,6 +23,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.hiepnguyen.tripfinance.ui.theme.EmeraldPrimary
 import com.hiepnguyen.tripfinance.ui.theme.extendedColorScheme
+import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
 
 @Composable
 fun AiSpendingAdvisorDialog(
@@ -89,7 +91,7 @@ fun AiSpendingAdvisorDialog(
                     }
 
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Filled.Close, contentDescription = "Đóng")
+                        Icon(Icons.Filled.Close, contentDescription = if (LocalAppLanguage.current == AppLanguage.VI) "Đóng" else "Close")
                     }
                 }
 

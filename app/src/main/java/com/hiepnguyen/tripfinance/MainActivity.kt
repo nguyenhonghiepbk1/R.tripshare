@@ -2,6 +2,7 @@ package com.hiepnguyen.tripfinance
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -94,6 +95,32 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
     var showExportReportDialog by remember { mutableStateOf(false) }
     var showBackupRestoreDialog by remember { mutableStateOf(false) }
     var showUserGuideScreen by remember { mutableStateOf(false) }
+
+    // Intercept back button for modal screens & dialogs
+    BackHandler(enabled = showUserGuideScreen) {
+        showUserGuideScreen = false
+    }
+    BackHandler(enabled = showExportReportDialog) {
+        showExportReportDialog = false
+    }
+    BackHandler(enabled = showBackupRestoreDialog) {
+        showBackupRestoreDialog = false
+    }
+    BackHandler(enabled = showAddExpenseDialog) {
+        showAddExpenseDialog = false
+    }
+    BackHandler(enabled = showAddFundDialog) {
+        showAddFundDialog = false
+    }
+    BackHandler(enabled = showCreateTripDialog) {
+        showCreateTripDialog = false
+    }
+    BackHandler(enabled = aiInsight != null || isLoadingAi) {
+        viewModel.clearAiInsight()
+    }
+    BackHandler(enabled = !showUserGuideScreen && !showExportReportDialog && !showBackupRestoreDialog && !showAddExpenseDialog && !showAddFundDialog && !showCreateTripDialog && currentTab != NavigationTab.DASHBOARD) {
+        currentTab = NavigationTab.DASHBOARD
+    }
 
     val snackbarHostState = remember { SnackbarHostState() }
 

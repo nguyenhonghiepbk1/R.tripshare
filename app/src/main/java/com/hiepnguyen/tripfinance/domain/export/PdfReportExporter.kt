@@ -19,6 +19,8 @@ import com.hiepnguyen.tripfinance.domain.model.MemberFinancialStatus
 import com.hiepnguyen.tripfinance.domain.model.SettlementTransfer
 import com.hiepnguyen.tripfinance.domain.model.sumOfSafe
 import com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils
+import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.AppStrings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -89,13 +91,17 @@ object PdfReportExporter {
         expenses: List<ExpenseEntity>,
         funds: List<FundContributionEntity>,
         splits: List<ExpenseSplitEntity> = emptyList(),
-        creatorName: String
+        creatorName: String,
+        language: AppLanguage = AppLanguage.VI
     ): File? = withContext(Dispatchers.IO) {
         var pdfDocument: PdfDocument? = null
         try {
             pdfDocument = PdfDocument()
             val pageWidth = 595 // Standard A4 width in PostScript points (72 dpi)
             val pageHeight = 842 // Standard A4 height in PostScript points
+
+            val localDateFormat = if (language == AppLanguage.VI) SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("vi", "VN")) else SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
+            val localDateOnlyFormat = if (language == AppLanguage.VI) SimpleDateFormat("dd/MM/yyyy", Locale("vi", "VN")) else SimpleDateFormat("yyyy-MM-dd", Locale.US)
 
             var pageNumber = 1
             var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
@@ -115,9 +121,9 @@ object PdfReportExporter {
                 paint.textSize = 8f
                 paint.typeface = Typeface.DEFAULT
                 paint.textAlign = Paint.Align.LEFT
-                canvas.drawText("Đây là gợi ý, ứng dụng không thực hiện giao dịch", margin, pageHeight - 20f, paint)
+                canvas.drawText(AppStrings.pdfFooterSuggestion(language), margin, pageHeight - 20f, paint)
                 paint.textAlign = Paint.Align.RIGHT
-                canvas.drawText("Trang $pageNumber", pageWidth - margin, pageHeight - 20f, paint)
+                canvas.drawText(AppStrings.pdfPageNumber(pageNumber, language), pageWidth - margin, pageHeight - 20f, paint)
             }
 
             fun checkPageBreak(requiredHeight: Float) {
@@ -144,18 +150,18 @@ object PdfReportExporter {
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             paint.textSize = 14.5f
             paint.textAlign = Paint.Align.CENTER
-            canvas.drawText("BÁO CÁO QUYẾT TOÁN TÀI CHÍNH & BẢNG KÊ CHI TIẾT", margin + (contentWidth / 2f), currentY + 28f, paint)
+            canvas.drawText(AppStrings.pdfBannerTitle(language), margin + (contentWidth / 2f), currentY + 28f, paint)
 
             paint.textSize = 10.5f
             paint.typeface = Typeface.DEFAULT
             paint.color = Color.parseColor("#E0E7FF")
-            val tripTitle = trip?.title ?: "ĐOÀN CÔNG TÁC"
+            val tripTitle = trip?.title ?: AppStrings.pdfDefaultTripName(language)
             canvas.drawText(tripTitle.uppercase(), margin + (contentWidth / 2f), currentY + 46f, paint)
 
             paint.textSize = 8.5f
             paint.color = Color.parseColor("#C7D2FE")
-            val dateStr = dateFormat.format(Date())
-            canvas.drawText("Ngày lập: $dateStr • Người lập: $creatorName • Thành viên: ${members.size} người", margin + (contentWidth / 2f), currentY + 60f, paint)
+            val dateStr = localDateFormat.format(Date())
+            canvas.drawText(AppStrings.pdfMetaInfo(dateStr, creatorName, members.size, language), margin + (contentWidth / 2f), currentY + 60f, paint)
 
             currentY += headerHeight + 16f
 
@@ -175,20 +181,20 @@ object PdfReportExporter {
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             paint.color = Color.parseColor("#0F172A")
             paint.textSize = 10f
-            canvas.drawText("I. TỔNG QUAN TÀI CHÍNH TOÀN ĐOÀN", margin + 12f, currentY + 18f, paint)
+            canvas.drawText(AppStrings.pdfSecOverview(language), margin + 12f, currentY + 18f, paint)
 
             paint.typeface = Typeface.DEFAULT
             paint.textSize = 9f
             paint.color = Color.parseColor("#334155")
-            canvas.drawText("• Tổng chi tiêu toàn đoàn: ${NumberFormatUtils.formatVnd(summary.totalExpenses)}", margin + 12f, currentY + 34f, paint)
-            canvas.drawText("• Thành viên tự chi hộ: ${NumberFormatUtils.formatVnd(summary.personalPaidExpenses)}", margin + 12f, currentY + 48f, paint)
-            canvas.drawText("• Chi từ quỹ chung đoàn: ${NumberFormatUtils.formatVnd(summary.fundPaidExpenses)}", margin + 12f, currentY + 62f, paint)
+            canvas.drawText(AppStrings.pdfMetricTotalExpenses(language) + NumberFormatUtils.formatVnd(summary.totalExpenses), margin + 12f, currentY + 34f, paint)
+            canvas.drawText(AppStrings.pdfMetricPersonalPaid(language) + NumberFormatUtils.formatVnd(summary.personalPaidExpenses), margin + 12f, currentY + 48f, paint)
+            canvas.drawText(AppStrings.pdfMetricFundPaid(language) + NumberFormatUtils.formatVnd(summary.fundPaidExpenses), margin + 12f, currentY + 62f, paint)
 
             val col2X = margin + (contentWidth / 2f) + 10f
-            canvas.drawText("• Tổng quỹ đoàn đã thu: ${NumberFormatUtils.formatVnd(summary.totalFundCollected)}", col2X, currentY + 34f, paint)
-            canvas.drawText("• Số dư quỹ còn lại: ${NumberFormatUtils.formatVnd(summary.remainingFund)}", col2X, currentY + 48f, paint)
-            val balanceText = if (summary.isBalanced) "HỢP LỆ (Cân bằng = 0 đ)" else "CẢNH BÁO: Lệch ${NumberFormatUtils.formatVnd(summary.balanceDiscrepancy)}"
-            canvas.drawText("• Tình trạng đối soát: $balanceText", col2X, currentY + 62f, paint)
+            canvas.drawText(AppStrings.pdfMetricTotalFund(language) + NumberFormatUtils.formatVnd(summary.totalFundCollected), col2X, currentY + 34f, paint)
+            canvas.drawText(AppStrings.pdfMetricRemainingFund(language) + NumberFormatUtils.formatVnd(summary.remainingFund), col2X, currentY + 48f, paint)
+            val balanceText = if (summary.isBalanced) AppStrings.pdfAuditBalanced(language) else AppStrings.pdfAuditDiscrepancy(language) + NumberFormatUtils.formatVnd(summary.balanceDiscrepancy)
+            canvas.drawText(AppStrings.pdfMetricAudit(language) + balanceText, col2X, currentY + 62f, paint)
 
             currentY += 92f
 
@@ -200,7 +206,7 @@ object PdfReportExporter {
             paint.color = Color.parseColor("#0F172A")
             paint.textSize = 10.5f
             paint.textAlign = Paint.Align.LEFT
-            canvas.drawText("II. BẢNG TỔNG HỢP SỐ DƯ & QUYẾT TOÁN TỪNG THÀNH VIÊN", margin, currentY, paint)
+            canvas.drawText(AppStrings.pdfSecMemberBalances(language), margin, currentY, paint)
             currentY += 12f
 
             // Table Header
@@ -211,12 +217,12 @@ object PdfReportExporter {
             paint.color = Color.WHITE
             paint.textSize = 8.5f
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            canvas.drawText("STT", margin + 4f, currentY + 13f, paint)
-            canvas.drawText("Họ và tên", margin + 28f, currentY + 13f, paint)
-            canvas.drawText("Chi hộ (A)", margin + 148f, currentY + 13f, paint)
-            canvas.drawText("Nộp quỹ (B)", margin + 220f, currentY + 13f, paint)
-            canvas.drawText("Phải chịu (C)", margin + 292f, currentY + 13f, paint)
-            canvas.drawText("Số dư quyết toán (A+B-C)", margin + 372f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColNo(language), margin + 4f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColFullName(language), margin + 28f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColPaid(language), margin + 148f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColFund(language), margin + 220f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColOwed(language), margin + 292f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColBalance(language), margin + 372f, currentY + 13f, paint)
             currentY += 20f
 
             // Table Rows
@@ -242,15 +248,15 @@ object PdfReportExporter {
                 if (st.balance > 0) {
                     paint.color = Color.parseColor("#15803D") // Green
                     paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                    canvas.drawText("+${NumberFormatUtils.formatVnd(st.balance)} (Nhận lại)", margin + 372f, currentY + 12f, paint)
+                    canvas.drawText("+${NumberFormatUtils.formatVnd(st.balance)} ${AppStrings.pdfBadgeToReceive(language)}", margin + 372f, currentY + 12f, paint)
                 } else if (st.balance < 0) {
                     paint.color = Color.parseColor("#B91C1C") // Red
                     paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                    canvas.drawText("${NumberFormatUtils.formatVnd(st.balance)} (Cần nộp)", margin + 372f, currentY + 12f, paint)
+                    canvas.drawText("${NumberFormatUtils.formatVnd(st.balance)} ${AppStrings.pdfBadgeToPay(language)}", margin + 372f, currentY + 12f, paint)
                 } else {
                     paint.color = Color.parseColor("#64748B")
                     paint.typeface = Typeface.DEFAULT
-                    canvas.drawText("0 đ (Cân bằng)", margin + 372f, currentY + 12f, paint)
+                    canvas.drawText(AppStrings.pdfBadgeBalanced(language), margin + 372f, currentY + 12f, paint)
                 }
 
                 paint.color = Color.parseColor("#E2E8F0")
@@ -272,16 +278,16 @@ object PdfReportExporter {
             paint.color = Color.parseColor("#0F172A")
             paint.style = Paint.Style.FILL
             paint.textSize = 10.5f
-            canvas.drawText("III. KẾ HOẠCH BÙ TRỪ CÔNG NỢ TỐI ƯU GIỮA CÁC THÀNH VIÊN", margin, currentY, paint)
+            canvas.drawText(AppStrings.pdfSecSettlementPlan(language), margin, currentY, paint)
             currentY += 13f
 
             paint.typeface = Typeface.DEFAULT
             paint.textSize = 8f
             paint.color = Color.parseColor("#475569")
             val settleDesc = if (settlementTransfers.isNotEmpty()) {
-                "Thuật toán tham lam đã tối ưu hóa, rút gọn còn ${settlementTransfers.size} giao dịch bù trừ trực tiếp (Tổng số tiền luân chuyển: ${NumberFormatUtils.formatVnd(totalTransferAmount)}):"
+                AppStrings.pdfSettleDesc(settlementTransfers.size, NumberFormatUtils.formatVnd(totalTransferAmount), language)
             } else {
-                "Tất cả các thành viên đã cân bằng tài chính hoặc số dư = 0 đ. Không phát sinh giao dịch bù trừ nào."
+                AppStrings.pdfSettleDescEmpty(language)
             }
             canvas.drawText(settleDesc, margin, currentY, paint)
             currentY += 10f
@@ -300,7 +306,7 @@ object PdfReportExporter {
                 paint.color = Color.parseColor("#15803D")
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 paint.textSize = 8.5f
-                canvas.drawText("✓ Toàn bộ các thành viên trong đoàn đã cân bằng số dư (0 đ). Quyết toán hoàn tất thành công!", margin + 12f, currentY + 18f, paint)
+                canvas.drawText(AppStrings.pdfSettleAllBalanced(language), margin + 12f, currentY + 18f, paint)
                 currentY += 36f
             } else {
                 // Bảng bù trừ tối ưu
@@ -311,12 +317,13 @@ object PdfReportExporter {
                 paint.color = Color.WHITE
                 paint.textSize = 8.5f
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                canvas.drawText("Người nộp bù", margin + 6f, currentY + 13f, paint)
-                canvas.drawText("Người nhận", margin + 125f, currentY + 13f, paint)
-                canvas.drawText("Số tiền (VND)", margin + 245f, currentY + 13f, paint)
-                canvas.drawText("Nội dung đối soát", margin + 345f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColSender(language), margin + 6f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColReceiver(language), margin + 125f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColAmount(language), margin + 245f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColAuditNote(language), margin + 345f, currentY + 13f, paint)
                 currentY += 20f
 
+                val fundName = AppStrings.pdfFundName(language)
                 paint.typeface = Typeface.DEFAULT
                 settlementTransfers.forEachIndexed { i, tr ->
                     checkPageBreak(22f)
@@ -328,8 +335,8 @@ object PdfReportExporter {
 
                     paint.color = Color.parseColor("#1E293B")
                     paint.style = Paint.Style.FILL
-                    val fromName = if (tr.fromMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else tr.fromMember.name
-                    val toName = if (tr.toMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else tr.toMember.name
+                    val fromName = if (tr.fromMember.id == "FUND_ORGANIZATION") fundName else tr.fromMember.name
+                    val toName = if (tr.toMember.id == "FUND_ORGANIZATION") fundName else tr.toMember.name
                     canvas.drawText(fromName.take(20), margin + 6f, currentY + 13f, paint)
                     canvas.drawText(toName.take(20), margin + 125f, currentY + 13f, paint)
 
@@ -351,14 +358,14 @@ object PdfReportExporter {
             }
 
             // =========================================================================
-            // Section 4: BẢN KÊ CHI TIẾT CÁC KHOẢN CHI TIÊU (HIỂN THỊ ĐẦY ĐỦ TÊN MỌI THÀNH VIÊN)
+            // Section 4: BẢN KÊ CHI TIẾT CÁC KHOẢN CHI TIÊU
             // =========================================================================
             checkPageBreak(50f)
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             paint.color = Color.parseColor("#0F172A")
             paint.style = Paint.Style.FILL
             paint.textSize = 10.5f
-            canvas.drawText("IV. BẢN KÊ CHI TIẾT CÁC KHOẢN CHI TIÊU (${expenses.size} khoản chi)", margin, currentY, paint)
+            canvas.drawText(AppStrings.pdfSecExpensesLedger(expenses.size, language), margin, currentY, paint)
             currentY += 12f
 
             // Expenses Table Header
@@ -369,12 +376,12 @@ object PdfReportExporter {
             paint.color = Color.WHITE
             paint.textSize = 8.5f
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            canvas.drawText("STT", margin + 4f, currentY + 13f, paint)
-            canvas.drawText("Thời gian", margin + 26f, currentY + 13f, paint)
-            canvas.drawText("Tên khoản chi & Ghi chú", margin + 110f, currentY + 13f, paint)
-            canvas.drawText("Nguồn chi", margin + 270f, currentY + 13f, paint)
-            canvas.drawText("Số tiền (VND)", margin + 360f, currentY + 13f, paint)
-            canvas.drawText("Phân bổ", margin + 450f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColNo(language), margin + 4f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColDate(language), margin + 26f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColExpenseTitleNote(language), margin + 110f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColPayer(language), margin + 270f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColAmount(language), margin + 360f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColSplit(language), margin + 450f, currentY + 13f, paint)
             currentY += 20f
 
             val sublinePaint = Paint().apply {
@@ -389,21 +396,22 @@ object PdfReportExporter {
                 val expSplits = splits.filter { it.expenseId == exp.id }
                 
                 // Chuẩn bị toàn bộ tên thành viên tham gia khoản chi đó
+                val defaultMem = AppStrings.pdfDefaultMember(language)
                 val participantsFullText: String = if (expSplits.isNotEmpty()) {
                     val formattedMembers = expSplits.map { sp ->
-                        val mName = members.find { it.id == sp.memberId }?.name ?: "Thành viên"
+                        val mName = members.find { it.id == sp.memberId }?.name ?: defaultMem
                         "$mName (${NumberFormatUtils.formatVnd(sp.amount)})"
                     }.joinToString(", ")
-                    "• Thành viên cùng chịu (${expSplits.size} người): $formattedMembers"
+                    AppStrings.pdfSplitParticipantsText(expSplits.size, formattedMembers, language)
                 } else {
                     val allNames = members.joinToString(", ") { it.name }
-                    "• Chia đều tất cả ${members.size} thành viên trong đoàn: $allNames"
+                    AppStrings.pdfSplitAllText(members.size, allNames, language)
                 }
 
-                // Tách thành nhiều dòng vừa khít khổ trang, không bao giờ bị khuất chữ
+                // Tách thành nhiều dòng vừa khít khổ trang
                 val participantLines = wrapText(participantsFullText, sublinePaint, maxSublineWidth)
                 val noteLines = if (exp.note.isNotBlank()) {
-                    wrapText("• Ghi chú: ${exp.note}", sublinePaint, maxSublineWidth)
+                    wrapText(AppStrings.pdfNotePrefix(language) + exp.note, sublinePaint, maxSublineWidth)
                 } else emptyList()
 
                 val lineSpacing = 10f
@@ -423,13 +431,13 @@ object PdfReportExporter {
                 paint.textSize = 8f
                 paint.typeface = Typeface.DEFAULT
                 canvas.drawText("${idx + 1}", margin + 4f, currentY + 11f, paint)
-                canvas.drawText(dateOnlyFormat.format(Date(exp.timestamp)), margin + 26f, currentY + 11f, paint)
+                canvas.drawText(localDateOnlyFormat.format(Date(exp.timestamp)), margin + 26f, currentY + 11f, paint)
 
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 canvas.drawText(exp.title.take(30), margin + 110f, currentY + 11f, paint)
 
                 paint.typeface = Typeface.DEFAULT
-                val payerName = if (exp.payerType == "FUND") "Quỹ đoàn" else (members.find { it.id == exp.payerMemberId }?.name ?: "Cá nhân")
+                val payerName = if (exp.payerType == "FUND") AppStrings.pdfPayerFund(language) else (members.find { it.id == exp.payerMemberId }?.name ?: AppStrings.pdfPayerPersonal(language))
                 canvas.drawText(payerName.take(16), margin + 270f, currentY + 11f, paint)
 
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
@@ -439,15 +447,14 @@ object PdfReportExporter {
                 paint.typeface = Typeface.DEFAULT
                 paint.color = Color.parseColor("#475569")
                 val splitModeStr = when (exp.splitType) {
-                    "EQUAL" -> "Chia đều"
-                    "CUSTOM_PARTICIPANT" -> "Chọn người"
-                    "RATIO" -> "Tỷ lệ %"
-                    "CUSTOM_AMOUNT" -> "Tùy nhập"
-                    else -> exp.splitType
+                    "EQUAL" -> AppStrings.pdfSplitEqual(language)
+                    "CUSTOM_PARTICIPANT" -> AppStrings.pdfSplitSelect(language)
+                    "RATIO" -> AppStrings.pdfSplitRatio(language)
+                    "CUSTOM_AMOUNT" -> AppStrings.pdfSplitCustom(language)
+                    else -> AppStrings.getSplitTypeName(exp.splitType, language)
                 }
                 canvas.drawText(splitModeStr, margin + 450f, currentY + 11f, paint)
 
-                // Render đầy đủ các dòng danh sách thành viên tham gia (tự động xuống dòng)
                 var sublineY = currentY + 22f
                 sublinePaint.color = Color.parseColor("#0369A1")
                 participantLines.forEach { line ->
@@ -455,7 +462,6 @@ object PdfReportExporter {
                     sublineY += lineSpacing
                 }
 
-                // Render ghi chú nếu có
                 sublinePaint.color = Color.parseColor("#64748B")
                 noteLines.forEach { line ->
                     canvas.drawText(line, margin + 110f, sublineY, sublinePaint)
@@ -477,7 +483,7 @@ object PdfReportExporter {
             paint.color = Color.parseColor("#0369A1")
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             paint.textSize = 8.5f
-            canvas.drawText("TỔNG CỘNG CHI TIÊU TOÀN ĐOÀN:", margin + 110f, currentY + 12f, paint)
+            canvas.drawText(AppStrings.pdfTotalExpensesLabel(language), margin + 110f, currentY + 12f, paint)
             canvas.drawText(NumberFormatUtils.formatVnd(summary.totalExpenses), margin + 360f, currentY + 12f, paint)
             currentY += 28f
 
@@ -490,7 +496,7 @@ object PdfReportExporter {
                 paint.color = Color.parseColor("#0F172A")
                 paint.style = Paint.Style.FILL
                 paint.textSize = 10.5f
-                canvas.drawText("V. BẢN KÊ ĐÓNG GÓP QUỸ ĐOÀN (${funds.size} đợt nộp)", margin, currentY, paint)
+                canvas.drawText(AppStrings.pdfSecFundLedger(funds.size, language), margin, currentY, paint)
                 currentY += 12f
 
                 // Fund Table Header
@@ -501,11 +507,11 @@ object PdfReportExporter {
                 paint.color = Color.WHITE
                 paint.textSize = 8.5f
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                canvas.drawText("STT", margin + 4f, currentY + 13f, paint)
-                canvas.drawText("Thời gian", margin + 26f, currentY + 13f, paint)
-                canvas.drawText("Thành viên nộp quỹ", margin + 110f, currentY + 13f, paint)
-                canvas.drawText("Số tiền nộp (VND)", margin + 260f, currentY + 13f, paint)
-                canvas.drawText("Ghi chú / Đợt nộp", margin + 380f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColNo(language), margin + 4f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColDate(language), margin + 26f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColContributor(language), margin + 110f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColContributedAmount(language), margin + 260f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColFundNote(language), margin + 380f, currentY + 13f, paint)
                 currentY += 20f
 
                 paint.typeface = Typeface.DEFAULT
@@ -521,9 +527,9 @@ object PdfReportExporter {
                     paint.style = Paint.Style.FILL
                     paint.textSize = 8.5f
                     canvas.drawText("${idx + 1}", margin + 4f, currentY + 12f, paint)
-                    canvas.drawText(dateOnlyFormat.format(Date(fund.timestamp)), margin + 26f, currentY + 12f, paint)
+                    canvas.drawText(localDateOnlyFormat.format(Date(fund.timestamp)), margin + 26f, currentY + 12f, paint)
 
-                    val memName = members.find { it.id == fund.memberId }?.name ?: "Thành viên"
+                    val memName = members.find { it.id == fund.memberId }?.name ?: AppStrings.pdfDefaultMember(language)
                     canvas.drawText(memName.take(22), margin + 110f, currentY + 12f, paint)
 
                     paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
@@ -532,7 +538,7 @@ object PdfReportExporter {
 
                     paint.typeface = Typeface.DEFAULT
                     paint.color = Color.parseColor("#475569")
-                    val noteDisplay = if (fund.note.isNotBlank()) fund.note else "Nộp quỹ"
+                    val noteDisplay = if (fund.note.isNotBlank()) fund.note else AppStrings.pdfDefaultFundNote(language)
                     canvas.drawText(noteDisplay.take(25), margin + 380f, currentY + 12f, paint)
 
                     paint.color = Color.parseColor("#FEF3C7")
@@ -550,7 +556,7 @@ object PdfReportExporter {
                 paint.color = Color.parseColor("#B45309")
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 paint.textSize = 8.5f
-                canvas.drawText("TỔNG CỘNG TIỀN QUỸ ĐÃ THU:", margin + 110f, currentY + 12f, paint)
+                canvas.drawText(AppStrings.pdfTotalFundLabel(language), margin + 110f, currentY + 12f, paint)
                 canvas.drawText(NumberFormatUtils.formatVnd(summary.totalFundCollected), margin + 260f, currentY + 12f, paint)
                 currentY += 28f
             }
@@ -566,14 +572,14 @@ object PdfReportExporter {
             val leftSignX = margin + (contentWidth * 0.25f)
             val rightSignX = margin + (contentWidth * 0.75f)
 
-            canvas.drawText("TRƯỞNG ĐOÀN", leftSignX, currentY + 12f, paint)
-            canvas.drawText("THỦ QUỸ ĐOÀN", rightSignX, currentY + 12f, paint)
+            canvas.drawText(AppStrings.pdfSignLeader(language), leftSignX, currentY + 12f, paint)
+            canvas.drawText(AppStrings.pdfSignTreasurer(language), rightSignX, currentY + 12f, paint)
 
             paint.typeface = Typeface.DEFAULT
             paint.textSize = 8f
             paint.color = Color.parseColor("#64748B")
-            canvas.drawText("(Ký và ghi rõ họ tên)", leftSignX, currentY + 24f, paint)
-            canvas.drawText("(Ký và ghi rõ họ tên)", rightSignX, currentY + 24f, paint)
+            canvas.drawText(AppStrings.pdfSignHint(language), leftSignX, currentY + 24f, paint)
+            canvas.drawText(AppStrings.pdfSignHint(language), rightSignX, currentY + 24f, paint)
 
             // Page Number and disclaimer for last page
             drawFooter()
@@ -583,7 +589,8 @@ object PdfReportExporter {
             // Write PDF to cache directory
             val reportsDir = File(context.cacheDir, "reports").apply { if (!exists()) mkdirs() }
             val sanitizeTripTitle = (trip?.title ?: "Trip").replace("[^a-zA-Z0-9]".toRegex(), "_")
-            val pdfFile = File(reportsDir, "BaoCaoQuyetToan_${sanitizeTripTitle}_${System.currentTimeMillis()}.pdf")
+            val prefix = if (language == AppLanguage.VI) "BaoCaoQuyetToan" else "SettlementReport"
+            val pdfFile = File(reportsDir, "${prefix}_${sanitizeTripTitle}_${System.currentTimeMillis()}.pdf")
             
             FileOutputStream(pdfFile).use { fos ->
                 pdfDocument.writeTo(fos)
@@ -592,13 +599,13 @@ object PdfReportExporter {
 
             // Open Share Intent for PDF on Main thread
             withContext(Dispatchers.Main) {
-                sharePdfFile(context, pdfFile, tripTitle)
+                sharePdfFile(context, pdfFile, tripTitle, language)
             }
             pdfFile
         } catch (e: Exception) {
             android.util.Log.e("PdfReportExporter", "Lỗi xuất file PDF: ${e.javaClass.simpleName}")
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Không thể xuất file PDF báo cáo. Vui lòng thử lại sau.", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, AppStrings.pdfExportErrorToast(language), Toast.LENGTH_LONG).show()
             }
             null
         } finally {
@@ -608,7 +615,7 @@ object PdfReportExporter {
         }
     }
 
-    private fun sharePdfFile(context: Context, file: File, tripTitle: String) {
+    private fun sharePdfFile(context: Context, file: File, tripTitle: String, lang: AppLanguage) {
         val uri: Uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
@@ -617,12 +624,12 @@ object PdfReportExporter {
 
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "application/pdf"
-            putExtra(Intent.EXTRA_SUBJECT, "Báo cáo quyết toán tài chính PDF - $tripTitle")
+            putExtra(Intent.EXTRA_SUBJECT, AppStrings.pdfShareSubject(tripTitle, lang))
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        val chooser = Intent.createChooser(intent, "Chia sẻ file Báo cáo PDF qua...")
+        val chooser = Intent.createChooser(intent, AppStrings.pdfShareChooser(lang))
         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(chooser)
     }
@@ -636,13 +643,15 @@ object PdfReportExporter {
         settlementTransfers: List<SettlementTransfer>,
         expenses: List<ExpenseEntity>,
         funds: List<FundContributionEntity>,
-        splits: List<ExpenseSplitEntity> = emptyList()
+        splits: List<ExpenseSplitEntity> = emptyList(),
+        language: AppLanguage = AppLanguage.VI
     ): File? = withContext(Dispatchers.IO) {
         try {
             val reportsDir = File(context.cacheDir, "reports").apply { if (!exists()) mkdirs() }
             val sanitizeTripTitle = (trip?.title ?: "Trip").replace("[^a-zA-Z0-9]".toRegex(), "_")
             val dateStr = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
-            val xlsxFile = File(reportsDir, "${sanitizeTripTitle}_${dateStr}.xlsx")
+            val prefix = if (language == AppLanguage.VI) "BaoCaoExcel" else "SettlementExcel"
+            val xlsxFile = File(reportsDir, "${prefix}_${sanitizeTripTitle}_${dateStr}.xlsx")
 
             FileOutputStream(xlsxFile).use { fos ->
                 ReportGenerator.generateXlsxReport(
@@ -654,25 +663,26 @@ object PdfReportExporter {
                     settlementTransfers = settlementTransfers,
                     expenses = expenses,
                     funds = funds,
-                    splits = splits
+                    splits = splits,
+                    language = language
                 )
                 fos.flush()
             }
 
             withContext(Dispatchers.Main) {
-                shareXlsxFile(context, xlsxFile, trip?.title ?: "Đoàn")
+                shareXlsxFile(context, xlsxFile, trip?.title ?: AppStrings.pdfDefaultTripName(language), language)
             }
             xlsxFile
         } catch (e: Exception) {
             android.util.Log.e("PdfReportExporter", "Lỗi xuất file Excel: ${e.javaClass.simpleName}", e)
             withContext(Dispatchers.Main) {
-                Toast.makeText(context, "Không thể xuất file Excel báo cáo. Vui lòng thử lại sau.", Toast.LENGTH_LONG).show()
+                Toast.makeText(context, AppStrings.xlsxExportErrorToast(language), Toast.LENGTH_LONG).show()
             }
             null
         }
     }
 
-    private fun shareXlsxFile(context: Context, file: File, tripTitle: String) {
+    private fun shareXlsxFile(context: Context, file: File, tripTitle: String, lang: AppLanguage) {
         val uri: Uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
@@ -681,13 +691,232 @@ object PdfReportExporter {
 
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            putExtra(Intent.EXTRA_SUBJECT, "Báo cáo quyết toán tài chính Excel - $tripTitle")
+            putExtra(Intent.EXTRA_SUBJECT, AppStrings.xlsxShareSubject(tripTitle, lang))
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        val chooser = Intent.createChooser(intent, "Chia sẻ file Báo cáo Excel qua...")
+        val chooser = Intent.createChooser(intent, AppStrings.xlsxShareChooser(lang))
         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(chooser)
     }
 }
+
+// --- AppStrings Localized Extensions for PdfReportExporter (PDF Table Headers, Columns & Labels) ---
+
+fun AppStrings.pdfBannerTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "BÁO CÁO QUYẾT TOÁN TÀI CHÍNH & BẢNG KÊ CHI TIẾT"
+    else "FINANCIAL SETTLEMENT REPORT & DETAILED LEDGER"
+
+fun AppStrings.pdfDefaultTripName(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "ĐOÀN CÔNG TÁC" else "BUSINESS TRIP"
+
+fun AppStrings.pdfMetaInfo(dateStr: String, creatorName: String, count: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ngày lập: $dateStr • Người lập: $creatorName • Thành viên: $count người"
+    else "Date: $dateStr • Creator: $creatorName • Members: $count people"
+
+fun AppStrings.pdfSecOverview(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "I. TỔNG QUAN TÀI CHÍNH TOÀN ĐOÀN"
+    else "I. GROUP FINANCIAL OVERVIEW"
+
+fun AppStrings.pdfMetricTotalExpenses(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Tổng chi tiêu toàn đoàn: " else "• Total group expenses: "
+
+fun AppStrings.pdfMetricPersonalPaid(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Thành viên tự chi hộ: " else "• Member out-of-pocket: "
+
+fun AppStrings.pdfMetricFundPaid(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Chi từ quỹ chung đoàn: " else "• Paid from group fund: "
+
+fun AppStrings.pdfMetricTotalFund(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Tổng quỹ đoàn đã thu: " else "• Total fund collected: "
+
+fun AppStrings.pdfMetricRemainingFund(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Số dư quỹ còn lại: " else "• Remaining fund balance: "
+
+fun AppStrings.pdfMetricAudit(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Tình trạng đối soát: " else "• Reconciliation status: "
+
+fun AppStrings.pdfAuditBalanced(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "HỢP LỆ (Cân bằng = 0 đ)" else "VALID (Balanced = 0 VND)"
+
+fun AppStrings.pdfAuditDiscrepancy(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "CẢNH BÁO: Lệch " else "WARNING: Discrepancy "
+
+fun AppStrings.pdfSecMemberBalances(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "II. BẢNG TỔNG HỢP SỐ DƯ & QUYẾT TOÁN TỪNG THÀNH VIÊN"
+    else "II. MEMBER BALANCE & SETTLEMENT SUMMARY"
+
+fun AppStrings.pdfColNo(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "STT" else "No."
+
+fun AppStrings.pdfColFullName(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Họ và tên" else "Full Name"
+
+fun AppStrings.pdfColPaid(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chi hộ (A)" else "Out-of-pocket (A)"
+
+fun AppStrings.pdfColFund(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nộp quỹ (B)" else "Fund (B)"
+
+fun AppStrings.pdfColOwed(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Phải chịu (C)" else "Share (C)"
+
+fun AppStrings.pdfColBalance(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Số dư quyết toán (A+B-C)" else "Net Balance (A+B-C)"
+
+fun AppStrings.pdfBadgeToReceive(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "(Nhận lại)" else "(To Receive)"
+
+fun AppStrings.pdfBadgeToPay(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "(Cần nộp)" else "(To Pay)"
+
+fun AppStrings.pdfBadgeBalanced(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "0 đ (Cân bằng)" else "0 VND (Balanced)"
+
+fun AppStrings.pdfSecSettlementPlan(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "III. KẾ HOẠCH BÙ TRỪ CÔNG NỢ TỐI ƯU GIỮA CÁC THÀNH VIÊN"
+    else "III. OPTIMAL DEBT NETTING PLAN BETWEEN MEMBERS"
+
+fun AppStrings.pdfSettleDesc(count: Int, total: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI)
+        "Thuật toán tham lam đã tối ưu hóa, rút gọn còn $count giao dịch bù trừ trực tiếp (Tổng số tiền luân chuyển: $total):"
+    else
+        "Greedy algorithm optimized down to $count direct netting transfers (Total cashflow: $total):"
+
+fun AppStrings.pdfSettleDescEmpty(lang: AppLanguage) =
+    if (lang == AppLanguage.VI)
+        "Tất cả các thành viên đã cân bằng tài chính hoặc số dư = 0 đ. Không phát sinh giao dịch bù trừ nào."
+    else
+        "All members are financially balanced with 0 VND balance. No netting transfers needed."
+
+fun AppStrings.pdfSettleAllBalanced(lang: AppLanguage) =
+    if (lang == AppLanguage.VI)
+        "✓ Toàn bộ các thành viên trong đoàn đã cân bằng số dư (0 đ). Quyết toán hoàn tất thành công!"
+    else
+        "✓ All members have reconciled with 0 VND balance. Settlement completed successfully!"
+
+fun AppStrings.pdfColSender(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Người nộp bù" else "Sender / Payer"
+
+fun AppStrings.pdfColReceiver(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Người nhận" else "Receiver"
+
+fun AppStrings.pdfColAmount(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Số tiền (VND)" else "Amount (VND)"
+
+fun AppStrings.pdfColAuditNote(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nội dung đối soát" else "Audit Note"
+
+fun AppStrings.pdfFundName(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quỹ chung đoàn" else "Group Fund"
+
+fun AppStrings.pdfSecExpensesLedger(count: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "IV. BẢN KÊ CHI TIẾT CÁC KHOẢN CHI TIÊU ($count khoản chi)"
+    else "IV. DETAILED EXPENSE LEDGER ($count items)"
+
+fun AppStrings.pdfColDate(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thời gian" else "Date"
+
+fun AppStrings.pdfColExpenseTitleNote(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tên khoản chi & Ghi chú" else "Expense Title & Note"
+
+fun AppStrings.pdfColPayer(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nguồn chi" else "Source / Payer"
+
+fun AppStrings.pdfColSplit(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Phân bổ" else "Allocation"
+
+fun AppStrings.pdfSplitParticipantsText(count: Int, members: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Thành viên cùng chịu ($count người): $members"
+    else "• Co-sharing members ($count people): $members"
+
+fun AppStrings.pdfSplitAllText(count: Int, allMembers: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Chia đều tất cả $count thành viên trong đoàn: $allMembers"
+    else "• Split equally among all $count members: $allMembers"
+
+fun AppStrings.pdfNotePrefix(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "• Ghi chú: " else "• Note: "
+
+fun AppStrings.pdfPayerFund(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Quỹ đoàn" else "Group Fund"
+
+fun AppStrings.pdfPayerPersonal(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Cá nhân" else "Personal"
+
+fun AppStrings.pdfDefaultMember(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên" else "Member"
+
+fun AppStrings.pdfSplitEqual(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chia đều" else "Equal"
+
+fun AppStrings.pdfSplitSelect(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chọn người" else "Selected"
+
+fun AppStrings.pdfSplitRatio(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tỷ lệ %" else "Ratio %"
+
+fun AppStrings.pdfSplitCustom(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tùy nhập" else "Custom"
+
+fun AppStrings.pdfTotalExpensesLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "TỔNG CỘNG CHI TIÊU TOÀN ĐOÀN:" else "TOTAL GROUP EXPENSES:"
+
+fun AppStrings.pdfSecFundLedger(count: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "V. BẢN KÊ ĐÓNG GÓP QUỸ ĐOÀN ($count đợt nộp)"
+    else "V. GROUP FUND CONTRIBUTIONS ($count entries)"
+
+fun AppStrings.pdfColContributor(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thành viên nộp quỹ" else "Contributor"
+
+fun AppStrings.pdfColContributedAmount(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Số tiền nộp (VND)" else "Contributed Amount (VND)"
+
+fun AppStrings.pdfColFundNote(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ghi chú / Đợt nộp" else "Note / Installment"
+
+fun AppStrings.pdfDefaultFundNote(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Nộp quỹ" else "Fund deposit"
+
+fun AppStrings.pdfTotalFundLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "TỔNG CỘNG TIỀN QUỸ ĐÃ THU:" else "TOTAL GROUP FUND COLLECTED:"
+
+fun AppStrings.pdfSignLeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "TRƯỞNG ĐOÀN" else "GROUP LEADER"
+
+fun AppStrings.pdfSignTreasurer(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "THỦ QUỸ ĐOÀN" else "GROUP TREASURER"
+
+fun AppStrings.pdfSignHint(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "(Ký và ghi rõ họ tên)" else "(Sign and write full name)"
+
+fun AppStrings.pdfFooterSuggestion(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đây là gợi ý, ứng dụng không thực hiện giao dịch"
+    else "Suggested only, the app does not execute financial transactions"
+
+fun AppStrings.pdfPageNumber(page: Int, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Trang $page" else "Page $page"
+
+fun AppStrings.pdfShareSubject(tripTitle: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Báo cáo quyết toán tài chính PDF - $tripTitle"
+    else "Financial Settlement Report PDF - $tripTitle"
+
+fun AppStrings.pdfShareChooser(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chia sẻ file Báo cáo PDF qua..."
+    else "Share PDF Report via..."
+
+fun AppStrings.xlsxShareSubject(tripTitle: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Báo cáo quyết toán tài chính Excel - $tripTitle"
+    else "Financial Settlement Report Excel - $tripTitle"
+
+fun AppStrings.xlsxShareChooser(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chia sẻ file Báo cáo Excel qua..."
+    else "Share Excel Report via..."
+
+fun AppStrings.pdfExportErrorToast(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Không thể xuất file PDF báo cáo. Vui lòng thử lại sau."
+    else "Cannot export PDF report. Please try again later."
+
+fun AppStrings.xlsxExportErrorToast(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Không thể xuất file Excel báo cáo. Vui lòng thử lại sau."
+    else "Cannot export Excel report. Please try again later."

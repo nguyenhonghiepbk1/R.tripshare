@@ -119,7 +119,7 @@ fun DashboardScreen(
                             onClick = onOpenCreateTrip,
                             colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                         ) {
-                            Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Filled.Add, contentDescription = AppStrings.createTripBigBtn(lang), modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(AppStrings.createTripBigBtn(lang))
                         }
@@ -590,7 +590,7 @@ fun DashboardScreen(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Icon(Icons.Filled.Add, contentDescription = AppStrings.quickAddExpense(lang), modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             AppStrings.quickAddExpense(lang),
@@ -1243,7 +1243,7 @@ fun TripHeaderCard(
                                 leadingIcon = {
                                     Icon(
                                         imageVector = if (isSelected) Icons.Filled.FlightTakeoff else Icons.Outlined.WorkOutline,
-                                        contentDescription = null,
+                                        contentDescription = trip.title,
                                         tint = if (isSelected) EmeraldPrimary else Color(0xFF64748B),
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -1268,7 +1268,7 @@ fun TripHeaderCard(
                             )
                         },
                         leadingIcon = {
-                            Icon(Icons.Filled.AddCircleOutline, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Filled.AddCircleOutline, contentDescription = AppStrings.createNewTripDropdownItem(lang), tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
                         },
                         onClick = {
                             showTripDropdown = false
@@ -1295,7 +1295,7 @@ fun TripHeaderCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Filled.Person,
-                        contentDescription = null,
+                        contentDescription = AppStrings.switchRoleAction(lang),
                         tint = Color.White,
                         modifier = Modifier.size(16.dp)
                     )

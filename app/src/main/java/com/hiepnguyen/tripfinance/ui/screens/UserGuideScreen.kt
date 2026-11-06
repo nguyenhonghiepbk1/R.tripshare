@@ -497,7 +497,7 @@ fun UserGuideScreen(
                             leadingIcon = {
                                 Icon(
                                     cat.icon,
-                                    contentDescription = null,
+                                    contentDescription = AppStrings.guideCategoryTitle(cat, lang),
                                     modifier = Modifier.size(16.dp),
                                     tint = if (isSelected) EmeraldPrimary else Color(0xFF64748B)
                                 )
@@ -578,7 +578,7 @@ fun UserGuideScreen(
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Icon(Icons.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(15.dp))
+                                    Icon(Icons.Filled.OpenInNew, contentDescription = AppStrings.publicPolicyLinkBtn(lang), modifier = Modifier.size(15.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = AppStrings.publicPolicyLinkBtn(lang),
@@ -593,7 +593,7 @@ fun UserGuideScreen(
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Icon(Icons.Filled.Description, contentDescription = null, modifier = Modifier.size(15.dp))
+                                    Icon(Icons.Filled.Description, contentDescription = AppStrings.readPolicyInAppBtn(lang), modifier = Modifier.size(15.dp))
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = AppStrings.readPolicyInAppBtn(lang),

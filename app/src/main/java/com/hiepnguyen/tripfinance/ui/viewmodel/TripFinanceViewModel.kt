@@ -293,7 +293,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                         expenses = state.expenses,
                         funds = state.fundContributions,
                         splits = state.allSplits,
-                        creatorName = creator
+                        creatorName = creator,
+                        language = state.language
                     )
                 }
             } finally {
@@ -323,7 +324,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                         settlementTransfers = state.settlementTransfers,
                         expenses = state.expenses,
                         funds = state.fundContributions,
-                        splits = state.allSplits
+                        splits = state.allSplits,
+                        language = state.language
                     )
                 }
             } finally {

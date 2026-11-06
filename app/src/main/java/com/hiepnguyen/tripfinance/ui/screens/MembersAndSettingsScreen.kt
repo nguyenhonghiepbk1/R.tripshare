@@ -501,7 +501,7 @@ fun MembersAndSettingsScreen(
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Filled.CurrencyExchange, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Filled.CurrencyExchange, contentDescription = AppStrings.exchangeRatesHeaderWithCount(uiState.exchangeRates.size, lang), modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(AppStrings.exchangeRatesHeaderWithCount(uiState.exchangeRates.size, lang), fontSize = 12.sp)
                 }
@@ -513,7 +513,7 @@ fun MembersAndSettingsScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = IndigoSecondary),
                     modifier = Modifier.weight(1f)
                 ) {
-                    Icon(Icons.Filled.HistoryEdu, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Filled.HistoryEdu, contentDescription = "Audit Log", modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text("Audit Log", fontSize = 12.sp)
                 }
@@ -541,7 +541,7 @@ fun MembersAndSettingsScreen(
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         modifier = Modifier.height(32.dp).testTag("add_member_button")
                     ) {
-                        Icon(Icons.Filled.PersonAdd, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Icon(Icons.Filled.PersonAdd, contentDescription = AppStrings.add(lang), modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(AppStrings.add(lang), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
@@ -609,7 +609,7 @@ fun MembersAndSettingsScreen(
                             ) {
                                 RoleBadge(role = member.role)
                                 if (isAdmin) {
-                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = null, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Filled.ArrowDropDown, contentDescription = if (lang == AppLanguage.VI) "Đổi vai trò" else "Change role", modifier = Modifier.size(16.dp))
                                 }
                             }
 

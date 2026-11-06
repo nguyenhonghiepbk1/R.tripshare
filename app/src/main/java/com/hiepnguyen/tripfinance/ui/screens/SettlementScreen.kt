@@ -166,7 +166,7 @@ fun SettlementScreen(
                                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                                 modifier = Modifier.testTag("export_report_screen_button")
                             ) {
-                                Icon(Icons.Filled.Description, contentDescription = null, modifier = Modifier.size(15.dp))
+                                Icon(Icons.Filled.Description, contentDescription = AppStrings.reportShortBtn(lang), modifier = Modifier.size(15.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(AppStrings.reportShortBtn(lang), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
@@ -180,7 +180,7 @@ fun SettlementScreen(
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                                     modifier = Modifier.testTag("finalize_settlement_button")
                                 ) {
-                                    Icon(Icons.Filled.Lock, contentDescription = null, modifier = Modifier.size(15.dp))
+                                    Icon(Icons.Filled.Lock, contentDescription = AppStrings.lockLedgerBtn(lang), modifier = Modifier.size(15.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(AppStrings.lockLedgerBtn(lang), fontSize = 11.sp)
                                 }
@@ -191,7 +191,7 @@ fun SettlementScreen(
                                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                                     modifier = Modifier.testTag("reopen_settlement_button")
                                 ) {
-                                    Icon(Icons.Filled.LockOpen, contentDescription = null, modifier = Modifier.size(15.dp))
+                                    Icon(Icons.Filled.LockOpen, contentDescription = AppStrings.unlockLedgerShortBtn(lang), modifier = Modifier.size(15.dp))
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Text(AppStrings.unlockLedgerShortBtn(lang), fontSize = 11.sp)
                                 }
