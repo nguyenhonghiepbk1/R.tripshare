@@ -420,13 +420,14 @@ class TripFinanceRepository(private val db: AppDatabase) {
         }
     }
 
-    suspend fun deleteExpense(expense: ExpenseEntity, actor: TripMemberEntity) {
-        db.withTransaction {
+    suspend fun deleteExpense(expense: ExpenseEntity, actor: TripMemberEntity): List<ExpenseSplitEntity> {
+        return db.withTransaction {
             val trip = db.tripDao().getTripByIdOnce(expense.tripId)
                 ?: throw IllegalArgumentException("Chuyến đi không tồn tại")
             if (trip.isSettled) {
                 throw IllegalStateException("Chuyến đi '${trip.title}' đã được khóa sổ quyết toán. Không thể xóa khoản chi!")
             }
+            val splits = db.expenseDao().getSplitsByExpenseOnce(expense.id)
             val beforeJson = JSONObject().apply {
                 put("title", expense.title)
                 put("category", expense.category)
@@ -438,6 +439,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 put("convertedTotalAmount", expense.convertedTotalAmount)
                 put("splitType", expense.splitType)
                 put("createdMemberId", expense.createdMemberId)
+                put("splitsCount", splits.size)
             }.toString()
 
             db.expenseDao().deleteExpenseWithSplits(expense.id)
@@ -450,6 +452,40 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 description = "Xóa chi tiêu '${expense.title}' (${expense.convertedTotalAmount} VND)",
                 before = beforeJson,
                 after = null
+            )
+
+            splits
+        }
+    }
+
+    suspend fun restoreExpense(
+        expense: ExpenseEntity,
+        splits: List<ExpenseSplitEntity>,
+        actor: TripMemberEntity
+    ) {
+        db.withTransaction {
+            val trip = db.tripDao().getTripByIdOnce(expense.tripId)
+                ?: throw IllegalArgumentException("Chuyến đi không tồn tại")
+            if (trip.isSettled) {
+                throw IllegalStateException("Chuyến đi '${trip.title}' đã được khóa sổ quyết toán. Không thể hoàn tác khoản chi!")
+            }
+
+            db.expenseDao().insertExpenseWithSplits(expense, splits)
+
+            logAction(
+                tripId = expense.tripId,
+                actorMemberId = actor.id,
+                actorName = actor.name,
+                action = "RESTORE_EXPENSE",
+                description = "Hoàn tác khôi phục chi tiêu '${expense.title}' (${expense.convertedTotalAmount} VND)",
+                before = null,
+                after = JSONObject().apply {
+                    put("title", expense.title)
+                    put("category", expense.category)
+                    put("totalAmount", expense.totalAmount)
+                    put("convertedTotalAmount", expense.convertedTotalAmount)
+                    put("splitsCount", splits.size)
+                }.toString()
             )
         }
     }

@@ -2190,6 +2190,136 @@ class ExampleRobolectricTest {
             }
         }
     }
+
+    @Test
+    fun `deleteExpense and restoreExpense restores expense with splits atomically in a transaction`() = runBlocking {
+        // 1. Create trip & members
+        val tripId = repository.createTrip(
+            title = "Chuyến đi Phú Quốc",
+            description = "Nghỉ dưỡng",
+            joinCode = "PQ2026",
+            startDate = 1000L,
+            endDate = 2000L,
+            adminName = "Admin PQ"
+        )
+        val adminMember = repository.getMembers(tripId).first().first()
+        val mem2Id = repository.addMember(tripId, "Member 2", "MEMBER", adminMember)
+        val mem3Id = repository.addMember(tripId, "Member 3", "MEMBER", adminMember)
+
+        // 2. Add expense with 3 splits
+        val expId = UUID.randomUUID().toString()
+        val expense = ExpenseEntity(
+            id = expId,
+            tripId = tripId,
+            title = "Ăn hải sản đêm",
+            category = "FOOD",
+            payerType = "MEMBER",
+            payerMemberId = adminMember.id,
+            totalAmount = 900000.0,
+            currency = "VND",
+            exchangeRate = 1.0,
+            convertedTotalAmount = 900000L,
+            splitType = "EQUAL",
+            note = "Ăn tôm hùm mực nướng",
+            timestamp = 1500L,
+            createdMemberId = adminMember.id
+        )
+        val splits = listOf(
+            ExpenseSplitEntity(UUID.randomUUID().toString(), expId, tripId, adminMember.id, 300000L),
+            ExpenseSplitEntity(UUID.randomUUID().toString(), expId, tripId, mem2Id, 300000L),
+            ExpenseSplitEntity(UUID.randomUUID().toString(), expId, tripId, mem3Id, 300000L)
+        )
+        repository.addExpenseWithSplits(expense, splits, adminMember)
+
+        // Verify initial state
+        assertNotNull(db.expenseDao().getExpenseById(expId))
+        assertEquals(3, db.expenseDao().getSplitsByExpenseOnce(expId).size)
+
+        // 3. Delete expense
+        val deletedSplits = repository.deleteExpense(expense, adminMember)
+        assertEquals(3, deletedSplits.size)
+
+        // Verify deleted
+        assertNull(db.expenseDao().getExpenseById(expId))
+        assertTrue(db.expenseDao().getSplitsByExpenseOnce(expId).isEmpty())
+
+        // 4. Restore expense atomically in transaction
+        repository.restoreExpense(expense, deletedSplits, adminMember)
+
+        // Verify restored
+        val restoredExpense = db.expenseDao().getExpenseById(expId)
+        assertNotNull("Khoản chi phải được khôi phục", restoredExpense)
+        assertEquals("Ăn hải sản đêm", restoredExpense?.title)
+        assertEquals(900000L, restoredExpense?.convertedTotalAmount)
+
+        val restoredSplits = db.expenseDao().getSplitsByExpenseOnce(expId)
+        assertEquals(3, restoredSplits.size)
+        val memberAmounts = restoredSplits.associate { it.memberId to it.amount }
+        assertEquals(300000L, memberAmounts[adminMember.id])
+        assertEquals(300000L, memberAmounts[mem2Id])
+        assertEquals(300000L, memberAmounts[mem3Id])
+
+        // Verify audit log
+        val logs = repository.getAuditLogs(tripId).first()
+        val restoreLog = logs.find { it.action == "RESTORE_EXPENSE" }
+        assertNotNull("Audit log phải ghi nhận RESTORE_EXPENSE", restoreLog)
+        assertTrue(restoreLog?.description?.contains("Ăn hải sản đêm") == true)
+    }
+
+    @Test
+    fun `restoreExpense throws exception and rejects restore when trip is settled`() = runBlocking {
+        // 1. Create trip & members
+        val tripId = repository.createTrip(
+            title = "Đoàn khóa sổ",
+            description = "Kiểm tra khóa sổ",
+            joinCode = "LOCK-99",
+            startDate = 1000L,
+            endDate = 2000L,
+            adminName = "Admin Lock"
+        )
+        val adminMember = repository.getMembers(tripId).first().first()
+
+        // 2. Add expense
+        val expId = UUID.randomUUID().toString()
+        val expense = ExpenseEntity(
+            id = expId,
+            tripId = tripId,
+            title = "Chi tiêu trước khóa sổ",
+            category = "OTHER",
+            payerType = "MEMBER",
+            payerMemberId = adminMember.id,
+            totalAmount = 100000.0,
+            currency = "VND",
+            exchangeRate = 1.0,
+            convertedTotalAmount = 100000L,
+            splitType = "EQUAL",
+            createdMemberId = adminMember.id
+        )
+        val splits = listOf(
+            ExpenseSplitEntity(UUID.randomUUID().toString(), expId, tripId, adminMember.id, 100000L)
+        )
+        repository.addExpenseWithSplits(expense, splits, adminMember)
+
+        // 3. Delete expense
+        val deletedSplits = repository.deleteExpense(expense, adminMember)
+        assertNull(db.expenseDao().getExpenseById(expId))
+
+        // 4. Lock / Settle the trip
+        val trip = db.tripDao().getTripByIdOnce(tripId)!!
+        db.tripDao().updateTrip(trip.copy(isSettled = true, settledAt = System.currentTimeMillis()))
+
+        // 5. Attempt restoreExpense -> Must throw IllegalStateException
+        val ex = assertThrows(IllegalStateException::class.java) {
+            runBlocking {
+                repository.restoreExpense(expense, deletedSplits, adminMember)
+            }
+        }
+        assertTrue(ex.message?.contains("đã được khóa sổ quyết toán. Không thể hoàn tác khoản chi!") == true)
+
+        // Verify expense and splits remain deleted
+        assertNull("Khoản chi vẫn phải là đã xóa", db.expenseDao().getExpenseById(expId))
+        assertTrue("Các splits vẫn phải trống", db.expenseDao().getSplitsByExpenseOnce(expId).isEmpty())
+    }
 }
 
 

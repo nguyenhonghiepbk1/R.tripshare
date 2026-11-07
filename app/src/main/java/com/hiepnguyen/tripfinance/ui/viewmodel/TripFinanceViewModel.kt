@@ -54,6 +54,11 @@ sealed class DatabaseInitState {
     ) : DatabaseInitState()
 }
 
+data class DeletedExpenseUndo(
+    val expense: ExpenseEntity,
+    val splits: List<ExpenseSplitEntity>
+)
+
 class TripFinanceViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _databaseInitState = MutableStateFlow<DatabaseInitState>(DatabaseInitState.Initializing)
@@ -71,6 +76,10 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
     private val _searchQuery = MutableStateFlow("")
     private val _errorMessage = MutableStateFlow<String?>(null)
     private val _successMessage = MutableStateFlow<String?>(null)
+    private val _deletedExpenseEvent = MutableSharedFlow<DeletedExpenseUndo>(extraBufferCapacity = 1)
+    val deletedExpenseEvent: SharedFlow<DeletedExpenseUndo> = _deletedExpenseEvent.asSharedFlow()
+    var lastDeletedExpense: DeletedExpenseUndo? = null
+        private set
     private val _aiInsight = MutableStateFlow<String?>(null)
     private val _isLoadingAi = MutableStateFlow(false)
     val aiInsight: StateFlow<String?> = _aiInsight.asStateFlow()
@@ -768,12 +777,39 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
 
         viewModelScope.launch {
             try {
-                repository.deleteExpense(expense, currentMember)
-                showSuccess(AppStrings.vmDeleteExpenseSuccess(expense.title, _language.value))
+                val splits = repository.deleteExpense(expense, currentMember)
+                val undoItem = DeletedExpenseUndo(expense, splits)
+                lastDeletedExpense = undoItem
+                _deletedExpenseEvent.emit(undoItem)
             } catch (e: Exception) {
                 showError(AppStrings.vmDeleteExpenseError(e.message, _language.value))
             }
         }
+    }
+
+    fun undoDeleteExpense(deletedUndo: DeletedExpenseUndo) {
+        val currentTrip = uiState.value.currentTrip ?: return
+        val currentMember = uiState.value.currentMember ?: return
+
+        if (currentTrip.isSettled) {
+            showError(AppStrings.vmTripLockedCannotRestoreExpense(currentTrip.title, _language.value))
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                repository.restoreExpense(deletedUndo.expense, deletedUndo.splits, currentMember)
+                lastDeletedExpense = null
+                showSuccess(AppStrings.vmRestoreExpenseSuccess(deletedUndo.expense.title, _language.value))
+            } catch (e: Exception) {
+                showError(AppStrings.vmRestoreExpenseError(e.message, _language.value))
+            }
+        }
+    }
+
+    fun undoDeleteLastExpense() {
+        val item = lastDeletedExpense ?: return
+        undoDeleteExpense(item)
     }
 
     // Fund operations
@@ -1484,3 +1520,16 @@ fun AppStrings.vmGeneralRestoreError(err: String?, lang: AppLanguage) =
 
 fun AppStrings.vmShareBackupError(err: String?, lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Lỗi chia sẻ tệp sao lưu: ${err ?: ""}" else "Failed to share backup file: ${err ?: ""}"
+
+fun AppStrings.vmTripLockedCannotRestoreExpense(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chuyến đi '$title' đã được khóa sổ quyết toán. Không thể hoàn tác khoản chi!"
+    else "Trip '$title' is settled & locked. Cannot undo deleted expense!"
+
+fun AppStrings.vmRestoreExpenseSuccess(title: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã hoàn tác khôi phục khoản chi '$title'"
+    else "Restored expense '$title'"
+
+fun AppStrings.vmRestoreExpenseError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi hoàn tác khôi phục khoản chi: ${err ?: ""}"
+    else "Failed to restore expense: ${err ?: ""}"
+

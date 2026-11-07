@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.withTimeoutOrNull
 import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
 import com.hiepnguyen.tripfinance.ui.locale.AppStrings
 import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
@@ -142,6 +144,24 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
                 duration = SnackbarDuration.Short
             )
             viewModel.clearMessages()
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.deletedExpenseEvent.collectLatest { deletedUndo ->
+            val currentLang = viewModel.uiState.value.language
+            val message = if (currentLang == AppLanguage.VI) "Đã xóa. Hoàn tác" else "Deleted. Undo"
+            val actionLabel = if (currentLang == AppLanguage.VI) "Hoàn tác" else "Undo"
+            val result = withTimeoutOrNull(5000L) {
+                snackbarHostState.showSnackbar(
+                    message = message,
+                    actionLabel = actionLabel,
+                    duration = SnackbarDuration.Indefinite
+                )
+            }
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.undoDeleteExpense(deletedUndo)
+            }
         }
     }
 
