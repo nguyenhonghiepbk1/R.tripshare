@@ -24,9 +24,10 @@ import java.util.UUID
         FundContributionEntity::class,
         ExchangeRateEntity::class,
         SettlementSnapshotEntity::class,
-        AuditLogEntity::class
+        AuditLogEntity::class,
+        SettlementTransferEntity::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -276,6 +277,63 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `settlement_transfers` (
+                        `id` TEXT NOT NULL,
+                        `tripId` TEXT NOT NULL,
+                        `fromMemberId` TEXT NOT NULL,
+                        `toMemberId` TEXT NOT NULL,
+                        `amount` INTEGER NOT NULL,
+                        `transferNote` TEXT NOT NULL,
+                        `isCompleted` INTEGER NOT NULL DEFAULT 0,
+                        `updatedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_settlement_transfers_tripId` ON `settlement_transfers` (`tripId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_settlement_transfers_fromMemberId` ON `settlement_transfers` (`fromMemberId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_settlement_transfers_toMemberId` ON `settlement_transfers` (`toMemberId`)")
+                createDatabaseCheckConstraints(db)
+            }
+        }
+
+        val MIGRATION_1_6 = object : Migration(1, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_1_2.migrate(db)
+                MIGRATION_2_3.migrate(db)
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+            }
+        }
+
+        val MIGRATION_2_6 = object : Migration(2, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_2_3.migrate(db)
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+            }
+        }
+
+        val MIGRATION_3_6 = object : Migration(3, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+            }
+        }
+
+        val MIGRATION_4_6 = object : Migration(4, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+            }
+        }
+
         @Synchronized
         fun resetDatabase(context: Context) {
             try {
@@ -344,8 +402,9 @@ abstract class AppDatabase : RoomDatabase() {
                 "trip_finance_database"
             )
             .addMigrations(
-                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
-                MIGRATION_1_4, MIGRATION_2_4, MIGRATION_1_5, MIGRATION_2_5, MIGRATION_3_5
+                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
+                MIGRATION_1_4, MIGRATION_2_4, MIGRATION_1_5, MIGRATION_2_5, MIGRATION_3_5,
+                MIGRATION_1_6, MIGRATION_2_6, MIGRATION_3_6, MIGRATION_4_6
             )
 
             if (sqlCipherFactory != null) {
@@ -758,6 +817,59 @@ abstract class AppDatabase : RoomDatabase() {
                             SELECT COUNT(*) FROM trip_members WHERE id = NEW.recordedByMemberId AND tripId = NEW.tripId
                         ) = 0
                             THEN RAISE(ABORT, 'VALIDATION FAILED: Người ghi nhận nộp quỹ không thuộc danh sách thành viên của đoàn này!')
+                    END;
+                END;
+            """.trimIndent())
+
+            // 8. RÀNG BUỘC CHO BẢNG GỢI Ý CHUYỂN KHOẢN (SETTLEMENT TRANSFERS):
+            // - Kiểm tra số tiền chuyển không âm
+            // - Khi đoàn đã khóa sổ: CHO PHÉP đánh dấu cột trạng thái isCompleted,
+            //   nhưng KHÓA CHẶT mọi cột tài chính khác (amount, fromMemberId, toMemberId, tripId, transferNote),
+            //   và CHẶN xóa bản ghi gợi ý chuyển khoản.
+            db.execSQL("""
+                CREATE TRIGGER IF NOT EXISTS trg_check_settlement_transfer_insert
+                BEFORE INSERT ON settlement_transfers
+                BEGIN
+                    SELECT CASE
+                        WHEN NEW.amount < 0 THEN RAISE(ABORT, 'CHECK CONSTRAINT FAILED: transfer amount cannot be negative')
+                    END;
+                END;
+            """.trimIndent())
+
+            db.execSQL("""
+                CREATE TRIGGER IF NOT EXISTS trg_check_settlement_transfer_update
+                BEFORE UPDATE ON settlement_transfers
+                BEGIN
+                    SELECT CASE
+                        WHEN NEW.amount < 0 THEN RAISE(ABORT, 'CHECK CONSTRAINT FAILED: transfer amount cannot be negative')
+                    END;
+                END;
+            """.trimIndent())
+
+            db.execSQL("""
+                CREATE TRIGGER IF NOT EXISTS trg_prevent_settlement_transfer_update_when_settled
+                BEFORE UPDATE ON settlement_transfers
+                BEGIN
+                    SELECT CASE
+                        WHEN (SELECT isSettled FROM trips WHERE id = OLD.tripId) = 1 AND (
+                            OLD.tripId != NEW.tripId OR
+                            OLD.fromMemberId != NEW.fromMemberId OR
+                            OLD.toMemberId != NEW.toMemberId OR
+                            OLD.amount != NEW.amount OR
+                            OLD.transferNote != NEW.transferNote
+                        )
+                            THEN RAISE(ABORT, 'SETTLEMENT LOCKED: Chuyến đi đã khóa sổ quyết toán. Không thể sửa đổi thông tin tài chính chuyển khoản, chỉ được cập nhật trạng thái đã chuyển!')
+                    END;
+                END;
+            """.trimIndent())
+
+            db.execSQL("""
+                CREATE TRIGGER IF NOT EXISTS trg_prevent_settlement_transfer_delete_when_settled
+                BEFORE DELETE ON settlement_transfers
+                BEGIN
+                    SELECT CASE
+                        WHEN (SELECT isSettled FROM trips WHERE id = OLD.tripId) = 1
+                            THEN RAISE(ABORT, 'SETTLEMENT LOCKED: Chuyến đi đã khóa sổ quyết toán. Không thể xóa gợi ý chuyển khoản!')
                     END;
                 END;
             """.trimIndent())

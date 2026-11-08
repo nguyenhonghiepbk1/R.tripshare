@@ -211,6 +211,31 @@ interface SettlementDao {
 
     @Query("DELETE FROM settlement_snapshots WHERE tripId = :tripId")
     suspend fun deleteSnapshotsByTrip(tripId: String)
+
+    // Settlement Transfers
+    @Query("SELECT * FROM settlement_transfers WHERE tripId = :tripId ORDER BY updatedAt DESC")
+    fun getTransfersByTrip(tripId: String): Flow<List<SettlementTransferEntity>>
+
+    @Query("SELECT * FROM settlement_transfers WHERE tripId = :tripId")
+    suspend fun getTransfersByTripOnce(tripId: String): List<SettlementTransferEntity>
+
+    @Query("SELECT * FROM settlement_transfers")
+    suspend fun getAllTransfersOnce(): List<SettlementTransferEntity>
+
+    @Query("SELECT * FROM settlement_transfers WHERE id = :id LIMIT 1")
+    suspend fun getTransferById(id: String): SettlementTransferEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTransfer(transfer: SettlementTransferEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTransfers(transfers: List<SettlementTransferEntity>)
+
+    @Query("UPDATE settlement_transfers SET isCompleted = :isCompleted, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateTransferStatus(id: String, isCompleted: Boolean, updatedAt: Long = System.currentTimeMillis())
+
+    @Query("DELETE FROM settlement_transfers WHERE tripId = :tripId")
+    suspend fun deleteTransfersByTrip(tripId: String)
 }
 
 @Dao

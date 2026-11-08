@@ -112,7 +112,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
     private data class TripAuxData(
         val logs: List<AuditLogEntity>,
         val snapshots: List<SettlementSnapshotEntity>,
-        val financialPair: Pair<FinancialSummary, List<MemberFinancialStatus>>
+        val financialPair: Pair<FinancialSummary, List<MemberFinancialStatus>>,
+        val transfers: List<SettlementTransferEntity> = emptyList()
     )
 
     init {
@@ -172,9 +173,10 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                         val auxFlow = combine(
                             repo.getAuditLogs(tripId),
                             repo.getSnapshots(tripId),
-                            repo.observeFinancialStatus(tripId)
-                        ) { logs, snapshots, financialPair ->
-                            TripAuxData(logs, snapshots, financialPair)
+                            repo.observeFinancialStatus(tripId),
+                            repo.getTransfers(tripId)
+                        ) { logs, snapshots, financialPair, transfers ->
+                            TripAuxData(logs, snapshots, financialPair, transfers)
                         }
 
                 combine(coreFlow, auxFlow) { core, aux ->
@@ -230,6 +232,16 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                         fundHolder = fundHolder
                     )
 
+                    val savedTransfersMap = aux.transfers.associateBy { it.id }
+                    val finalTransfers = settlementResult.transfers.map { tr ->
+                        val saved = savedTransfersMap[tr.id]
+                        if (saved != null) {
+                            tr.copy(isCompleted = saved.isCompleted)
+                        } else {
+                            tr
+                        }
+                    }
+
                     val filteredExpenses = core.expenses.filter { exp ->
                         val matchesCat = filters.categoryFilter == null || exp.category == filters.categoryFilter
                         val matchesSearch = filters.query.isBlank() ||
@@ -245,7 +257,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                         currentMember = currentMember,
                         financialSummary = summary,
                         memberStatuses = statuses,
-                        settlementTransfers = settlementResult.transfers,
+                        settlementTransfers = finalTransfers,
                         reconciliationError = settlementResult.reconciliationError,
                         categoryBreakdowns = breakdowns,
                         expenses = filteredExpenses,
@@ -1102,12 +1114,14 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             put("transfers", org.json.JSONArray().apply {
                 state.settlementTransfers.forEach { tr ->
                     put(org.json.JSONObject().apply {
+                        put("id", tr.id)
                         put("fromMemberId", tr.fromMember.id)
                         put("fromMemberName", tr.fromMember.name)
                         put("toMemberId", tr.toMember.id)
                         put("toMemberName", tr.toMember.name)
                         put("amount", tr.amount)
                         put("transferNote", tr.transferNote)
+                        put("isCompleted", tr.isCompleted)
                     })
                 }
             })
@@ -1126,6 +1140,24 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                 showSuccess(AppStrings.vmLockSettlementSuccess(_language.value))
             } catch (e: Exception) {
                 showError(AppStrings.vmLockSettlementError(e.message, _language.value))
+            }
+        }
+    }
+
+    fun toggleTransferCompleted(transfer: SettlementTransfer) {
+        val currentTrip = uiState.value.currentTrip ?: return
+        val currentMember = uiState.value.currentMember ?: return
+        val newStatus = !transfer.isCompleted
+        viewModelScope.launch {
+            try {
+                repository.setTransferCompleted(
+                    tripId = currentTrip.id,
+                    transfer = transfer,
+                    isCompleted = newStatus,
+                    actor = currentMember
+                )
+            } catch (e: Exception) {
+                showError(AppStrings.vmUpdateTransferError(e.message, _language.value))
             }
         }
     }
@@ -1532,4 +1564,9 @@ fun AppStrings.vmRestoreExpenseSuccess(title: String, lang: AppLanguage) =
 fun AppStrings.vmRestoreExpenseError(err: String?, lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Lỗi hoàn tác khôi phục khoản chi: ${err ?: ""}"
     else "Failed to restore expense: ${err ?: ""}"
+
+fun AppStrings.vmUpdateTransferError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi cập nhật trạng thái chuyển khoản: ${err ?: ""}"
+    else "Failed to update transfer status: ${err ?: ""}"
+
 

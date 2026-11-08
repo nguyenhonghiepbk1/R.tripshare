@@ -505,18 +505,21 @@ object ReportGenerator {
                     AppStrings.colSender(language),
                     AppStrings.colReceiver(language),
                     AppStrings.colAmountVnd(language),
-                    AppStrings.colSuggestedNote(language)
+                    AppStrings.colSuggestedNote(language),
+                    AppStrings.colTransferred(language)
                 )
                 val fundName = AppStrings.valGroupFundFull(language)
                 settlementTransfers.forEachIndexed { i, t ->
                     val fromName = if (t.fromMember.id == "FUND_ORGANIZATION") fundName else t.fromMember.name
                     val toName = if (t.toMember.id == "FUND_ORGANIZATION") fundName else t.toMember.name
+                    val transferredText = if (t.isCompleted) AppStrings.valTransferredYes(language) else AppStrings.valTransferredNo(language)
                     row {
                         cell(i + 1)
                         cell(fromName)
                         cell(toName)
                         currencyCell(t.amount)
                         cell(t.transferNote)
+                        cell(transferredText)
                     }
                 }
             }
@@ -588,6 +591,10 @@ fun AppStrings.colSender(lang: AppLanguage) = if (lang == AppLanguage.VI) "Ngư�
 fun AppStrings.colReceiver(lang: AppLanguage) = if (lang == AppLanguage.VI) "Người nhận" else "Receiver"
 fun AppStrings.colAmountVnd(lang: AppLanguage) = if (lang == AppLanguage.VI) "Số tiền (VND)" else "Amount (VND)"
 fun AppStrings.colSuggestedNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Nội dung gợi ý" else "Suggested Note"
+fun AppStrings.colTransferred(lang: AppLanguage) = if (lang == AppLanguage.VI) "Đã chuyển" else "Transferred"
+fun AppStrings.valTransferredYes(lang: AppLanguage) = if (lang == AppLanguage.VI) "Đã chuyển" else "Transferred"
+fun AppStrings.valTransferredNo(lang: AppLanguage) = if (lang == AppLanguage.VI) "Chưa chuyển" else "Pending"
 fun AppStrings.valGroupFundFull(lang: AppLanguage) = if (lang == AppLanguage.VI) "Quỹ chung đoàn" else "Group Fund"
 fun AppStrings.valDefaultTripTitle(lang: AppLanguage) = if (lang == AppLanguage.VI) "ĐOÀN CÔNG TÁC / DU LỊCH" else "BUSINESS TRIP / TOUR"
+
 

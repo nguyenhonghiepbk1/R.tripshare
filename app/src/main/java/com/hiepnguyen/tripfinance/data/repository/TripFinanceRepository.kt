@@ -147,6 +147,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
             db.expenseDao().deleteExpensesByTrip(tripId)
             db.fundDao().deleteFundsByTrip(tripId)
             db.exchangeRateDao().deleteExchangeRatesByTrip(tripId)
+            db.settlementDao().deleteTransfersByTrip(tripId)
             db.settlementDao().deleteSnapshotsByTrip(tripId)
             db.auditLogDao().deleteAuditLogsByTrip(tripId)
             db.tripMemberDao().deleteMembersByTrip(tripId)
@@ -575,6 +576,43 @@ class TripFinanceRepository(private val db: AppDatabase) {
     fun getSnapshots(tripId: String): Flow<List<SettlementSnapshotEntity>> =
         db.settlementDao().getSnapshotsByTrip(tripId)
 
+    fun getTransfers(tripId: String): Flow<List<SettlementTransferEntity>> =
+        db.settlementDao().getTransfersByTrip(tripId)
+
+    suspend fun setTransferCompleted(
+        tripId: String,
+        transfer: SettlementTransfer,
+        isCompleted: Boolean,
+        actor: TripMemberEntity
+    ) {
+        db.withTransaction {
+            val existing = db.settlementDao().getTransferById(transfer.id)
+            val now = System.currentTimeMillis()
+            if (existing != null) {
+                db.settlementDao().updateTransferStatus(transfer.id, isCompleted, now)
+            } else {
+                val entity = SettlementTransferEntity(
+                    id = transfer.id,
+                    tripId = tripId,
+                    fromMemberId = transfer.fromMember.id,
+                    toMemberId = transfer.toMember.id,
+                    amount = transfer.amount,
+                    transferNote = transfer.transferNote,
+                    isCompleted = isCompleted,
+                    updatedAt = now
+                )
+                db.settlementDao().insertTransfer(entity)
+            }
+            logAction(
+                tripId = tripId,
+                actorMemberId = actor.id,
+                actorName = actor.name,
+                action = "UPDATE_TRANSFER_STATUS",
+                description = "Cập nhật chuyển khoản ${transfer.fromMember.name} -> ${transfer.toMember.name} (${transfer.amount} VND): ${if (isCompleted) "Đã chuyển" else "Chưa chuyển"}"
+            )
+        }
+    }
+
     suspend fun finalizeSettlement(
         trip: TripEntity,
         snapshotTitle: String,
@@ -630,7 +668,29 @@ class TripFinanceRepository(private val db: AppDatabase) {
 
             val settledAt = System.currentTimeMillis()
 
-            // 6. Thực thi khóa sổ và tăng version nguyên tử qua SQLite Query
+            // 6. Tính gợi ý chuyển khoản và lưu bảng settlement_transfers trước khi khóa sổ
+            val transfers = com.hiepnguyen.tripfinance.domain.engine.SettlementEngine.computeSimplifiedTransfers(
+                memberStatuses = memberStatuses,
+                tripJoinCode = freshTrip.joinCode,
+                remainingFund = freshSummary.remainingFund
+            )
+            val existingTransfers = db.settlementDao().getTransfersByTripOnce(trip.id).associateBy { it.id }
+            val transferEntities = transfers.map { tr ->
+                val existing = existingTransfers[tr.id]
+                SettlementTransferEntity(
+                    id = tr.id,
+                    tripId = trip.id,
+                    fromMemberId = tr.fromMember.id,
+                    toMemberId = tr.toMember.id,
+                    amount = tr.amount,
+                    transferNote = tr.transferNote,
+                    isCompleted = existing?.isCompleted ?: tr.isCompleted,
+                    updatedAt = existing?.updatedAt ?: settledAt
+                )
+            }
+            db.settlementDao().insertTransfers(transferEntities)
+
+            // 7. Thực thi khóa sổ và tăng version nguyên tử qua SQLite Query
             val rowsUpdated = db.tripDao().lockSettlementWithOptimisticLock(
                 tripId = trip.id,
                 expectedVersion = trip.version,
@@ -642,12 +702,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 )
             }
 
-            // 7. Tạo chuỗi JSON cấu trúc chuẩn RFC 8259 (JSON thực thụ, không phải văn bản thô)
-            val transfers = com.hiepnguyen.tripfinance.domain.engine.SettlementEngine.computeSimplifiedTransfers(
-                memberStatuses = memberStatuses,
-                tripJoinCode = freshTrip.joinCode,
-                remainingFund = freshSummary.remainingFund
-            )
+            // 8. Tạo chuỗi JSON cấu trúc chuẩn RFC 8259 (JSON thực thụ, không phải văn bản thô)
             val structuredSettlementJson = JSONObject().apply {
                 put("version", 1)
                 put("tripId", freshTrip.id)
@@ -683,14 +738,18 @@ class TripFinanceRepository(private val db: AppDatabase) {
                     }
                 })
                 put("transfers", JSONArray().apply {
-                    transfers.forEach { tr ->
+                    transferEntities.forEach { tr ->
+                        val fromMemberName = members.find { it.id == tr.fromMemberId }?.name ?: ""
+                        val toMemberName = members.find { it.id == tr.toMemberId }?.name ?: ""
                         put(JSONObject().apply {
-                            put("fromMemberId", tr.fromMember.id)
-                            put("fromMemberName", tr.fromMember.name)
-                            put("toMemberId", tr.toMember.id)
-                            put("toMemberName", tr.toMember.name)
+                            put("id", tr.id)
+                            put("fromMemberId", tr.fromMemberId)
+                            put("fromMemberName", fromMemberName)
+                            put("toMemberId", tr.toMemberId)
+                            put("toMemberName", toMemberName)
                             put("amount", tr.amount)
                             put("transferNote", tr.transferNote)
+                            put("isCompleted", tr.isCompleted)
                         })
                     }
                 })

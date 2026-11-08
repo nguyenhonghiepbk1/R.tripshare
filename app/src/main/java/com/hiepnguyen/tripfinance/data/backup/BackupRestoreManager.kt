@@ -24,7 +24,7 @@ import java.util.UUID
 data class BackupMetadata(
     val appName: String = "TripFinance",
     val backupVersion: Int = 1,
-    val schemaVersion: Int = 5,
+    val schemaVersion: Int = 6,
     val createdAt: Long = System.currentTimeMillis(),
     val createdAtFormatted: String = "",
     val totalTrips: Int = 0,
@@ -35,6 +35,7 @@ data class BackupMetadata(
     val totalRates: Int = 0,
     val totalSnapshots: Int = 0,
     val totalLogs: Int = 0,
+    val totalTransfers: Int = 0,
     val dataChecksum: String? = null
 )
 
@@ -47,7 +48,8 @@ data class BackupData(
     val fundContributions: List<FundContributionEntity> = emptyList(),
     val exchangeRates: List<ExchangeRateEntity> = emptyList(),
     val settlementSnapshots: List<SettlementSnapshotEntity> = emptyList(),
-    val auditLogs: List<AuditLogEntity> = emptyList()
+    val auditLogs: List<AuditLogEntity> = emptyList(),
+    val settlementTransfers: List<SettlementTransferEntity> = emptyList()
 )
 
 data class RestoreResult(
@@ -111,12 +113,13 @@ object BackupRestoreManager {
         val rates = db.exchangeRateDao().getAllExchangeRatesOnce()
         val snapshots = db.settlementDao().getAllSnapshotsOnce()
         val logs = db.auditLogDao().getAllAuditLogsOnce()
+        val transfers = db.settlementDao().getAllTransfersOnce()
 
         val now = System.currentTimeMillis()
         val metaJson = JSONObject().apply {
             put("appName", "TripFinance")
             put("backupVersion", 1)
-            put("schemaVersion", 5)
+            put("schemaVersion", 6)
             put("createdAt", now)
             put("createdAtFormatted", dateFormat.format(Date(now)))
             put("totalTrips", trips.size)
@@ -127,6 +130,7 @@ object BackupRestoreManager {
             put("totalRates", rates.size)
             put("totalSnapshots", snapshots.size)
             put("totalLogs", logs.size)
+            put("totalTransfers", transfers.size)
         }
 
         val tripsArray = JSONArray()
@@ -251,6 +255,20 @@ object BackupRestoreManager {
             })
         }
 
+        val transfersArray = JSONArray()
+        transfers.forEach { tr ->
+            transfersArray.put(JSONObject().apply {
+                put("id", tr.id)
+                put("tripId", tr.tripId)
+                put("fromMemberId", tr.fromMemberId)
+                put("toMemberId", tr.toMemberId)
+                put("amount", tr.amount)
+                put("transferNote", tr.transferNote)
+                put("isCompleted", tr.isCompleted)
+                put("updatedAt", tr.updatedAt)
+            })
+        }
+
         // Bổ sung mã kiểm tra toàn vẹn
         val checksum = computeChecksum(tripsArray, membersArray, expensesArray, splitsArray, fundsArray)
         metaJson.put("dataChecksum", checksum)
@@ -265,6 +283,7 @@ object BackupRestoreManager {
             put("exchangeRates", ratesArray)
             put("settlementSnapshots", snapshotsArray)
             put("auditLogs", logsArray)
+            put("settlementTransfers", transfersArray)
         }
 
         return root.toString(2)
@@ -515,6 +534,7 @@ object BackupRestoreManager {
             val ratesList = mutableListOf<ExchangeRateEntity>()
             val snapshotsList = mutableListOf<SettlementSnapshotEntity>()
             val logsList = mutableListOf<AuditLogEntity>()
+            val transfersList = mutableListOf<SettlementTransferEntity>()
 
             jsonReader.beginObject()
             while (jsonReader.hasNext()) {
@@ -528,6 +548,7 @@ object BackupRestoreManager {
                     "exchangeRates" -> readRates(jsonReader, ratesList)
                     "settlementSnapshots" -> readSnapshots(jsonReader, snapshotsList)
                     "auditLogs" -> readLogs(jsonReader, logsList)
+                    "settlementTransfers" -> readTransfers(jsonReader, transfersList)
                     else -> jsonReader.skipValue()
                 }
             }
@@ -546,7 +567,8 @@ object BackupRestoreManager {
                 fundContributions = fundsList,
                 exchangeRates = ratesList,
                 settlementSnapshots = snapshotsList,
-                auditLogs = logsList
+                auditLogs = logsList,
+                settlementTransfers = transfersList
             )
 
             // Kiểm tra toàn vẹn ngữ nghĩa và các ràng buộc dữ liệu tài chính
@@ -565,7 +587,7 @@ object BackupRestoreManager {
         reader.beginObject()
         var appName = "TripFinance"
         var backupVersion = 1
-        var schemaVersion = 4
+        var schemaVersion = 6
         var createdAt = 0L
         var createdAtFormatted = ""
         var totalTrips = 0
@@ -576,13 +598,14 @@ object BackupRestoreManager {
         var totalRates = 0
         var totalSnapshots = 0
         var totalLogs = 0
+        var totalTransfers = 0
         var dataChecksum: String? = null
 
         while (reader.hasNext()) {
             when (reader.nextName()) {
                 "appName" -> appName = reader.nextStringOrDefault("TripFinance")
                 "backupVersion" -> backupVersion = reader.nextIntOrDefault(1)
-                "schemaVersion" -> schemaVersion = reader.nextIntOrDefault(4)
+                "schemaVersion" -> schemaVersion = reader.nextIntOrDefault(6)
                 "createdAt" -> createdAt = reader.nextLongOrDefault(0L)
                 "createdAtFormatted" -> createdAtFormatted = reader.nextStringOrDefault("")
                 "totalTrips" -> totalTrips = reader.nextIntOrDefault(0)
@@ -593,6 +616,7 @@ object BackupRestoreManager {
                 "totalRates" -> totalRates = reader.nextIntOrDefault(0)
                 "totalSnapshots" -> totalSnapshots = reader.nextIntOrDefault(0)
                 "totalLogs" -> totalLogs = reader.nextIntOrDefault(0)
+                "totalTransfers" -> totalTransfers = reader.nextIntOrDefault(0)
                 "dataChecksum" -> dataChecksum = reader.nextStringOrNull()
                 else -> reader.skipValue()
             }
@@ -612,6 +636,7 @@ object BackupRestoreManager {
             totalRates = totalRates,
             totalSnapshots = totalSnapshots,
             totalLogs = totalLogs,
+            totalTransfers = totalTransfers,
             dataChecksum = dataChecksum
         )
     }
@@ -1028,6 +1053,55 @@ object BackupRestoreManager {
         reader.endArray()
     }
 
+    private fun readTransfers(reader: JsonReader, list: MutableList<SettlementTransferEntity>) {
+        if (reader.peek() == JsonToken.NULL) {
+            reader.nextNull()
+            return
+        }
+        reader.beginArray()
+        while (reader.hasNext()) {
+            reader.beginObject()
+            var id = ""
+            var tripId = ""
+            var fromMemberId = ""
+            var toMemberId = ""
+            var amount = 0L
+            var transferNote = ""
+            var isCompleted = false
+            var updatedAt = 0L
+
+            while (reader.hasNext()) {
+                when (reader.nextName()) {
+                    "id" -> id = reader.nextStringOrDefault()
+                    "tripId" -> tripId = reader.nextStringOrDefault()
+                    "fromMemberId" -> fromMemberId = reader.nextStringOrDefault()
+                    "toMemberId" -> toMemberId = reader.nextStringOrDefault()
+                    "amount" -> amount = reader.nextLongOrDefault(0L)
+                    "transferNote" -> transferNote = reader.nextStringOrDefault()
+                    "isCompleted" -> isCompleted = reader.nextBooleanOrDefault(false)
+                    "updatedAt" -> updatedAt = reader.nextLongOrDefault(0L)
+                    else -> reader.skipValue()
+                }
+            }
+            reader.endObject()
+            if (id.isNotBlank() && tripId.isNotBlank()) {
+                list.add(
+                    SettlementTransferEntity(
+                        id = id,
+                        tripId = tripId,
+                        fromMemberId = fromMemberId,
+                        toMemberId = toMemberId,
+                        amount = amount,
+                        transferNote = transferNote,
+                        isCompleted = isCompleted,
+                        updatedAt = updatedAt
+                    )
+                )
+            }
+        }
+        reader.endArray()
+    }
+
     // Helper extension functions for safe streaming reading
     private fun JsonReader.nextStringOrNull(): String? {
         return if (peek() == JsonToken.NULL) {
@@ -1225,6 +1299,16 @@ object BackupRestoreManager {
             }
         }
 
+        // 7. Kiểm tra gợi ý chuyển khoản
+        for (transfer in data.settlementTransfers) {
+            if (!tripIds.contains(transfer.tripId)) {
+                return Result.failure(IllegalArgumentException("Gợi ý chuyển khoản tham chiếu chuyến đi không tồn tại (${transfer.tripId})"))
+            }
+            if (transfer.amount < 0L) {
+                return Result.failure(IllegalArgumentException("Số tiền gợi ý chuyển khoản không được âm"))
+            }
+        }
+
         return Result.success(Unit)
     }
 
@@ -1243,6 +1327,7 @@ object BackupRestoreManager {
                         db.expenseDao().deleteExpensesByTrip(t.id)
                         db.fundDao().deleteFundsByTrip(t.id)
                         db.exchangeRateDao().deleteExchangeRatesByTrip(t.id)
+                        db.settlementDao().deleteTransfersByTrip(t.id)
                         db.settlementDao().deleteSnapshotsByTrip(t.id)
                         db.auditLogDao().deleteAuditLogsByTrip(t.id)
                         db.tripMemberDao().deleteMembersByTrip(t.id)
@@ -1303,6 +1388,11 @@ object BackupRestoreManager {
                 for (fund in backupData.fundContributions) {
                     if (db.fundDao().getFundById(fund.id) == null) {
                         db.fundDao().insertFundContribution(fund)
+                    }
+                }
+                for (transfer in backupData.settlementTransfers) {
+                    if (db.settlementDao().getTransferById(transfer.id) == null) {
+                        db.settlementDao().insertTransfer(transfer)
                     }
                 }
                 for (snapshot in backupData.settlementSnapshots) {

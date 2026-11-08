@@ -403,6 +403,7 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
                         uiState = uiState,
                         onFinalizeSettlement = { title -> viewModel.finalizeSettlement(title) },
                         onReopenSettlement = { viewModel.reopenSettlement() },
+                        onToggleTransferCompleted = { viewModel.toggleTransferCompleted(it) },
                         onOpenExportReport = { showExportReportDialog = true }
                     )
                     NavigationTab.MEMBERS -> MembersAndSettingsScreen(

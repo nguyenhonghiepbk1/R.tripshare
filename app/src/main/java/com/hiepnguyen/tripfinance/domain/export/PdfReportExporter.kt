@@ -318,9 +318,10 @@ object PdfReportExporter {
                 paint.textSize = 8.5f
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 canvas.drawText(AppStrings.pdfColSender(language), margin + 6f, currentY + 13f, paint)
-                canvas.drawText(AppStrings.pdfColReceiver(language), margin + 125f, currentY + 13f, paint)
-                canvas.drawText(AppStrings.pdfColAmount(language), margin + 245f, currentY + 13f, paint)
-                canvas.drawText(AppStrings.pdfColAuditNote(language), margin + 345f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColReceiver(language), margin + 110f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColAmount(language), margin + 215f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColAuditNote(language), margin + 305f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColTransferred(language), margin + 435f, currentY + 13f, paint)
                 currentY += 20f
 
                 val fundName = AppStrings.pdfFundName(language)
@@ -337,16 +338,26 @@ object PdfReportExporter {
                     paint.style = Paint.Style.FILL
                     val fromName = if (tr.fromMember.id == "FUND_ORGANIZATION") fundName else tr.fromMember.name
                     val toName = if (tr.toMember.id == "FUND_ORGANIZATION") fundName else tr.toMember.name
-                    canvas.drawText(fromName.take(20), margin + 6f, currentY + 13f, paint)
-                    canvas.drawText(toName.take(20), margin + 125f, currentY + 13f, paint)
+                    canvas.drawText(fromName.take(18), margin + 6f, currentY + 13f, paint)
+                    canvas.drawText(toName.take(18), margin + 110f, currentY + 13f, paint)
 
                     paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                     paint.color = Color.parseColor("#4338CA")
-                    canvas.drawText(NumberFormatUtils.formatVnd(tr.amount), margin + 245f, currentY + 13f, paint)
+                    canvas.drawText(NumberFormatUtils.formatVnd(tr.amount), margin + 215f, currentY + 13f, paint)
 
                     paint.typeface = Typeface.DEFAULT
                     paint.color = Color.parseColor("#1E293B")
-                    canvas.drawText(tr.transferNote.take(35), margin + 345f, currentY + 13f, paint)
+                    canvas.drawText(tr.transferNote.take(24), margin + 305f, currentY + 13f, paint)
+
+                    if (tr.isCompleted) {
+                        paint.color = Color.parseColor("#15803D")
+                        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+                        canvas.drawText("✓ ${AppStrings.pdfStatusTransferred(language)}", margin + 435f, currentY + 13f, paint)
+                    } else {
+                        paint.color = Color.parseColor("#64748B")
+                        paint.typeface = Typeface.DEFAULT
+                        canvas.drawText("○ ${AppStrings.pdfStatusPending(language)}", margin + 435f, currentY + 13f, paint)
+                    }
 
                     paint.color = Color.parseColor("#E0E7FF")
                     paint.style = Paint.Style.STROKE
@@ -920,3 +931,13 @@ fun AppStrings.pdfExportErrorToast(lang: AppLanguage) =
 fun AppStrings.xlsxExportErrorToast(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Không thể xuất file Excel báo cáo. Vui lòng thử lại sau."
     else "Cannot export Excel report. Please try again later."
+
+fun AppStrings.pdfColTransferred(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã chuyển" else "Status"
+
+fun AppStrings.pdfStatusTransferred(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã chuyển" else "Done"
+
+fun AppStrings.pdfStatusPending(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chưa" else "Pending"
+

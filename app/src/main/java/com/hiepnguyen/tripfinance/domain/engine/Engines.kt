@@ -238,10 +238,13 @@ object SettlementEngine {
 
             if (settleAmount > 0L) {
                 val transferNote = "${debtor.member.name} chuyển cho ${creditor.member.name}"
+                val effectiveTripId = memberStatuses.firstOrNull()?.member?.tripId?.ifBlank { tripJoinCode }
+                    ?: fundHolder?.tripId?.ifBlank { tripJoinCode }
+                    ?: tripJoinCode
 
                 transfers.add(
                     SettlementTransfer(
-                        id = UUID.randomUUID().toString(),
+                        id = "tr_${effectiveTripId}_${debtor.member.id}_${creditor.member.id}",
                         fromMember = debtor.member,
                         toMember = creditor.member,
                         amount = settleAmount,

@@ -296,3 +296,35 @@ data class AuditLogEntity(
     val detailAfter: String? = null,
     val timestamp: Long = System.currentTimeMillis()
 )
+
+@Entity(
+    tableName = "settlement_transfers",
+    foreignKeys = [
+        ForeignKey(
+            entity = TripEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["tripId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [
+        Index(value = ["tripId"]),
+        Index(value = ["fromMemberId"]),
+        Index(value = ["toMemberId"])
+    ]
+)
+data class SettlementTransferEntity(
+    @PrimaryKey val id: String,
+    val tripId: String,
+    val fromMemberId: String,
+    val toMemberId: String,
+    val amount: Long,
+    val transferNote: String,
+    val isCompleted: Boolean = false,
+    val updatedAt: Long = System.currentTimeMillis()
+) {
+    init {
+        require(amount >= 0L && amount <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Transfer amount cannot be negative or exceed limit ($amount)" }
+    }
+}
+

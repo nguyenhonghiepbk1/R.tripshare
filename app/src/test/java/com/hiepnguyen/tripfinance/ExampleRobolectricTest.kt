@@ -5,8 +5,10 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.hiepnguyen.tripfinance.data.db.AppDatabase
 import com.hiepnguyen.tripfinance.data.entity.*
+import com.hiepnguyen.tripfinance.data.backup.BackupRestoreManager
 import com.hiepnguyen.tripfinance.data.repository.TripFinanceRepository
 import com.hiepnguyen.tripfinance.domain.model.DefaultExchangeRates
+import com.hiepnguyen.tripfinance.domain.model.SettlementTransfer
 import com.hiepnguyen.tripfinance.domain.model.sumOfSafe
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -508,7 +510,7 @@ class ExampleRobolectricTest {
 
         // Mở qua Room Database builder kèm migration 1_2, 2_3, 3_4, 4_5 (không có destructive fallback)
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration.db")
-            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4, AppDatabase.MIGRATION_4_5)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4, AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6)
             .build()
 
         val migratedTrips = runBlocking { migratedDb.tripDao().getAllTripsOnce() }
@@ -621,7 +623,7 @@ class ExampleRobolectricTest {
 
         // Nâng cấp trực tiếp lên v5
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_legacy_snapshot.db")
-            .addMigrations(AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4, AppDatabase.MIGRATION_4_5)
+            .addMigrations(AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4, AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6)
             .build()
 
         val snapshots = runBlocking { migratedDb.settlementDao().getAllSnapshotsOnce() }
@@ -1984,7 +1986,7 @@ class ExampleRobolectricTest {
 
         // 2. Mở qua Room Database builder kèm MIGRATION_4_5 (không dùng fallbackToDestructiveMigration)
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration_4_5.db")
-            .addMigrations(AppDatabase.MIGRATION_4_5)
+            .addMigrations(AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6)
             .build()
 
         val members = runBlocking { migratedDb.tripMemberDao().getAllMembersOnce() }
@@ -2320,7 +2322,394 @@ class ExampleRobolectricTest {
         assertNull("Khoản chi vẫn phải là đã xóa", db.expenseDao().getExpenseById(expId))
         assertTrue("Các splits vẫn phải trống", db.expenseDao().getSplitsByExpenseOnce(expId).isEmpty())
     }
+
+    @Test
+    fun testMigration_5_to_6_createsSettlementTransfersTableAndPreservesData(): Unit = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val dbFile = context.getDatabasePath("test_migration_v5_v6.db")
+        if (dbFile.exists()) dbFile.delete()
+
+        // 1. Khởi tạo CSDL SQLite phiên bản v5
+        val sqlite = android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(dbFile, null)
+        sqlite.version = 5
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `trips` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `joinCode` TEXT NOT NULL, `startDate` INTEGER NOT NULL, `endDate` INTEGER NOT NULL, `baseCurrency` TEXT NOT NULL, `isSettled` INTEGER NOT NULL, `settledAt` INTEGER, `createdAt` INTEGER NOT NULL, `version` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+        sqlite.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_trips_joinCode` ON `trips` (`joinCode`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `trip_members` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `userId` TEXT NOT NULL, `name` TEXT NOT NULL, `role` TEXT NOT NULL, `isActive` INTEGER NOT NULL, `joinedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_trip_members_tripId` ON `trip_members` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_trip_members_tripId_name` ON `trip_members` (`tripId`, `name`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `expenses` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `title` TEXT NOT NULL, `category` TEXT NOT NULL, `payerType` TEXT NOT NULL, `payerMemberId` TEXT, `totalAmount` REAL NOT NULL, `currency` TEXT NOT NULL, `exchangeRate` REAL NOT NULL, `convertedTotalAmount` INTEGER NOT NULL, `splitType` TEXT NOT NULL, `receiptImageUri` TEXT, `note` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `createdMemberId` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`payerMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`createdMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_tripId` ON `expenses` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_payerMemberId` ON `expenses` (`payerMemberId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_createdMemberId` ON `expenses` (`createdMemberId`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `expense_splits` (`id` TEXT NOT NULL, `expenseId` TEXT NOT NULL, `tripId` TEXT NOT NULL, `memberId` TEXT NOT NULL, `amount` INTEGER NOT NULL, `percentage` REAL, PRIMARY KEY(`id`), FOREIGN KEY(`expenseId`) REFERENCES `expenses`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`memberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expense_splits_expenseId` ON `expense_splits` (`expenseId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expense_splits_tripId` ON `expense_splits` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expense_splits_memberId` ON `expense_splits` (`memberId`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `fund_contributions` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `memberId` TEXT NOT NULL, `amount` INTEGER NOT NULL, `currency` TEXT NOT NULL, `exchangeRate` REAL NOT NULL, `convertedAmount` INTEGER NOT NULL, `note` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `recordedByMemberId` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`memberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`recordedByMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_fund_contributions_tripId` ON `fund_contributions` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_fund_contributions_memberId` ON `fund_contributions` (`memberId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_fund_contributions_recordedByMemberId` ON `fund_contributions` (`recordedByMemberId`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `exchange_rates` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `currencyCode` TEXT NOT NULL, `rateToBase` REAL NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_exchange_rates_tripId` ON `exchange_rates` (`tripId`)")
+        sqlite.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_exchange_rates_tripId_currencyCode` ON `exchange_rates` (`tripId`, `currencyCode`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `settlement_snapshots` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `snapshotTitle` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `totalExpenses` INTEGER NOT NULL, `totalFundCollected` INTEGER NOT NULL, `totalFundSpent` INTEGER NOT NULL, `remainingFund` INTEGER NOT NULL, `settlementJson` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_settlement_snapshots_tripId` ON `settlement_snapshots` (`tripId`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `audit_logs` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `actorMemberId` TEXT NOT NULL, `actorName` TEXT NOT NULL, `action` TEXT NOT NULL, `description` TEXT NOT NULL, `detailBefore` TEXT, `detailAfter` TEXT, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_audit_logs_tripId` ON `audit_logs` (`tripId`)")
+
+        sqlite.execSQL("INSERT INTO `trips` VALUES('trip-v5', 'Chuyến đi V5', 'Khám phá Sa Pa', 'TRIP-V5', 1000, 2000, 'VND', 0, NULL, 1000, 1)")
+        sqlite.execSQL("INSERT INTO `trip_members` VALUES('mem-v5-1', 'trip-v5', 'usr-1', 'Nguyễn Văn A', 'ADMIN', 1, 1000)")
+        sqlite.execSQL("INSERT INTO `trip_members` VALUES('mem-v5-2', 'trip-v5', 'usr-2', 'Trần Thị B', 'MEMBER', 1, 1100)")
+        sqlite.close()
+
+        // 2. Mở qua Room Database builder kèm MIGRATION_5_6 (không dùng destructive migration)
+        val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration_v5_v6.db")
+            .addMigrations(AppDatabase.MIGRATION_5_6)
+            .build()
+
+        // 3. Kiểm tra dữ liệu cũ không bị ảnh hưởng
+        val trips = migratedDb.tripDao().getAllTripsOnce()
+        assertEquals(1, trips.size)
+        assertEquals("Chuyến đi V5", trips[0].title)
+
+        val members = migratedDb.tripMemberDao().getAllMembersOnce()
+        assertEquals(2, members.size)
+
+        // 4. Kiểm tra bảng mới settlement_transfers đã được tạo với các cột đầy đủ
+        val pragmaCursor = migratedDb.openHelper.readableDatabase.query("PRAGMA table_info(`settlement_transfers`)")
+        val columns = mutableListOf<String>()
+        while (pragmaCursor.moveToNext()) {
+            columns.add(pragmaCursor.getString(1))
+        }
+        pragmaCursor.close()
+
+        assertTrue(columns.contains("id"))
+        assertTrue(columns.contains("tripId"))
+        assertTrue(columns.contains("fromMemberId"))
+        assertTrue(columns.contains("toMemberId"))
+        assertTrue(columns.contains("amount"))
+        assertTrue(columns.contains("transferNote"))
+        assertTrue(columns.contains("isCompleted"))
+        assertTrue(columns.contains("updatedAt"))
+
+        // 5. Thử chèn bản ghi vào settlement_transfers qua DAO
+        val transfer = SettlementTransferEntity(
+            id = "tr-test-1",
+            tripId = "trip-v5",
+            fromMemberId = "mem-v5-2",
+            toMemberId = "mem-v5-1",
+            amount = 150000L,
+            transferNote = "Bù trừ tiền ăn",
+            isCompleted = false,
+            updatedAt = System.currentTimeMillis()
+        )
+        migratedDb.settlementDao().insertTransfer(transfer)
+
+        val savedTransfers = migratedDb.settlementDao().getTransfersByTripOnce("trip-v5")
+        assertEquals(1, savedTransfers.size)
+        assertEquals("tr-test-1", savedTransfers[0].id)
+        assertFalse(savedTransfers[0].isCompleted)
+
+        migratedDb.close()
+        dbFile.delete()
+    }
+
+    @Test
+    fun testMigration_all_paths_to_6_definedCorrectly() {
+        assertEquals(1, AppDatabase.MIGRATION_1_6.startVersion)
+        assertEquals(6, AppDatabase.MIGRATION_1_6.endVersion)
+
+        assertEquals(2, AppDatabase.MIGRATION_2_6.startVersion)
+        assertEquals(6, AppDatabase.MIGRATION_2_6.endVersion)
+
+        assertEquals(3, AppDatabase.MIGRATION_3_6.startVersion)
+        assertEquals(6, AppDatabase.MIGRATION_3_6.endVersion)
+
+        assertEquals(4, AppDatabase.MIGRATION_4_6.startVersion)
+        assertEquals(6, AppDatabase.MIGRATION_4_6.endVersion)
+
+        assertEquals(5, AppDatabase.MIGRATION_5_6.startVersion)
+        assertEquals(6, AppDatabase.MIGRATION_5_6.endVersion)
+    }
+
+    @Test
+    fun testSettlementTransfer_triggersOnSettledTrip(): Unit = runBlocking {
+        // 1. Tạo chuyến đi và các thành viên
+        val tripId = repository.createTrip(
+            title = "Đoàn Trigger Test",
+            description = "Kiểm tra ràng buộc chuyển khoản khi khóa sổ",
+            joinCode = "TRIG-TRIP",
+            startDate = 1000L,
+            endDate = 2000L,
+            adminName = "Trưởng Đoàn"
+        )
+        val members = db.tripMemberDao().getMembersByTripOnce(tripId)
+        val admin = members.first()
+        val member2Id = repository.addMember(tripId, "Thành Viên B", "MEMBER", admin)
+
+        // 2. Thêm bản ghi chuyển khoản
+        val transferId = "tr_trig_test"
+        val transfer = SettlementTransferEntity(
+            id = transferId,
+            tripId = tripId,
+            fromMemberId = member2Id,
+            toMemberId = admin.id,
+            amount = 250000L,
+            transferNote = "Gợi ý chuyển khoản test",
+            isCompleted = false,
+            updatedAt = System.currentTimeMillis()
+        )
+        db.settlementDao().insertTransfer(transfer)
+
+        // 3. Khóa sổ chuyến đi (isSettled = true)
+        val trip = db.tripDao().getTripByIdOnce(tripId)!!
+        db.tripDao().updateTrip(trip.copy(isSettled = true, settledAt = System.currentTimeMillis()))
+
+        // 4. KIỂM TRA CHO PHÉP: Cập nhật isCompleted trên chuyến đi ĐÃ KHÓA SỔ -> Phải thành công!
+        val now = System.currentTimeMillis()
+        db.settlementDao().updateTransferStatus(transferId, true, now)
+
+        val updated = db.settlementDao().getTransferById(transferId)!!
+        assertTrue("Trạng thái isCompleted phải được cập nhật thành công", updated.isCompleted)
+        assertEquals(now, updated.updatedAt)
+        assertEquals(250000L, updated.amount)
+
+        // 5. KIỂM TRA CHẶN: Thay đổi cột tài chính 'amount' trên chuyến đi đã khóa sổ -> Trigger phải ném ngoại lệ!
+        assertThrows(android.database.sqlite.SQLiteException::class.java) {
+            db.openHelper.writableDatabase.execSQL(
+                "UPDATE settlement_transfers SET amount = 999999 WHERE id = '$transferId'"
+            )
+        }
+
+        // 6. KIỂM TRA CHẶN: Thay đổi cột 'fromMemberId' trên chuyến đi đã khóa sổ -> Trigger phải ném ngoại lệ!
+        assertThrows(android.database.sqlite.SQLiteException::class.java) {
+            db.openHelper.writableDatabase.execSQL(
+                "UPDATE settlement_transfers SET fromMemberId = 'fake_member' WHERE id = '$transferId'"
+            )
+        }
+
+        // 7. KIỂM TRA CHẶN: Thay đổi cột 'transferNote' trên chuyến đi đã khóa sổ -> Trigger phải ném ngoại lệ!
+        assertThrows(android.database.sqlite.SQLiteException::class.java) {
+            db.openHelper.writableDatabase.execSQL(
+                "UPDATE settlement_transfers SET transferNote = 'Hacked note' WHERE id = '$transferId'"
+            )
+        }
+
+        // 8. KIỂM TRA CHẶN: Xóa gợi ý chuyển khoản trên chuyến đi đã khóa sổ -> Trigger phải ném ngoại lệ!
+        assertThrows(android.database.sqlite.SQLiteException::class.java) {
+            db.openHelper.writableDatabase.execSQL(
+                "DELETE FROM settlement_transfers WHERE id = '$transferId'"
+            )
+        }
+
+        // 9. Mở khóa sổ chuyến đi (isSettled = false) -> Có thể sửa và xóa bình thường
+        db.tripDao().updateTrip(trip.copy(isSettled = false))
+
+        db.openHelper.writableDatabase.execSQL(
+            "UPDATE settlement_transfers SET amount = 300000 WHERE id = '$transferId'"
+        )
+        val unlockedUpdated = db.settlementDao().getTransferById(transferId)!!
+        assertEquals(300000L, unlockedUpdated.amount)
+
+        db.openHelper.writableDatabase.execSQL(
+            "DELETE FROM settlement_transfers WHERE id = '$transferId'"
+        )
+        assertNull(db.settlementDao().getTransferById(transferId))
+    }
+
+    @Test
+    fun testSettlementTransfer_checkboxHasZeroFinancialDiscrepancy(): Unit = runBlocking {
+        // Tạo đoàn và chi tiêu cân bằng
+        val tripId = repository.createTrip(
+            title = "Đoàn Test Checkbox",
+            description = "Đảm bảo checkbox không làm lệch tài chính",
+            joinCode = "BOX-TRIP",
+            startDate = 1000L,
+            endDate = 2000L,
+            adminName = "Admin A"
+        )
+        val admin = db.tripMemberDao().getMembersByTripOnce(tripId).first()
+        val memBId = repository.addMember(tripId, "Member B", "MEMBER", admin)
+        val memB = db.tripMemberDao().getMemberById(memBId)!!
+
+        val exp = ExpenseEntity(
+            id = UUID.randomUUID().toString(),
+            tripId = tripId,
+            title = "Bữa trưa",
+            category = "FOOD",
+            payerType = "MEMBER",
+            payerMemberId = admin.id,
+            totalAmount = 200000.0,
+            currency = "VND",
+            exchangeRate = 1.0,
+            convertedTotalAmount = 200000L,
+            splitType = "EQUAL",
+            createdMemberId = admin.id
+        )
+        val splits = listOf(
+            ExpenseSplitEntity(UUID.randomUUID().toString(), exp.id, tripId, admin.id, 100000L),
+            ExpenseSplitEntity(UUID.randomUUID().toString(), exp.id, tripId, memBId, 100000L)
+        )
+        repository.addExpenseWithSplits(exp, splits, admin)
+
+        // Tính toán ban đầu
+        val (summaryBefore, statusesBefore) = repository.calculateFinancialSummaryAndStatuses(
+            members = listOf(admin, memB),
+            expenses = listOf(exp),
+            splits = splits,
+            fundContributions = emptyList()
+        )
+        assertEquals(0L, summaryBefore.balanceDiscrepancy)
+        assertTrue(summaryBefore.isBalanced)
+        assertEquals(100000L, statusesBefore.first { it.member.id == admin.id }.balance)
+        assertEquals(-100000L, statusesBefore.first { it.member.id == memBId }.balance)
+
+        // Đánh dấu chuyển khoản hoàn thành qua repository
+        val transferModel = SettlementTransfer(
+            id = "tr_box_test",
+            fromMember = memB,
+            toMember = admin,
+            amount = 100000L,
+            transferNote = "Trả tiền ăn trưa",
+            isCompleted = false
+        )
+        repository.setTransferCompleted(tripId, transferModel, isCompleted = true, actor = admin)
+
+        val savedTransfer = db.settlementDao().getTransferById("tr_box_test")!!
+        assertTrue(savedTransfer.isCompleted)
+
+        // Tính toán lại sau khi đánh dấu: Các chỉ số tài chính, số dư từng người TUYỆT ĐỐI không bị lệch
+        val (summaryAfter, statusesAfter) = repository.calculateFinancialSummaryAndStatuses(
+            members = listOf(admin, memB),
+            expenses = listOf(exp),
+            splits = splits,
+            fundContributions = emptyList()
+        )
+        assertEquals(summaryBefore.totalExpenses, summaryAfter.totalExpenses)
+        assertEquals(summaryBefore.balanceDiscrepancy, summaryAfter.balanceDiscrepancy)
+        assertEquals(summaryBefore.isBalanced, summaryAfter.isBalanced)
+        assertEquals(statusesBefore.first { it.member.id == admin.id }.balance, statusesAfter.first { it.member.id == admin.id }.balance)
+        assertEquals(statusesBefore.first { it.member.id == memBId }.balance, statusesAfter.first { it.member.id == memBId }.balance)
+    }
+
+    @Test
+    fun testBackupRestore_withTransfersAndBackwardCompatibility(): Unit = runBlocking {
+        // 1. Tạo đoàn mẫu và chuyển khoản
+        val tripId = repository.createTrip(
+            title = "Đoàn Backup Transfers",
+            description = "Kiểm tra xuất nhập chuyển khoản",
+            joinCode = "BAK-TRANS",
+            startDate = 1000L,
+            endDate = 2000L,
+            adminName = "Trưởng Đoàn"
+        )
+        val admin = db.tripMemberDao().getMembersByTripOnce(tripId).first()
+        val memBId = repository.addMember(tripId, "Bạn B", "MEMBER", admin)
+
+        val transferEntity = SettlementTransferEntity(
+            id = "tr_backup_test_1",
+            tripId = tripId,
+            fromMemberId = memBId,
+            toMemberId = admin.id,
+            amount = 120000L,
+            transferNote = "Chuyển khoản tiền xăng",
+            isCompleted = true,
+            updatedAt = System.currentTimeMillis()
+        )
+        db.settlementDao().insertTransfer(transferEntity)
+
+        // 2. Xuất bản sao lưu JSON (dạng rõ)
+        val exportedJson = BackupRestoreManager.exportBackupToJson(db, maskSensitiveData = false)
+        assertTrue(exportedJson.contains("\"settlementTransfers\": ["))
+        assertTrue(exportedJson.contains("\"id\": \"tr_backup_test_1\""))
+        assertTrue(exportedJson.contains("\"isCompleted\": true"))
+        assertTrue(exportedJson.contains("\"totalTransfers\": 1"))
+
+        // 3. Khôi phục với clearExisting = true
+        val parseResult = BackupRestoreManager.parseBackupFromReader(java.io.StringReader(exportedJson))
+        assertTrue(parseResult.isSuccess)
+        val backupData = parseResult.getOrThrow()
+        assertEquals(1, backupData.settlementTransfers.size)
+        assertEquals("tr_backup_test_1", backupData.settlementTransfers[0].id)
+        assertTrue(backupData.settlementTransfers[0].isCompleted)
+
+        val restoreResult = BackupRestoreManager.restoreFromBackupData(db, backupData, clearExisting = true)
+        assertTrue(restoreResult.isSuccess)
+
+        val restoredTransfers = db.settlementDao().getTransfersByTripOnce(tripId)
+        assertEquals(1, restoredTransfers.size)
+        assertEquals("tr_backup_test_1", restoredTransfers[0].id)
+        assertTrue(restoredTransfers[0].isCompleted)
+
+        // 4. KIỂM TRA TƯƠNG THÍCH NGƯỢC (Backward Compatibility):
+        // Bản backup cũ v5 (không có settlementTransfers và không có totalTransfers)
+        val legacyJson = """
+            {
+              "metadata": {
+                "appName": "TripFinance",
+                "backupVersion": 1,
+                "schemaVersion": 5,
+                "createdAt": 1700000000000,
+                "createdAtFormatted": "2023-11-14 20:00:00",
+                "totalTrips": 1,
+                "totalMembers": 1,
+                "totalExpenses": 0,
+                "totalSplits": 0,
+                "totalFunds": 0,
+                "totalRates": 0,
+                "totalSnapshots": 0,
+                "totalLogs": 0
+              },
+              "trips": [
+                {
+                  "id": "legacy-trip-id",
+                  "title": "Đoàn Backup Cũ",
+                  "description": "Bản sao lưu không có settlementTransfers",
+                  "joinCode": "LEGACY-01",
+                  "startDate": 1000,
+                  "endDate": 2000,
+                  "baseCurrency": "VND",
+                  "isSettled": false,
+                  "settledAt": null,
+                  "createdAt": 1000,
+                  "version": 1
+                }
+              ],
+              "members": [
+                {
+                  "id": "legacy-mem-id",
+                  "tripId": "legacy-trip-id",
+                  "userId": "usr-legacy",
+                  "name": "Người Cũ",
+                  "role": "ADMIN",
+                  "isActive": true,
+                  "joinedAt": 1000
+                }
+              ],
+              "expenses": [],
+              "splits": [],
+              "fundContributions": [],
+              "exchangeRates": [],
+              "settlementSnapshots": [],
+              "auditLogs": []
+            }
+        """.trimIndent()
+
+        val legacyParse = BackupRestoreManager.parseBackupFromReader(java.io.StringReader(legacyJson))
+        assertTrue("Bản backup cũ không có settlementTransfers phải parse thành công", legacyParse.isSuccess)
+        val legacyData = legacyParse.getOrThrow()
+        assertTrue("Danh sách settlementTransfers phải rỗng đối với bản backup cũ", legacyData.settlementTransfers.isEmpty())
+        assertEquals(0, legacyData.metadata.totalTransfers)
+
+        val legacyRestore = BackupRestoreManager.restoreFromBackupData(db, legacyData, clearExisting = false)
+        assertTrue("Bản backup cũ phải nạp thành công vào CSDL v6", legacyRestore.isSuccess)
+
+        val restoredLegacyTrip = db.tripDao().getTripByIdOnce("legacy-trip-id")
+        assertNotNull(restoredLegacyTrip)
+        assertEquals("Đoàn Backup Cũ", restoredLegacyTrip?.title)
+    }
 }
+
 
 
 

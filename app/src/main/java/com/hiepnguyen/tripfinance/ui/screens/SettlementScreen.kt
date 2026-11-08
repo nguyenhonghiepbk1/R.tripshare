@@ -2,6 +2,7 @@ package com.hiepnguyen.tripfinance.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -49,6 +50,7 @@ fun SettlementScreen(
     uiState: UiState,
     onFinalizeSettlement: (String) -> Unit,
     onReopenSettlement: () -> Unit = {},
+    onToggleTransferCompleted: (SettlementTransfer) -> Unit = {},
     onOpenExportReport: () -> Unit
 ) {
     val lang = LocalAppLanguage.current
@@ -449,19 +451,37 @@ fun SettlementScreen(
                         HorizontalDivider(color = MaterialTheme.extendedColorScheme.cardBorder)
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // Note & Copy Action
-                        if (transfer.transferNote.isNotBlank()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Checkbox "Đã chuyển" - có thể bấm kể cả khi đoàn đã khóa sổ
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .testTag("transfer_checkbox_row_${transfer.id}")
+                                    .clickable { onToggleTransferCompleted(transfer) }
                             ) {
-                                Text(
-                                    text = AppStrings.transferMemoLabel(transfer.transferNote, lang),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.weight(1f)
+                                Checkbox(
+                                    checked = transfer.isCompleted,
+                                    onCheckedChange = { onToggleTransferCompleted(transfer) },
+                                    modifier = Modifier.testTag("transfer_checkbox_${transfer.id}"),
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = EmeraldPrimary,
+                                        checkmarkColor = Color.White
+                                    )
                                 )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = AppStrings.transferredCheckboxLabel(lang),
+                                    fontSize = 13.sp,
+                                    fontWeight = if (transfer.isCompleted) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (transfer.isCompleted) EmeraldPrimary else MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+
+                            if (transfer.transferNote.isNotBlank()) {
                                 OutlinedButton(
                                     onClick = {
                                         clipboardManager.setText(AnnotatedString(transfer.transferNote))
@@ -476,6 +496,15 @@ fun SettlementScreen(
                                     Text(AppStrings.copyCd(lang), style = MaterialTheme.typography.labelSmall)
                                 }
                             }
+                        }
+
+                        if (transfer.transferNote.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = AppStrings.transferMemoLabel(transfer.transferNote, lang),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 }
@@ -991,3 +1020,7 @@ fun AppStrings.adminOnlyLockWarning(lang: AppLanguage) =
 fun AppStrings.noMembersCannotLock(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "• Đoàn chưa có thành viên nào. Không thể khóa sổ!"
     else "• No members in group. Cannot lock ledger!"
+
+fun AppStrings.transferredCheckboxLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Đã chuyển" else "Transferred"
+
