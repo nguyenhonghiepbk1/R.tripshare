@@ -39,9 +39,6 @@ fun CreateTripDialog(
         startDate: Long,
         endDate: Long,
         adminName: String,
-        adminBankName: String?,
-        adminBankAccount: String?,
-        adminBankHolder: String?,
         baseCurrency: String
     ) -> Unit
 ) {
@@ -212,9 +209,6 @@ fun CreateTripDialog(
                         now,
                         now + 86400000L * 5,
                         adminName.trim(),
-                        null,
-                        null,
-                        null,
                         selectedBaseCurrency
                     )
                 },

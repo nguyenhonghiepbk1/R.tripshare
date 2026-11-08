@@ -310,10 +310,8 @@ object ReportGenerator {
      * 1. "Tổng quan": Thông tin chung, số liệu tổng hợp thu - chi, quỹ đoàn và tình trạng đối soát.
      * 2. "Chi tiêu": Toàn bộ các khoản chi tiêu (ngày, danh mục, người trả, tiền gốc, tiền tệ, tỷ giá, quy đổi VND, kiểu phân bổ, ghi chú).
      * 3. "Theo thành viên": Bảng số dư từng cá nhân (đã chi, nộp quỹ, tổng chi, phải chịu, số dư, trạng thái).
-     *    TUYỆT ĐỐI KHÔNG chứa thông tin ngân hàng, số tài khoản hay chủ tài khoản.
      * 4. "Quỹ chung": Nhật ký các đợt nộp quỹ của các thành viên.
-     * 5. "Gợi ý chuyển khoản": Danh sách gợi ý bù trừ công nợ tối ưu (chỉ gồm người trả, người nhận, số tiền, nội dung gợi ý).
-     *    TUYỆT ĐỐI KHÔNG chứa cột ngân hàng, số tài khoản, chủ tài khoản hay mã QR.
+     * 5. "Gợi ý chuyển khoản": Danh sách gợi ý bù trừ công nợ tối ưu (chỉ gồm người trả, người nhận, số tiền, nội dung gợi ý, đã chuyển).
      */
     fun generateXlsxReport(
         outputStream: OutputStream,

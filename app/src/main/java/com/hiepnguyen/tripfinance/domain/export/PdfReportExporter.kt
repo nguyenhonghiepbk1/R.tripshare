@@ -608,16 +608,15 @@ object PdfReportExporter {
                 fos.flush()
             }
 
-            // Open Share Intent for PDF on Main thread
-            withContext(Dispatchers.Main) {
-                sharePdfFile(context, pdfFile, tripTitle, language)
-            }
+            sharePdfFile(context, pdfFile, tripTitle, language)
             pdfFile
         } catch (e: Exception) {
             android.util.Log.e("PdfReportExporter", "Lỗi xuất file PDF: ${e.javaClass.simpleName}")
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, AppStrings.pdfExportErrorToast(language), Toast.LENGTH_LONG).show()
-            }
+            try {
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    Toast.makeText(context, AppStrings.pdfExportErrorToast(language), Toast.LENGTH_LONG).show()
+                }
+            } catch (_: Throwable) {}
             null
         } finally {
             try {
@@ -627,22 +626,26 @@ object PdfReportExporter {
     }
 
     private fun sharePdfFile(context: Context, file: File, tripTitle: String, lang: AppLanguage) {
-        val uri: Uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
+        try {
+            val uri: Uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
 
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/pdf"
-            putExtra(Intent.EXTRA_SUBJECT, AppStrings.pdfShareSubject(tripTitle, lang))
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(Intent.EXTRA_SUBJECT, AppStrings.pdfShareSubject(tripTitle, lang))
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            val chooser = Intent.createChooser(intent, AppStrings.pdfShareChooser(lang))
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(chooser)
+        } catch (e: Throwable) {
+            android.util.Log.w("PdfReportExporter", "Không thể chia sẻ file PDF qua FileProvider: ${e.message}")
         }
-
-        val chooser = Intent.createChooser(intent, AppStrings.pdfShareChooser(lang))
-        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(chooser)
     }
 
     suspend fun exportAndShareXlsx(
@@ -680,36 +683,40 @@ object PdfReportExporter {
                 fos.flush()
             }
 
-            withContext(Dispatchers.Main) {
-                shareXlsxFile(context, xlsxFile, trip?.title ?: AppStrings.pdfDefaultTripName(language), language)
-            }
+            shareXlsxFile(context, xlsxFile, trip?.title ?: AppStrings.pdfDefaultTripName(language), language)
             xlsxFile
         } catch (e: Exception) {
             android.util.Log.e("PdfReportExporter", "Lỗi xuất file Excel: ${e.javaClass.simpleName}", e)
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, AppStrings.xlsxExportErrorToast(language), Toast.LENGTH_LONG).show()
-            }
+            try {
+                android.os.Handler(android.os.Looper.getMainLooper()).post {
+                    Toast.makeText(context, AppStrings.xlsxExportErrorToast(language), Toast.LENGTH_LONG).show()
+                }
+            } catch (_: Throwable) {}
             null
         }
     }
 
     private fun shareXlsxFile(context: Context, file: File, tripTitle: String, lang: AppLanguage) {
-        val uri: Uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            file
-        )
+        try {
+            val uri: Uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
 
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            putExtra(Intent.EXTRA_SUBJECT, AppStrings.xlsxShareSubject(tripTitle, lang))
-            putExtra(Intent.EXTRA_STREAM, uri)
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                putExtra(Intent.EXTRA_SUBJECT, AppStrings.xlsxShareSubject(tripTitle, lang))
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            val chooser = Intent.createChooser(intent, AppStrings.xlsxShareChooser(lang))
+            chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(chooser)
+        } catch (e: Throwable) {
+            android.util.Log.w("PdfReportExporter", "Không thể chia sẻ file XLSX qua FileProvider: ${e.message}")
         }
-
-        val chooser = Intent.createChooser(intent, AppStrings.xlsxShareChooser(lang))
-        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(chooser)
     }
 }
 

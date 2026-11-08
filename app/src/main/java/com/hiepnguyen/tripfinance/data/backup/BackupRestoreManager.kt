@@ -68,19 +68,6 @@ object BackupRestoreManager {
     private val fileDateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
     const val MAX_BACKUP_FILE_SIZE = 50 * 1024 * 1024L // 50MB giới hạn an toàn chống tràn bộ nhớ (OOM)
 
-    /**
-     * Ẩn số tài khoản ngân hàng để bảo vệ dữ liệu nhạy cảm khi tệp sao lưu ở dạng rõ (không mã hóa mật khẩu)
-     */
-    fun maskBankAccount(account: String?): String? {
-        if (account.isNullOrBlank()) return null
-        val trimmed = account.trim()
-        val digits = trimmed.filter { it.isLetterOrDigit() }
-        return if (digits.length > 4) {
-            "******" + digits.takeLast(4)
-        } else {
-            "******"
-        }
-    }
 
     /**
      * Tính toán mã băm toàn vẹn SHA-256 cho toàn bộ payload dữ liệu

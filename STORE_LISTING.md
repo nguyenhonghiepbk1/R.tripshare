@@ -1,17 +1,20 @@
 # Bộ Thông Tin & Mô Tả Ứng Dụng Đăng Tải Google Play (Store Listing) - TripFinance
 
-Tài liệu này cung cấp đầy đủ nội dung theo chuẩn quy định mới nhất của **Google Play Console**, bao gồm Tiếng Việt (Ngôn ngữ chính) và Tiếng Anh (Ngôn ngữ phụ), sẵn sàng để sao chép trực tiếp vào trang **Main Store Listing (Trang thông tin chính trên Cửa hàng)**.
+Tài liệu này cung cấp nội dung niêm yết theo chuẩn quy định của **Google Play Console**, sử dụng **Tiếng Việt (`vi-VN`) làm ngôn ngữ niêm yết duy nhất** trên Cửa hàng (phù hợp với ngôn ngữ giao diện chính của ứng dụng).
 
 - **Mã gói ứng dụng (Application ID):** `com.hiepnguyen.tripfinance.oddnis`
 - **Phiên bản (Version):** `20.0` (VersionCode: `20`)
-- **Quyền mạng (Permissions):** Không có quyền INTERNET (`Zero-Internet Permission`), hoạt động 100% ngoại tuyến.
+- **Quyền mạng (Permissions):** Không có quyền INTERNET (`Zero-Internet`), hoạt động 100% ngoại tuyến.
+- **Phạm vi tính năng:** Quản lý chi tiêu đoàn, chia tiền nhóm, đối soát công nợ và gợi ý chuyển khoản; KHÔNG lưu trữ/xử lý tài khoản ngân hàng, KHÔNG tạo mã QR, KHÔNG thực hiện giao dịch chuyển tiền.
+
+> **Ghi chú về ngôn ngữ niêm yết:** Hiện tại, ứng dụng chỉ duy trì bản niêm yết Tiếng Việt (`vi-VN`) trên Google Play Store để phản ánh chính xác ngôn ngữ giao diện chính của ứng dụng. Khi hoàn thiện bản địa hóa song ngữ toàn diện trong các phiên bản tiếp theo, bản niêm yết Tiếng Anh (`en-US`) sẽ được bổ sung sau.
 
 ---
 
-## 1. Phiên Bản Tiếng Việt (`vi-VN`) - Ngôn Ngữ Chính
+## 1. Thông Tin Niêm Yết Tiếng Việt (`vi-VN`)
 
 ### 🏷 Tên ứng dụng (App Name)
-> *Quy định Google Play: Tối đa 30 ký tự, không viết hoa toàn bộ, không chứa từ khóa quảng cáo (như "miễn phí", "tốt nhất").*
+> *Quy định Google Play: Tối đa 30 ký tự, không viết hoa toàn bộ, không chứa từ khóa quảng cáo.*
 
 ```text
 TripFinance - Chia tiền đoàn
@@ -24,7 +27,7 @@ TripFinance - Chia tiền đoàn
 > *Quy định Google Play: Tối đa 80 ký tự, nêu bật giá trị cốt lõi của ứng dụng.*
 
 ```text
-Quản lý tài chính đoàn, chia tiền nhóm, theo dõi quỹ chung và bù trừ công nợ.
+Quản lý chi tiêu đoàn, chia tiền nhóm, theo dõi quỹ chung, gợi ý chuyển khoản.
 ```
 *(Độ dài: 79/80 ký tự)*
 
@@ -34,117 +37,51 @@ Quản lý tài chính đoàn, chia tiền nhóm, theo dõi quỹ chung và bù 
 > *Quy định Google Play: Tối đa 4000 ký tự.*
 
 ```text
-TripFinance là ứng dụng quản lý tài chính ngoại tuyến dành cho các chuyến du lịch nhóm, đoàn công tác, sự kiện gia đình hoặc hội bạn bè. Ứng dụng giúp bạn xóa bỏ phiền toái khi ghi chép sổ sách thủ công, chia tiền phức tạp và tranh cãi sau mỗi chuyến đi.
+TripFinance là ứng dụng quản lý tài chính ngoại tuyến dành cho các chuyến du lịch nhóm, đoàn công tác, sự kiện gia đình hoặc hội bạn bè. Ứng dụng giúp bạn xóa bỏ phiền toái khi ghi chép sổ sách thủ công, phân chia chi phí phức tạp và đối soát công nợ sau mỗi chuyến đi.
 
-TÍNH NĂNG NỔI BẬT:
+CÁC TÍNH NĂNG CHÍNH:
 
-1. CHIA TIỀN LINH HOẠT & CÔNG BẰNG
+1. GHI NHẬN THU CHI & PHÂN CHIA CHI PHÍ LINH HOẠT
+• Ghi nhận các khoản chi tiêu theo danh mục, người thanh toán, số tiền và thời gian.
 • Chia đều cho tất cả mọi người hoặc chỉ những người cùng tham gia khoản chi.
-• Chia theo số tiền cụ thể hoặc theo tỷ lệ phần trăm tùy chỉnh.
-• Hỗ trợ một người chi hộ nhiều người hoặc chi trực tiếp từ Quỹ đoàn một cách rõ ràng.
+• Chia theo số tiền cụ thể hoặc theo tỷ lệ phần trăm tùy chỉnh với thuật toán phân bổ phần dư tự động.
+• Hỗ trợ một người chi hộ nhiều người hoặc chi trực tiếp từ Quỹ chung của đoàn.
 
-2. QUẢN LÝ QUỸ CHUNG CHẶT CHẼ
+2. QUẢN LÝ QUỸ CHUNG ĐOÀN
 • Theo dõi chi tiết từng đợt đóng quỹ của các thành viên.
 • Chi tiêu trực tiếp từ quỹ đoàn với tính năng kiểm tra số dư khả dụng tức thời.
-• Tự động tính toán phần quỹ còn dư để hoàn lại công bằng khi chốt chuyến đi.
+• Tự động tính toán phần quỹ còn dư để hoàn lại khi kết thúc chuyến đi.
 
-3. THUẬT TOÁN BÙ TRỪ CÔNG NỢ TỐI ƯU (MIN-TRANSFERS)
-• Thuật toán tối ưu hóa tự động tính toán bù trừ công nợ giữa các thành viên, rút gọn số lượt giao dịch thanh toán xuống mức tối thiểu.
-• Hiển thị rõ người nộp bù, người nhận, số tiền và nội dung đối soát chuẩn.
-• Hỗ trợ sao chép nhanh thông tin thanh toán bù trừ để gửi cho các thành viên.
+3. ĐỐI SOÁT CÔNG NỢ & GỢI Ý CHUYỂN KHOẢN TỐI ƯU
+• Thuật toán bù trừ công nợ tự động tính toán số dư ròng của từng thành viên, rút gọn số lượt giao dịch cần thiết xuống mức tối thiểu.
+• Đưa ra gợi ý chuyển khoản rõ ràng: người gửi, người nhận, số tiền và nội dung đối soát.
+• Hỗ trợ checkbox "Đã chuyển" trên từng dòng gợi ý để theo dõi tiến độ thanh toán (hoạt động bình thường cả khi đoàn đã khóa sổ).
+• Lưu ý: Ứng dụng chỉ đưa ra gợi ý tính toán trên màn hình, KHÔNG lưu/nhập số tài khoản ngân hàng, KHÔNG tạo mã QR và KHÔNG thực hiện hay xử lý bất kỳ giao dịch tiền tệ nào.
 
-4. HỖ TRỢ NGOẠI TỆ & TỶ GIÁ TÙY CHỈNH
+4. HỖ TRỢ ĐA TIỀN TỆ & TỶ GIÁ TÙY CHỈNH
 • Nhập chi tiêu bằng nhiều loại tiền tệ (USD, EUR, JPY, KRW, THB, SGD...).
-• Tự động quy đổi ra VND theo tỷ giá tham khảo hoặc tỷ giá người dùng tự thiết lập.
+• Quy đổi ra VND theo tỷ giá tham khảo hoặc tỷ giá người dùng tự thiết lập.
 
-5. BẢO MẬT DỮ LIỆU & HOẠT ĐỘNG NGOẠI TUYẾN 100%
-• Không cần kết nối Internet: Ứng dụng không yêu cầu quyền INTERNET, hoạt động trơn tru trên máy bay hoặc vùng không có sóng di động.
-• Cơ sở dữ liệu SQLite được mã hóa cục bộ bằng SQLCipher (AES-256) kết hợp Android KeyStore.
-• Tính năng xuất/nhập sao lưu mã hóa bằng mật khẩu (sử dụng thuật toán AES-GCM và PBKDF2).
+5. BẢO VỆ DỮ LIỆU CỤC BỘ & 100% NGOẠI TUYẾN
+• Hoàn toàn không cần kết nối Internet: Ứng dụng không yêu cầu quyền INTERNET trong hệ thống, hoạt động bình thường trên máy bay hoặc vùng không có sóng di động.
+• Cơ sở dữ liệu SQLite được mã hóa cục bộ bằng SQLCipher (AES-256) kết hợp quản lý khóa Android KeyStore.
+• Tính năng xuất/nhập sao lưu định dạng JSON với tùy chọn mã hóa mật khẩu (sử dụng thuật toán AES-GCM và PBKDF2 600.000 vòng lặp).
 
 6. XUẤT BÁO CÁO TÀI CHÍNH ĐA DẠNG
-• Báo cáo tóm tắt văn bản dễ dàng sao chép và gửi qua tin nhắn.
-• Bảng kê chi tiết định dạng CSV (Excel) chuẩn mã hóa UTF-8 BOM hiển thị tiếng Việt hoàn hảo.
-• Xuất tệp báo cáo PDF chuẩn A4 đầy đủ bảng biểu thu chi và phân bổ nợ.
+• Bảng tính Microsoft Excel (.xlsx) đa sheet chuẩn OpenXML (Tổng quan, Chi tiêu, Theo thành viên, Quỹ chung, Gợi ý chuyển khoản) tích hợp cơ chế chống tiêm công thức (Formula Injection Protection).
+• Tệp báo cáo PDF chuẩn A4 trình bày trang trọng, đầy đủ bảng kê thu chi và phân bổ công nợ.
+• Báo cáo tóm tắt văn bản dễ dàng sao chép để gửi nhanh qua tin nhắn.
 
-7. CỐ VẤN CHI TIÊU NGOẠI TUYẾN
+7. CỐ VẤN CHI TIÊU NỘI BỘ (LOCAL SPENDING ADVISOR)
 • Phân tích cơ cấu chi tiêu theo danh mục (ăn uống, đi lại, lưu trú, vé tham quan...).
-• Tính toán trực tiếp trên thiết bị, bảo đảm quyền riêng tư tuyệt đối cho dữ liệu của bạn.
+• Tính toán trực tiếp trên vi xử lý của thiết bị, dữ liệu không rời khỏi điện thoại.
 
-Tải TripFinance ngay hôm nay để mọi chuyến đi đều ngập tràn niềm vui và tài chính luôn minh bạch, rõ ràng!
+TripFinance đồng hành cùng bạn để mọi chuyến đi luôn vui vẻ và tài chính luôn minh bạch, rõ ràng!
 ```
 
 ---
 
-## 2. Phiên Bản Tiếng Anh (`en-US`) - Secondary Listing
-
-### 🏷 App Name
-> *Max 30 characters:*
-
-```text
-TripFinance: Group Expenses
-```
-*(Length: 27/30 characters)*
-
----
-
-### 📝 Short Description
-> *Max 80 characters:*
-
-```text
-Track group expenses, split bills easily, manage shared funds, and settle debts.
-```
-*(Length: 80/80 characters)*
-
----
-
-### 📄 Full Description
-> *Max 4000 characters:*
-
-```text
-TripFinance is an offline financial manager designed for group travel, business trips, shared events, and friends. Eliminate manual spreadsheets and awkward debt calculations with effortless expense tracking and smart debt netting.
-
-KEY FEATURES:
-
-1. FAIR & FLEXIBLE EXPENSE SPLITTING
-• Split equally among everyone or selectively among specific participants.
-• Split by exact amounts or custom percentage ratios.
-• Support personal out-of-pocket payments as well as direct payments from the group fund.
-
-2. SHARED GROUP FUND MANAGEMENT
-• Track fund contributions from each member.
-• Pay directly from group funds with real-time balance tracking.
-• Automatically calculate remaining fund refunds upon closing the trip.
-
-3. OPTIMIZED DEBT NETTING ALGORITHM
-• Minimizes total settlement transactions across the group using an efficient debt-netting algorithm.
-• Clear overview of who owes whom, exact amounts, and standardized payment memos.
-• One-tap copy for sharing settlement breakdowns with members.
-
-4. MULTI-CURRENCY WITH CUSTOM EXCHANGE RATES
-• Log expenses in various foreign currencies (USD, EUR, JPY, KRW, THB, SGD...).
-• Automatic conversion to VND using configurable exchange rates.
-
-5. DATA PRIVACY & 100% OFFLINE CAPABILITY
-• Zero-Internet permission: Functions completely offline anywhere, including flights and remote areas.
-• Local SQLite database encrypted at rest with SQLCipher (AES-256) backed by Android KeyStore.
-• Passphrase-protected encrypted backup export and import (AES-GCM with PBKDF2).
-
-6. COMPREHENSIVE REPORT EXPORTS
-• Summary text report ready to copy and share via messaging apps.
-• Detailed CSV spreadsheet export with UTF-8 BOM encoding for seamless Excel viewing.
-• Formatted standard A4 PDF report export with complete expense ledgers and balance tables.
-
-7. OFFLINE SPENDING ADVISOR
-• Breakdown of spending across categories (dining, lodging, transit, activities).
-• Computed entirely on your device with complete privacy.
-
-Travel together, track expenses easily, and settle balances transparently with TripFinance!
-```
-
----
-
-## 3. Cấu Hình Phân Loại & Cài Đặt Cửa Hàng (Store Settings)
+## 2. Cấu Hình Phân Loại & Cài Đặt Cửa Hàng (Store Settings)
 
 Khi điền thông tin trong **Cài đặt cửa hàng (Store settings)** trên Google Play Console:
 
@@ -160,15 +97,15 @@ Khi điền thông tin trong **Cài đặt cửa hàng (Store settings)** trên 
 
 ---
 
-## 4. Tóm Tắt Khai Báo An Toàn Dữ Liệu (Data Safety Declaration)
+## 3. Khai Báo An Toàn Dữ Liệu (Data Safety Declaration)
 
 Biểu mẫu **An toàn dữ liệu (Data Safety)** trên Google Play Console:
 
 1. **Thu thập dữ liệu (Data collection):**
    - Chọn **Không (No)** — Ứng dụng không thu thập bất kỳ dữ liệu người dùng nào.
-   - Toàn bộ dữ liệu được lưu trữ cục bộ (local on-device) trong bộ nhớ ứng dụng.
+   - Toàn bộ dữ liệu được lưu trữ cục bộ trong vùng nhớ bảo mật nội bộ của ứng dụng.
 2. **Chia sẻ dữ liệu (Data sharing):**
-   - Chọn **Không (No)** — Không có bất kỳ dữ liệu nào được chia sẻ với bên thứ ba hoặc gửi lên máy chủ ngoài.
+   - Chọn **Không (No)** — Không có dữ liệu nào được gửi lên máy chủ hay chia sẻ với bên thứ ba.
 3. **Thực hành bảo mật (Security practices):**
    - **Dữ liệu được mã hóa khi lưu trữ (Data is encrypted at rest):** Đánh dấu **CÓ (Yes)** (Mã hóa CSDL SQLCipher AES-256).
-   - **Cơ chế xóa dữ liệu (Data deletion mechanism):** Đánh dấu **CÓ (Yes)** (Người dùng có thể chủ động sửa/xóa từng bản ghi, xóa chuyến đi trong ứng dụng hoặc gỡ cài đặt ứng dụng để xóa toàn bộ dữ liệu).
+   - **Cơ chế xóa dữ liệu (Data deletion mechanism):** Đánh dấu **CÓ (Yes)** (Người dùng có thể xóa từng bản ghi, xóa chuyến đi trong ứng dụng hoặc gỡ cài đặt ứng dụng để xóa toàn bộ dữ liệu khỏi thiết bị).

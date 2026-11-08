@@ -98,7 +98,14 @@
 
         <h2>1. Dữ Liệu Được Xử Lý & Lưu Trữ Cục Bộ</h2>
         <ul>
-            <li><strong>Dữ liệu chuyến đi và chi tiêu:</strong> Tên đoàn, danh sách thành viên, các khoản chi tiêu, số tiền, ngày giờ, phân bổ nợ, lịch sử đóng góp quỹ đoàn, số tài khoản ngân hàng của thành viên (nếu người dùng tự nguyện nhập để đối soát) và tỷ giá quy đổi ngoại tệ.</li>
+            <li><strong>Dữ liệu chuyến đi và chi tiêu:</strong> Tên đoàn, danh sách thành viên (tên hiển thị, vai trò), các khoản chi tiêu (tiêu đề, số tiền, ngày giờ, danh mục, phân bổ nợ), lịch sử đóng góp quỹ đoàn, ghi chú chuyến đi và tỷ giá quy đổi ngoại tệ.</li>
+            <li><strong>Phạm vi dữ liệu tài chính & ngân hàng:</strong>
+                <ul>
+                    <li>Ứng dụng <strong>KHÔNG</strong> lưu, không nhập và không xuất số tài khoản ngân hàng, thông tin thẻ hay tài khoản thanh toán của thành viên.</li>
+                    <li>Ứng dụng <strong>KHÔNG</strong> tạo mã QR chuyển khoản.</li>
+                    <li>Ứng dụng <strong>KHÔNG</strong> thực hiện hay xử lý bất kỳ giao dịch chuyển tiền hoặc thanh toán nào. Các gợi ý chuyển khoản chỉ là kết quả tính toán số học hiển thị để các thành viên tham khảo đối soát.</li>
+                </ul>
+            </li>
             <li><strong>Lưu trữ an toàn trên thiết bị:</strong> Toàn bộ dữ liệu được lưu trữ trực tiếp và duy nhất trong bộ nhớ ứng dụng (App Sandbox) trên thiết bị của bạn trong cơ sở dữ liệu SQLite mã hóa toàn bộ dữ liệu lưu trữ bằng <strong>SQLCipher (chuẩn AES-256)</strong> với khóa quản lý qua <strong>Android KeyStore</strong>.</li>
             <li><strong>Không gửi dữ liệu ra ngoài:</strong> Ứng dụng không có máy chủ trung gian, không tải dữ liệu lên đám mây và nhà phát triển hoàn toàn không thể tiếp cận hay thu thập dữ liệu của bạn.</li>
         </ul>
@@ -107,12 +114,12 @@
         <ul>
             <li><strong>Không có quyền INTERNET:</strong> Ứng dụng hoàn toàn không khai báo và không yêu cầu quyền <code>android.permission.INTERNET</code> trong tệp <code>AndroidManifest.xml</code>. Ứng dụng không thể kết nối mạng dưới bất kỳ hình thức nào.</li>
             <li><strong>Cố vấn chi tiêu ngoại tuyến (Local Spending Advisor):</strong> Tính năng phân tích và gợi ý chi tiêu hoạt động hoàn toàn bằng thuật toán nội bộ trên thiết bị, chạy 100% ngoại tuyến và không truyền bất kỳ dữ liệu nào ra bên ngoài.</li>
-            <li><strong>Không yêu cầu quyền đọc/ghi bộ nhớ diện rộng:</strong> Ứng dụng không yêu cầu <code>READ_EXTERNAL_STORAGE</code> hoặc <code>WRITE_EXTERNAL_STORAGE</code>. Báo cáo tài chính (PDF, CSV, văn bản) được chia sẻ qua cơ chế an toàn tiêu chuẩn của hệ điều hành Android (<code>FileProvider</code>).</li>
+            <li><strong>Không yêu cầu quyền đọc/ghi bộ nhớ diện rộng:</strong> Ứng dụng không yêu cầu <code>READ_EXTERNAL_STORAGE</code> hoặc <code>WRITE_EXTERNAL_STORAGE</code>. Báo cáo tài chính (Excel <code>.xlsx</code>, tài liệu PDF, văn bản tóm tắt) được chia sẻ qua cơ chế an toàn tiêu chuẩn của hệ điều hành Android (<code>FileProvider</code>).</li>
         </ul>
 
         <h2>3. Sao Lưu Mã Hóa & Toàn Vẹn Dữ Liệu</h2>
         <ul>
-            <li><strong>Sao lưu mã hóa (Encrypted Backup):</strong> Tính năng xuất tệp sao lưu dữ liệu chuyến đi sử dụng thuật toán AES-GCM với khóa dẫn xuất từ mật khẩu người dùng thông qua hàm PBKDF2 (600.000 vòng lặp). Tệp sao lưu chỉ có thể giải mã khi có đúng mật khẩu do bạn đặt.</li>
+            <li><strong>Sao lưu mã hóa (Encrypted Backup):</strong> Tính năng xuất tệp sao lưu dữ liệu chuyến đi định dạng JSON hỗ trợ tùy chọn mã hóa tệp bằng thuật toán AES-GCM với khóa dẫn xuất từ mật khẩu người dùng thông qua hàm PBKDF2 (600.000 vòng lặp theo khuyến nghị bảo mật). Tệp sao lưu chỉ có thể giải mã khi có đúng mật khẩu do bạn đặt.</li>
             <li><strong>Không tự động sao lưu đám mây:</strong> Cấu hình <code>android:allowBackup="false"</code> ngăn chặn hệ thống tự động đưa tệp cơ sở dữ liệu lên các dịch vụ đám mây chưa được kiểm soát.</li>
         </ul>
 
@@ -122,7 +129,7 @@
         <h2>5. Thông Tin Liên Hệ</h2>
         <p>Mọi thắc mắc về chính sách quyền riêng tư của TripFinance, vui lòng liên hệ:</p>
         <p>
-            Nhà phát triển: Hiệp Nguyễn<br>
+            Nhà phát triển: Nguyễn Hồng Hiệp<br>
             Email: <a href="mailto:nguyenhonghiepbk1@gmail.com">nguyenhonghiepbk1@gmail.com</a><br>
             Mã gói: <code>com.hiepnguyen.tripfinance.oddnis</code>
         </p>
@@ -143,7 +150,14 @@
 
         <h2>1. Handled Information & Local On-Device Storage</h2>
         <ul>
-            <li><strong>Trip & Financial Records:</strong> Trip titles, member rosters, logged expenses, amounts, timestamps, debt allocations, group fund history, member bank details (optionally entered for internal reconciliation), and custom exchange rates.</li>
+            <li><strong>Trip & Financial Records:</strong> Trip titles, member rosters (display names, roles), logged expenses (titles, amounts, timestamps, categories, debt allocations), group fund history, trip notes, and custom exchange rates.</li>
+            <li><strong>Scope of Financial & Banking Data:</strong>
+                <ul>
+                    <li>The app <strong>DOES NOT</strong> store, request input of, or export any member bank account numbers, credentials, or payment card details.</li>
+                    <li>The app <strong>DOES NOT</strong> generate QR codes for bank transfers or electronic wallets.</li>
+                    <li>The app <strong>DOES NOT</strong> execute or process any monetary transactions or payments. Settlement suggestions are purely calculated arithmetic recommendations displayed on screen for informational reference among group members.</li>
+                </ul>
+            </li>
             <li><strong>Local On-Device Storage:</strong> All data is stored directly and exclusively within the application sandbox on your device inside a SQLite database encrypted at rest with <strong>SQLCipher (AES-256 standard)</strong> and managed via <strong>Android KeyStore</strong>.</li>
             <li><strong>Zero External Transmission:</strong> The app operates without remote servers or cloud databases; the developer has zero access to your financial records.</li>
         </ul>
@@ -152,17 +166,17 @@
         <ul>
             <li><strong>No INTERNET Permission:</strong> The app does not declare or request the <code>android.permission.INTERNET</code> permission in its <code>AndroidManifest.xml</code>. It is technically incapable of network connectivity.</li>
             <li><strong>Offline Spending Advisor:</strong> Financial insights and budget calculations are performed strictly on-device using local analytical algorithms, operating 100% offline.</li>
-            <li><strong>No Broad Storage Permissions:</strong> The app does not require <code>READ_EXTERNAL_STORAGE</code> or <code>WRITE_EXTERNAL_STORAGE</code>. Financial reports (PDF, CSV, text) are shared securely via Android's native <code>FileProvider</code> mechanism.</li>
+            <li><strong>No Broad Storage Permissions:</strong> The app does not require <code>READ_EXTERNAL_STORAGE</code> or <code>WRITE_EXTERNAL_STORAGE</code>. Financial reports (Excel <code>.xlsx</code>, PDF documents, text summaries) are shared securely via Android's native <code>FileProvider</code> mechanism.</li>
         </ul>
 
         <h2>3. Encrypted Backups & Security Practices</h2>
         <ul>
-            <li><strong>Passphrase-Protected Encrypted Backups:</strong> Trip backup files are encrypted using AES-GCM with keys derived from your passphrase via PBKDF2 (600,000 iterations). Backups can only be decrypted with the user's passphrase.</li>
+            <li><strong>Passphrase-Protected Encrypted Backups:</strong> Trip backup files in JSON format support optional encryption using AES-GCM with keys derived from your passphrase via PBKDF2 (600,000 iterations according to security recommendations). Backups can only be decrypted with the user's passphrase.</li>
             <li><strong>Disabled OS Cloud Backups:</strong> The setting <code>android:allowBackup="false"</code> prevents unencrypted database snapshots from being uploaded to uncontrolled cloud backup services.</li>
         </ul>
 
         <h2>4. User Control & Data Deletion</h2>
-        <p>You have full authority to modify or delete any record at any time. When you uninstall TripFinance from your device, Android permanently purges the local database and cryptographic keys. No residual data remains.</p>
+        <p>You have full authority to modify or delete any record at any time. When you uninstall TripFinance from your device, Android permanently purges the local database and cryptographic keys. No residual data remains on the device.</p>
 
         <h2>5. Contact Us</h2>
         <p>For inquiries regarding this Privacy Policy:</p>

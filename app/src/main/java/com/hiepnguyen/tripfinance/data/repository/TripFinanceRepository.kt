@@ -32,9 +32,6 @@ class TripFinanceRepository(private val db: AppDatabase) {
         startDate: Long,
         endDate: Long,
         adminName: String,
-        adminBankName: String? = null,
-        adminBankAccount: String? = null,
-        adminBankHolder: String? = null,
         baseCurrency: String = "VND"
     ): String {
         val tripId = UUID.randomUUID().toString()

@@ -2,7 +2,7 @@
 <!-- Data extraction rules preventing database and sensitive financial data leakage -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- Exclude Room SQLite database containing member bank accounts and transactions -->
+        <!-- Exclude Room SQLite database containing trip records and financial transactions -->
         <exclude domain="database" path="."/>
         <exclude domain="sharedpref" path="."/>
     </cloud-backup>

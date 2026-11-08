@@ -1,6 +1,6 @@
 TripFinance v20.0:
-• Hỗ trợ toàn diện Android 15+ và bộ nhớ trang 16 KB với SQLCipher 4.6.1 mới nhất.
-• Bảo mật đa lớp: Kiểm tra tính hợp lệ thành viên đa đoàn, loại bỏ sai lệch dữ liệu.
-• Thuật toán quyết toán phi trạng thái, tính toán nợ tối ưu an toàn đa luồng.
-• Cố vấn chi tiêu bảo mật: Minh bạch xin ý kiến người dùng, phân tích cục bộ ngoại tuyến 100%.
-• Tinh gọn mã nguồn, tối ưu hóa hiệu năng và tăng tốc độ khởi chạy ứng dụng.
+• Ghi nhận chi tiêu đoàn, chia tiền linh hoạt, đối soát công nợ và gợi ý chuyển khoản tối ưu.
+• Thêm checkbox "Đã chuyển" cho từng gợi ý chuyển khoản (hoạt động cả khi đoàn đã khóa sổ).
+• Xuất báo cáo Excel (.xlsx) đa sheet có chống chèn công thức và báo cáo PDF chuẩn A4.
+• Sao lưu định dạng JSON với tùy chọn mã hóa mật khẩu AES-GCM kết hợp PBKDF2 600.000 vòng lặp.
+• Vận hành ngoại tuyến 100%, không quyền INTERNET, mã hóa CSDL cục bộ SQLCipher AES-256.

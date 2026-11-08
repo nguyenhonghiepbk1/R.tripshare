@@ -489,8 +489,8 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
     if (showCreateTripDialog) {
         CreateTripDialog(
             onDismiss = { showCreateTripDialog = false },
-            onConfirm = { title, desc, code, start, end, admin, bName, bAcc, bHolder, baseCurr ->
-                viewModel.createTrip(title, desc, code, start, end, admin, bName, bAcc, bHolder, baseCurr)
+            onConfirm = { title, desc, code, start, end, admin, baseCurr ->
+                viewModel.createTrip(title, desc, code, start, end, admin, baseCurr)
                 showCreateTripDialog = false
             }
         )

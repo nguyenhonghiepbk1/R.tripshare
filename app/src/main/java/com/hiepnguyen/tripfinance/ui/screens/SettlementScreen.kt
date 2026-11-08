@@ -815,7 +815,7 @@ fun SettlementScreen(
 
 fun AppStrings.settlementGuideOverview(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "• Ứng dụng tự động tính bù trừ công nợ tối ưu (Min-Transfers). Các giao dịch chỉ mang tính chất gợi ý đối soát nội bộ, ứng dụng không thực hiện chuyển khoản."
-    else "• Smart min-transfers algorithm simplifies debts. Suggestions are for internal bookkeeping only; the app does not execute bank transfers."
+    else "• Smart min-transfers algorithm simplifies debts. Suggestions are for internal bookkeeping only; the app does not execute transfers."
 
 fun AppStrings.settlementDiscrepancyWarning(amountStr: String, lang: AppLanguage) =
     if (lang == AppLanguage.VI) "• Phát hiện chênh lệch đối soát ($amountStr). Khoản chi phân bổ chưa đủ hoặc có sai lệch dữ liệu. Không thể khóa sổ!"

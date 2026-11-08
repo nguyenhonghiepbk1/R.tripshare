@@ -72,9 +72,10 @@ class ExampleRobolectricTest {
 
     @Test
     fun `launch MainActivity without crash`() {
-        val scenario = androidx.test.core.app.ActivityScenario.launch(MainActivity::class.java)
-        assertNotNull(scenario)
-        scenario.close()
+        val controller = org.robolectric.Robolectric.buildActivity(MainActivity::class.java)
+        controller.create().start().resume()
+        assertNotNull(controller.get())
+        controller.pause().stop().destroy()
     }
 
     @Test
@@ -215,9 +216,6 @@ class ExampleRobolectricTest {
             startDate = System.currentTimeMillis(),
             endDate = System.currentTimeMillis() + 86400000L,
             adminName = "Nguyễn Văn A",
-            adminBankName = null,
-            adminBankAccount = null,
-            adminBankHolder = null
         )
         val members = repository.getMembers(tripId).first()
         val admin = members.first()
@@ -289,9 +287,6 @@ class ExampleRobolectricTest {
             startDate = System.currentTimeMillis(),
             endDate = System.currentTimeMillis() + 86400000L,
             adminName = "Admin 1",
-            adminBankName = null,
-            adminBankAccount = null,
-            adminBankHolder = null
         )
         val admin1 = repository.getMembers(trip1Id).first().first()
 
@@ -328,9 +323,6 @@ class ExampleRobolectricTest {
                 startDate = System.currentTimeMillis(),
                 endDate = System.currentTimeMillis() + 86400000L,
                 adminName = "Admin 2",
-                adminBankName = null,
-                adminBankAccount = null,
-                adminBankHolder = null
             )
             fail("Phải ném ngoại lệ khi trùng joinCode do người dùng chỉ định")
         } catch (e: IllegalArgumentException) {
@@ -355,9 +347,6 @@ class ExampleRobolectricTest {
             startDate = System.currentTimeMillis(),
             endDate = System.currentTimeMillis() + 86400000L,
             adminName = "Admin Quyết Toán",
-            adminBankName = null,
-            adminBankAccount = null,
-            adminBankHolder = null
         )
         val originalTrip = db.tripDao().getTripByIdOnce(tripId)!!
 
@@ -397,9 +386,6 @@ class ExampleRobolectricTest {
             startDate = System.currentTimeMillis(),
             endDate = System.currentTimeMillis() + 86400000L,
             adminName = "Admin Clean",
-            adminBankName = null,
-            adminBankAccount = null,
-            adminBankHolder = null
         )
         val admin = repository.getMembers(tripId).first().first()
 
@@ -1105,9 +1091,6 @@ class ExampleRobolectricTest {
             startDate = 1000L,
             endDate = 2000L,
             adminName = "Admin Lock",
-            adminBankName = null,
-            adminBankAccount = null,
-            adminBankHolder = null
         )
         val admin = repository.getMembers(tripId).first().first()
 
@@ -1190,9 +1173,6 @@ class ExampleRobolectricTest {
             startDate = 1000L,
             endDate = 2000L,
             adminName = "Admin Đồng Thời",
-            adminBankName = null,
-            adminBankAccount = null,
-            adminBankHolder = null
         )
         val admin = repository.getMembers(tripId).first().first()
 
@@ -1379,9 +1359,6 @@ class ExampleRobolectricTest {
             startDate = 1000L,
             endDate = 2000L,
             adminName = "Admin A",
-            adminBankName = null,
-            adminBankAccount = null,
-            adminBankHolder = null
         )
         val tripBId = repository.createTrip(
             title = "Chuyến đi B",
@@ -1390,9 +1367,6 @@ class ExampleRobolectricTest {
             startDate = 1000L,
             endDate = 2000L,
             adminName = "Admin B",
-            adminBankName = null,
-            adminBankAccount = null,
-            adminBankHolder = null
         )
 
         val membersA = repository.getMembers(tripAId).first()
@@ -1474,9 +1448,6 @@ class ExampleRobolectricTest {
             startDate = 1000L,
             endDate = 2000L,
             adminName = "Thủ quỹ A",
-            adminBankName = null,
-            adminBankAccount = null,
-            adminBankHolder = null
         )
         val tripBId = repository.createTrip(
             title = "Chuyến đi Quỹ B",
@@ -1485,9 +1456,6 @@ class ExampleRobolectricTest {
             startDate = 1000L,
             endDate = 2000L,
             adminName = "Thủ quỹ B",
-            adminBankName = null,
-            adminBankAccount = null,
-            adminBankHolder = null
         )
 
         val adminA = repository.getMembers(tripAId).first().first()
@@ -1709,9 +1677,6 @@ class ExampleRobolectricTest {
             startDate = 1000L,
             endDate = 2000L,
             adminName = "Admin Settle",
-            adminBankName = null,
-            adminBankAccount = null,
-            adminBankHolder = null
         )
         val originalTrip = db.tripDao().getTripByIdOnce(tripId)!!
         val settledTimestamp = 1710000000000L

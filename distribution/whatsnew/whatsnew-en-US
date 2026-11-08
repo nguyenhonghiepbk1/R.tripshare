@@ -1,6 +1,6 @@
 TripFinance v20.0:
-• Full 16 KB page-size compatibility on Android 15+ with modern SQLCipher 4.6.1.
-• Cross-trip data integrity: Multi-layer validation for members and expense splits.
-• Thread-safe & stateless settlement engine for flawless zero-discrepancy balancing.
-• Privacy-first AI insights: Explicit user consent dialog & 100% offline local engine.
-• Cleaned unused code, optimized ProGuard/R8 shrinking, and improved startup speed.
+• Group expense tracking, flexible split options, debt reconciliation, and transfer suggestions.
+• Added "Transferred" checkbox for settlement suggestions (editable even on settled trips).
+• Multi-sheet Excel (.xlsx) export with formula injection protection and standard A4 PDF reports.
+• JSON backup with optional AES-GCM + 600,000-iteration PBKDF2 passphrase encryption.
+• 100% Offline-only operation, zero internet permissions, local SQLCipher AES-256 encrypted database.

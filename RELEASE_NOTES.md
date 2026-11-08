@@ -17,71 +17,64 @@
 
 ---
 
-## 🚀 Tóm Tắt Phát Hành Cho Google Play Console (Copy-Paste Ready)
+## 🚀 Tóm Tắt Phát Hành Cho Google Play Console (Dưới 500 ký tự)
 
-### 🇻🇳 Tiếng Việt (`vi-VN`) — Dưới 500 ký tự:
 ```text
 TripFinance v20.0:
-• Hoạt động ngoại tuyến 100%, bảo vệ dữ liệu cục bộ với CSDL mã hóa SQLCipher AES-256.
-• Quản lý khóa an toàn qua KeyProvider và sao lưu mã hóa PBKDF2 600.000 vòng lặp.
-• Tối ưu hóa hiệu năng: Xử lý tính toán quyết toán trên Dispatchers.Default, xuất báo cáo PDF đa luồng mượt mà.
-• Giao diện Material Design 3 hiện đại hỗ trợ đầy đủ chế độ Sáng và Tối (Light/Dark mode).
-• Chuẩn hóa quyết toán bù trừ công nợ tối ưu, tinh gọn trải nghiệm sử dụng.
+• Ghi nhận chi tiêu đoàn, chia tiền linh hoạt, đối soát công nợ và gợi ý chuyển khoản tối ưu.
+• Thêm checkbox "Đã chuyển" cho từng gợi ý chuyển khoản (hoạt động cả khi đoàn đã khóa sổ).
+• Xuất báo cáo Excel (.xlsx) đa sheet có chống chèn công thức và báo cáo PDF chuẩn A4.
+• Sao lưu định dạng JSON với tùy chọn mã hóa mật khẩu AES-GCM kết hợp PBKDF2 600.000 vòng lặp.
+• Vận hành ngoại tuyến 100%, không quyền INTERNET, mã hóa CSDL cục bộ SQLCipher AES-256.
 ```
-*(Độ dài: 462/500 ký tự)*
-
----
-
-### 🇺🇸 Tiếng Anh (`en-US`) — Under 500 characters:
-```text
-TripFinance v20.0:
-• 100% Offline-only operation with local SQLCipher AES-256 encrypted database.
-• Enhanced security with modular KeyProvider and 600,000-iteration PBKDF2 encrypted backups.
-• Performance optimizations: Background debt netting on Dispatchers.Default and asynchronous PDF report exports.
-• Polished Material Design 3 UI with full Light and Dark mode semantic theming.
-• Streamlined min-transfers debt netting settlement workflow.
-```
-*(Length: 423/500 characters)*
+*(Độ dài: 489/500 ký tự)*
 
 ---
 
 ## 🌟 Chi Tiết Các Cải Tiến & Tính Năng Trong Phiên Bản 20.0
 
-### 1. Tách Biệt Khóa & Bảo Mật Sao Lưu (Key Management & Crypto Architecture)
-- **Kiến trúc KeyProvider:** Tách cơ chế cung cấp khóa giải mã cơ sở dữ liệu qua giao diện `KeyProvider` độc lập, bảo đảm nguyên tắc fail-closed trong môi trường production (không tạo khóa dự phòng mặc định khi thiếu thông tin xác thực phần cứng).
-- **Sao lưu mã hóa tăng cường:** Nâng cấp cơ chế sao lưu tệp dữ liệu (`BackupCryptoUtils`) với hàm dẫn xuất khóa PBKDF2-HMAC-SHA256 đạt 600.000 vòng lặp theo tiêu chuẩn an mật hiện đại kết hợp mã hóa khối AES-GCM.
-- **Không có quyền INTERNET:** Ứng dụng không khai báo quyền `android.permission.INTERNET` trong manifest; mọi thao tác tính toán, lưu trữ và sao lưu đều diễn ra cục bộ trong thiết bị.
+### 1. Quản Lý Chi Tiêu Đoàn & Gợi Ý Chuyển Khoản
+- **Ghi nhận & phân chia chi phí:** Hỗ trợ chia đều, chia theo người tham gia thực tế, chia theo số tiền cố định hoặc tỷ lệ phần trăm tùy chỉnh.
+- **Quản lý Quỹ đoàn:** Theo dõi chi tiết các đợt nộp quỹ, chi tiêu trực tiếp từ quỹ hoặc cá nhân chi hộ.
+- **Đối soát công nợ & Gợi ý chuyển khoản:** Tự động tính toán số dư ròng và đưa ra gợi ý chuyển khoản tối ưu giữa các thành viên.
+- **Checkbox "Đã chuyển":** Cho phép đánh dấu trạng thái đã hoàn thành chuyển khoản cho từng dòng gợi ý (lưu trong cơ sở dữ liệu Room v6, không làm thay đổi số liệu tài chính đối soát, cho phép đánh dấu ngay cả khi đoàn đã khóa sổ).
+- **Phạm vi tài chính minh bạch:** Ứng dụng **KHÔNG** lưu/nhập/xuất số tài khoản ngân hàng, **KHÔNG** tạo mã QR chuyển khoản, và **KHÔNG** thực hiện hay xử lý bất kỳ giao dịch tiền tệ nào.
 
-### 2. Tối Ưu Hóa Đa Luồng & Báo Cáo PDF (Reactive Dispatchers & Safe PDF Export)
-- **Tính toán quyết toán trên luồng nền:** Chuyển đổi toàn bộ logic tính toán bù trừ công nợ và tổng hợp báo cáo tài chính trong `TripFinanceViewModel` sang `Dispatchers.Default` thông qua `flowOn(Dispatchers.Default)`, giúp giao diện chính luôn mượt mà.
-- **Xuất PDF an toàn & Quản lý tài nguyên xác định:** Chuyển hàm `PdfReportExporter.exportAndSharePdf` sang chạy bất đồng bộ với `withContext(Dispatchers.IO)` và hiển thị trạng thái tải (progress indicator). Quản lý giải phóng tài nguyên `PdfDocument` và luồng ghi tệp bằng khối `use{}` / `try-finally` chặt chẽ.
-- **Tự động dọn dẹp bộ nhớ đệm:** Tự động phát hiện và xóa các tệp báo cáo PDF tạm trong thư mục `cache/reports` cũ hơn 24 giờ mỗi khi mở ứng dụng.
+### 2. Xuất Báo Cáo Tài Chính & Sao Lưu Dữ Liệu
+- **Báo cáo Excel (.xlsx) chuẩn OpenXML:** Xuất 5 sheet chi tiết (Tổng quan, Chi tiêu, Theo thành viên, Quỹ chung, Gợi ý chuyển khoản). Tích hợp cơ chế tự động ngăn chặn tiêm công thức (Formula Injection Protection) bằng cách thêm dấu nháy đơn `'` cho các ô bắt đầu bằng `=`, `+`, `-`, `@`.
+- **Báo cáo PDF chuẩn A4:** Định dạng trang trọng, có phân trang, bảng biểu thu chi và bảng đối soát công nợ rõ ràng.
+- **Sao lưu & Khôi phục JSON:** Hỗ trợ tùy chọn mã hóa tệp sao lưu bằng thuật toán AES-GCM kết hợp hàm dẫn xuất khóa PBKDF2 (600.000 vòng lặp) theo khuyến nghị bảo mật. Tương thích ngược hoàn toàn với các bản sao lưu từ các phiên bản trước.
 
-### 3. Tối Ưu Hóa Hiển Thị Danh Sách (List Stability & Memoization)
-- **Khóa phần tử ổn định (Stable Keys):** Bổ sung thuộc tính `key = { it.id }` vào toàn bộ các danh sách `LazyColumn` (chi tiêu, thành viên, khoản nộp quỹ, giao dịch bù trừ) giúp Compose tái sử dụng composable hiệu quả và chống giật lag khi cuộn.
-- **Ghi nhớ bảng phân bổ chi phí:** Trong `ExpensesScreen`, nhóm và ánh xạ danh sách phân bổ `splits` trước một lần bằng `remember(allSplits)` thay vì lọc lặp lại trong từng hàng của danh sách.
+### 3. Bảo Vệ Dữ Liệu Cục Bộ & Cơ Sở Dữ Liệu
+- **Không có quyền INTERNET:** Hoàn toàn không khai báo quyền mạng trong `AndroidManifest.xml`, mọi dữ liệu được lưu trữ cục bộ trong sandbox ứng dụng.
+- **Mã hóa CSDL SQLCipher AES-256:** Bảo vệ cơ sở dữ liệu SQLite cục bộ với khóa ngẫu nhiên lưu trữ an toàn trong Android KeyStore.
+- **Toàn vẹn dữ liệu qua SQLite Triggers:** Hệ thống triggers kiểm tra ràng buộc thành viên đa đoàn và niêm phong dữ liệu tài chính khi đoàn đã khóa sổ (`isSettled = 1`).
 
-### 4. Chuẩn Hóa Giao Diện Material Design 3 & Semantic Colors
-- **Bảng màu ngữ nghĩa toàn diện:** Thay thế toàn bộ các mã màu cứng trong UI bằng màu sắc hệ thống `MaterialTheme.colorScheme` và bảng màu ngữ nghĩa mở rộng (`extendedColorScheme` gồm các biến trạng thái success, warning, danger, textMuted, cardBorder) thích ứng đồng bộ trên cả chế độ Giao diện Sáng (Light Mode) và Giao diện Tối (Dark Mode).
-- **Hệ thống kiểu chữ M3:** Áp dụng thống nhất các thang tỷ lệ typography chuẩn của Material 3 (`titleLarge`, `titleMedium`, `bodyMedium`, `labelSmall`...).
-- **Khả năng tiếp cận & Điều hướng:** Bổ sung mô tả ngôn ngữ cụ thể cho tất cả các Icon tương tác (`contentDescription`) và tích hợp `BackHandler` cho màn hình Hướng dẫn sử dụng cũng như các hộp thoại toàn màn hình.
-
-### 5. Chuẩn Hóa Trải Nghiệm Quyết Toán Bù Trừ Công Nợ
-- **Tối giản & Độc lập:** Loại bỏ hoàn toàn sự phụ thuộc vào các dịch vụ bên ngoài và chuyển khoản ngân hàng; chuyển toàn bộ luồng quyết toán sang mô hình **Bù trừ công nợ tối ưu (Debt Netting)**.
-- **Minh bạch thông tin:** Mỗi khoản bù trừ hiển thị rõ ràng người nộp bù, người nhận, số tiền cần bù và nội dung đối soát chuẩn kèm nút sao chép nhanh.
+### 4. Giao Diện & Trải Nghiệm Người Dùng
+- **Material Design 3:** Thiết kế giao diện hiện đại, trực quan, hỗ trợ đầy đủ chế độ Sáng và Tối (Light/Dark mode).
+- **Điều hướng & Khả năng tiếp cận:** Tích hợp `BackHandler` cho màn hình Hướng dẫn sử dụng và các hộp thoại toàn màn hình để nút quay lại đóng đúng màn hình thay vì thoát ứng dụng. Bổ sung mô tả ngắn cho các biểu tượng tương tác (`contentDescription`).
 
 ---
 
-## 🛠 Hướng Dẫn Kiểm Thử & Biên Dịch Bản Phát Hành
+## 🛠 Hướng Dẫn Biên Dịch & Kiểm Thử
 
-1. **Chạy kiểm thử cục bộ (Unit Test & Compose UI Test):**
+1. **Chạy kiểm thử đơn vị cục bộ (Unit Tests & Robolectric Tests):**
    ```bash
-   gradle :app:testDebugUnitTest
+   ./gradlew :app:testDebugUnitTest
    ```
-   *(Tất cả bài kiểm thử logic, repository, key provider và Compose screenshot đều vượt qua thành công).*
 
-2. **Biên dịch Android App Bundle (AAB):**
+2. **Biên dịch bản Debug (APK):**
    ```bash
-   gradle :app:bundleRelease
+   ./gradlew :app:assembleDebug
+   ```
+
+3. **Biên dịch bản Release (APK):**
+   ```bash
+   ./gradlew :app:assembleRelease
+   ```
+
+4. **Biên dịch Android App Bundle (AAB):**
+   ```bash
+   ./gradlew :app:bundleRelease
    ```
    Tệp xuất ra tại: `app/build/outputs/bundle/release/app-release.aab`

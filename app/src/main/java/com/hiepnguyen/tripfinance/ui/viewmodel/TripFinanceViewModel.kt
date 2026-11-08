@@ -508,9 +508,6 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         startDate: Long,
         endDate: Long,
         adminName: String,
-        adminBankName: String?,
-        adminBankAccount: String?,
-        adminBankHolder: String?,
         baseCurrency: String = "VND"
     ) {
         viewModelScope.launch {
@@ -522,9 +519,6 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     startDate = startDate,
                     endDate = endDate,
                     adminName = adminName,
-                    adminBankName = adminBankName,
-                    adminBankAccount = adminBankAccount,
-                    adminBankHolder = adminBankHolder,
                     baseCurrency = baseCurrency
                 )
                 _currentTripId.value = newTripId

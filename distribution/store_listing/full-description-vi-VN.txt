@@ -1,0 +1,40 @@
+TripFinance là ứng dụng quản lý tài chính ngoại tuyến dành cho các chuyến du lịch nhóm, đoàn công tác, sự kiện gia đình hoặc hội bạn bè. Ứng dụng giúp bạn xóa bỏ phiền toái khi ghi chép sổ sách thủ công, phân chia chi phí phức tạp và đối soát công nợ sau mỗi chuyến đi.
+
+CÁC TÍNH NĂNG CHÍNH:
+
+1. GHI NHẬN THU CHI & PHÂN CHIA CHI PHÍ LINH HOẠT
+• Ghi nhận các khoản chi tiêu theo danh mục, người thanh toán, số tiền và thời gian.
+• Chia đều cho tất cả mọi người hoặc chỉ những người cùng tham gia khoản chi.
+• Chia theo số tiền cụ thể hoặc theo tỷ lệ phần trăm tùy chỉnh với thuật toán phân bổ phần dư tự động.
+• Hỗ trợ một người chi hộ nhiều người hoặc chi trực tiếp từ Quỹ chung của đoàn.
+
+2. QUẢN LÝ QUỸ CHUNG ĐOÀN
+• Theo dõi chi tiết từng đợt đóng quỹ của các thành viên.
+• Chi tiêu trực tiếp từ quỹ đoàn với tính năng kiểm tra số dư khả dụng tức thời.
+• Tự động tính toán phần quỹ còn dư để hoàn lại khi kết thúc chuyến đi.
+
+3. ĐỐI SOÁT CÔNG NỢ & GỢI Ý CHUYỂN KHOẢN TỐI ƯU
+• Thuật toán bù trừ công nợ tự động tính toán số dư ròng của từng thành viên, rút gọn số lượt giao dịch cần thiết xuống mức tối thiểu.
+• Đưa ra gợi ý chuyển khoản rõ ràng: người gửi, người nhận, số tiền và nội dung đối soát.
+• Hỗ trợ checkbox "Đã chuyển" trên từng dòng gợi ý để theo dõi tiến độ thanh toán (hoạt động bình thường cả khi đoàn đã khóa sổ).
+• Lưu ý: Ứng dụng chỉ đưa ra gợi ý tính toán trên màn hình, KHÔNG lưu/nhập số tài khoản ngân hàng, KHÔNG tạo mã QR và KHÔNG thực hiện hay xử lý bất kỳ giao dịch tiền tệ nào.
+
+4. HỖ TRỢ ĐA TIỀN TỆ & TỶ GIÁ TÙY CHỈNH
+• Nhập chi tiêu bằng nhiều loại tiền tệ (USD, EUR, JPY, KRW, THB, SGD...).
+• Quy đổi ra VND theo tỷ giá tham khảo hoặc tỷ giá người dùng tự thiết lập.
+
+5. BẢO VỆ DỮ LIỆU CỤC BỘ & 100% NGOẠI TUYẾN
+• Hoàn toàn không cần kết nối Internet: Ứng dụng không yêu cầu quyền INTERNET trong hệ thống, hoạt động bình thường trên máy bay hoặc vùng không có sóng di động.
+• Cơ sở dữ liệu SQLite được mã hóa cục bộ bằng SQLCipher (AES-256) kết hợp quản lý khóa Android KeyStore.
+• Tính năng xuất/nhập sao lưu định dạng JSON với tùy chọn mã hóa mật khẩu (sử dụng thuật toán AES-GCM và PBKDF2 600.000 vòng lặp).
+
+6. XUẤT BÁO CÁO TÀI CHÍNH ĐA DẠNG
+• Bảng tính Microsoft Excel (.xlsx) đa sheet chuẩn OpenXML (Tổng quan, Chi tiêu, Theo thành viên, Quỹ chung, Gợi ý chuyển khoản) tích hợp cơ chế chống tiêm công thức (Formula Injection Protection).
+• Tệp báo cáo PDF chuẩn A4 trình bày trang trọng, đầy đủ bảng kê thu chi và phân bổ công nợ.
+• Báo cáo tóm tắt văn bản dễ dàng sao chép để gửi nhanh qua tin nhắn.
+
+7. CỐ VẤN CHI TIÊU NỘI BỘ (LOCAL SPENDING ADVISOR)
+• Phân tích cơ cấu chi tiêu theo danh mục (ăn uống, đi lại, lưu trú, vé tham quan...).
+• Tính toán trực tiếp trên vi xử lý của thiết bị, dữ liệu không rời khỏi điện thoại.
+
+TripFinance đồng hành cùng bạn để mọi chuyến đi luôn vui vẻ và tài chính luôn minh bạch, rõ ràng!
