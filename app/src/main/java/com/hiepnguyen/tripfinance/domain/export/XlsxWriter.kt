@@ -465,14 +465,19 @@ class XlsxWriter(private val outputStream: OutputStream) : Closeable, AutoClosea
                     when (cellValue) {
                         is CellValue.Text -> {
                             val sanitizedXml = sanitizeTextForXml(cellValue.text)
-                            append("""<c r="$cellRef"$styleAttr t="inlineStr"><is><t>$sanitizedXml</t></is></c>""")
+                            append("""<c r="$cellRef"$styleAttr t="inlineStr"><is><t xml:space="preserve">$sanitizedXml</t></is></c>""")
                         }
                         is CellValue.IntNumber -> {
                             append("""<c r="$cellRef"$styleAttr><v>${cellValue.value}</v></c>""")
                         }
                         is CellValue.DecNumber -> {
-                            val formattedVal = String.format(Locale.US, "%.4f", cellValue.value).trimEnd('0').trimEnd('.')
-                            append("""<c r="$cellRef"$styleAttr><v>$formattedVal</v></c>""")
+                            if (!cellValue.value.isFinite()) {
+                                // Nếu giá trị không hữu hạn (NaN/Infinity) thì ghi ô trống
+                                append("""<c r="$cellRef"$styleAttr/>""")
+                            } else {
+                                val formattedVal = String.format(Locale.US, "%.4f", cellValue.value).trimEnd('0').trimEnd('.')
+                                append("""<c r="$cellRef"$styleAttr><v>$formattedVal</v></c>""")
+                            }
                         }
                     }
                 }
@@ -494,6 +499,7 @@ class XlsxWriter(private val outputStream: OutputStream) : Closeable, AutoClosea
     }
 
     private fun formatDecLength(value: Double): Int {
+        if (!value.isFinite()) return 0
         val s = String.format(Locale.US, "%,.2f", value)
         return s.length
     }
@@ -545,16 +551,17 @@ class XlsxWriter(private val outputStream: OutputStream) : Closeable, AutoClosea
 
         /**
          * Làm sạch chuỗi văn bản cho ô:
-         * 1. Phòng chống Formula Injection: Nếu chuỗi bắt đầu bằng `=`, `+`, `-`, `@`, tự động thêm dấu nháy đơn `'` ở đầu.
+         * 1. Phòng chống Formula Injection: Nếu chuỗi bắt đầu bằng `=`, `+`, `-`, `@`, `\t` (tab), `\r` (CR), tự động thêm dấu nháy đơn `'` ở đầu.
          * 2. Thoát 5 ký tự đặc biệt của XML: `&`, `<`, `>`, `"`, `'`.
          * 3. Loại bỏ các ký tự điều khiển không hợp lệ trong đặc tả XML 1.0 (ví dụ \u0000..\u0008, \u000B, \u000C, \u000E..\u001F).
          */
         fun sanitizeTextForXml(input: String): String {
             if (input.isEmpty()) return ""
 
-            // 1. Chống Formula Injection
+            // 1. Chống Formula Injection (kể cả bắt đầu bằng tab hoặc CR)
             val formulaSafe = if (input.startsWith("=") || input.startsWith("+") ||
-                input.startsWith("-") || input.startsWith("@")
+                input.startsWith("-") || input.startsWith("@") ||
+                input.startsWith("\t") || input.startsWith("\r")
             ) {
                 "'$input"
             } else {

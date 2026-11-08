@@ -432,5 +432,30 @@ class ExampleUnitTest {
         assertFalse("SettlementTransfer không được chứa bankAccount", transferFields.contains("bankAccount"))
         assertFalse("SettlementTransfer không được chứa qrUrl", transferFields.contains("qrUrl"))
     }
+
+    @Test
+    fun `test sanitizeTitleForFileName strips Vietnamese diacritics and enforces 40 char limit`() {
+        // 1. Tiếng Việt có dấu: chuẩn hóa NFD, bỏ dấu giữ chữ cái
+        val title1 = "Chuyến đi Hà Nội - Hạ Long"
+        val sanitized1 = com.hiepnguyen.tripfinance.domain.export.PdfReportExporter.sanitizeTitleForFileName(title1)
+        assertEquals("Chuyen_di_Ha_Noi___Ha_Long", sanitized1)
+        assertFalse("Không được chứa ký tự có dấu", sanitized1.contains("ế") || sanitized1.contains("à") || sanitized1.contains("ạ"))
+
+        // 2. Chữ đ và Đ
+        val title2 = "Đà Nẵng Đồng Nai"
+        val sanitized2 = com.hiepnguyen.tripfinance.domain.export.PdfReportExporter.sanitizeTitleForFileName(title2)
+        assertEquals("Da_Nang_Dong_Nai", sanitized2)
+
+        // 3. Giới hạn 40 ký tự
+        val longTitle = "Một chuyến đi du lịch công tác rất dài và chi tiết vượt quá bốn mươi ký tự quy định"
+        val sanitizedLong = com.hiepnguyen.tripfinance.domain.export.PdfReportExporter.sanitizeTitleForFileName(longTitle)
+        assertTrue("Độ dài phải <= 40 ký tự", sanitizedLong.length <= 40)
+        assertEquals(40, sanitizedLong.length)
+
+        // 4. Null hoặc rỗng -> "Trip"
+        assertEquals("Trip", com.hiepnguyen.tripfinance.domain.export.PdfReportExporter.sanitizeTitleForFileName(null))
+        assertEquals("Trip", com.hiepnguyen.tripfinance.domain.export.PdfReportExporter.sanitizeTitleForFileName(""))
+        assertEquals("Trip", com.hiepnguyen.tripfinance.domain.export.PdfReportExporter.sanitizeTitleForFileName("   "))
+    }
 }
 

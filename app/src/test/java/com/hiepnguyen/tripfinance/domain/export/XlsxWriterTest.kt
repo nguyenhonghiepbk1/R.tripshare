@@ -362,4 +362,105 @@ class XlsxWriterTest {
         assertEquals("AZ", XlsxWriter.getColumnName(52))
         assertEquals("BA", XlsxWriter.getColumnName(53))
     }
+
+    @Test
+    fun `test Non-finite DecNumber values NaN and Infinity are written as empty cell without NaN or Infinity string`() {
+        val bos = ByteArrayOutputStream()
+        XlsxWriter(bos).use { writer ->
+            writer.sheet("NonFinite") {
+                headerRow("Label", "Col_Invalid1", "Col_Invalid2", "Col_Invalid3", "Valid_Val")
+                row {
+                    cell("Row1")
+                    decimalCell(Double.NaN)
+                    decimalCell(Double.POSITIVE_INFINITY)
+                    decimalCell(Double.NEGATIVE_INFINITY)
+                    decimalCell(123.45)
+                }
+            }
+        }
+
+        val zis = ZipInputStream(ByteArrayInputStream(bos.toByteArray()))
+        var sheetXml: String? = null
+        var entry = zis.nextEntry
+        while (entry != null) {
+            if (entry.name == "xl/worksheets/sheet1.xml") {
+                sheetXml = String(zis.readBytes(), Charsets.UTF_8)
+                break
+            }
+            zis.closeEntry()
+            entry = zis.nextEntry
+        }
+
+        assertNotNull("sheet1.xml must exist", sheetXml)
+        // XML không được chứa chuỗi NaN, Infinity hoặc -Infinity
+        assertFalse("Must not contain literal NaN", sheetXml!!.contains("NaN"))
+        assertFalse("Must not contain literal Infinity", sheetXml.contains("Infinity"))
+        // Giá trị hợp lệ vẫn phải xuất hiện
+        assertTrue("Must contain valid 123.45", sheetXml.contains("<v>123.45</v>"))
+    }
+
+    @Test
+    fun `test xml space preserve attribute is present on text elements`() {
+        val bos = ByteArrayOutputStream()
+        XlsxWriter(bos).use { writer ->
+            writer.sheet("Spaces") {
+                headerRow("  Cột có khoảng trắng  ")
+                row("  Nội dung giữ nguyên khoảng trắng  ")
+            }
+        }
+
+        val zis = ZipInputStream(ByteArrayInputStream(bos.toByteArray()))
+        var sheetXml: String? = null
+        var entry = zis.nextEntry
+        while (entry != null) {
+            if (entry.name == "xl/worksheets/sheet1.xml") {
+                sheetXml = String(zis.readBytes(), Charsets.UTF_8)
+                break
+            }
+            zis.closeEntry()
+            entry = zis.nextEntry
+        }
+
+        assertNotNull(sheetXml)
+        assertTrue("Text elements must contain xml:space=\"preserve\"", sheetXml!!.contains("""<t xml:space="preserve">"""))
+    }
+
+    @Test
+    fun `test Formula injection prevention handles leading tab and carriage return characters`() {
+        val tabPayload = "\t=CMD|' /C calc'!A0"
+        val crPayload = "\r+12345"
+        val tabText = "\tSimple tabbed text"
+        val crText = "\rCarriage returned"
+
+        // sanitizeTextForXml chèn nháy đơn ở đầu, sau đó escapeXml biến ' thành &apos;
+        assertTrue(XlsxWriter.sanitizeTextForXml(tabPayload).startsWith("&apos;"))
+        assertTrue(XlsxWriter.sanitizeTextForXml(crPayload).startsWith("&apos;"))
+        assertTrue(XlsxWriter.sanitizeTextForXml(tabText).startsWith("&apos;"))
+        assertTrue(XlsxWriter.sanitizeTextForXml(crText).startsWith("&apos;"))
+
+        val bos = ByteArrayOutputStream()
+        XlsxWriter(bos).use { writer ->
+            writer.sheet("TabCrSecurity") {
+                headerRow("Mục", "Payload")
+                row("TabAttack", tabPayload)
+                row("CrAttack", crPayload)
+            }
+        }
+
+        val zis = ZipInputStream(ByteArrayInputStream(bos.toByteArray()))
+        var sheetXml: String? = null
+        var entry = zis.nextEntry
+        while (entry != null) {
+            if (entry.name == "xl/worksheets/sheet1.xml") {
+                sheetXml = String(zis.readBytes(), Charsets.UTF_8)
+                break
+            }
+            zis.closeEntry()
+            entry = zis.nextEntry
+        }
+
+        assertNotNull(sheetXml)
+        assertFalse("Must never output <f> formula tag", sheetXml!!.contains("<f>"))
+        assertTrue("Must contain sanitized tab payload with leading quote", sheetXml.contains("'$tabPayload") || sheetXml.contains("&apos;\t=CMD"))
+    }
 }

@@ -826,15 +826,21 @@ abstract class AppDatabase : RoomDatabase() {
             // - Khi đoàn đã khóa sổ: CHO PHÉP đánh dấu cột trạng thái isCompleted,
             //   nhưng KHÓA CHẶT mọi cột tài chính khác (amount, fromMemberId, toMemberId, tripId, transferNote),
             //   và CHẶN xóa bản ghi gợi ý chuyển khoản.
-            db.execSQL("""
-                CREATE TRIGGER IF NOT EXISTS trg_check_settlement_transfer_insert
-                BEFORE INSERT ON settlement_transfers
-                BEGIN
-                    SELECT CASE
-                        WHEN NEW.amount < 0 THEN RAISE(ABORT, 'CHECK CONSTRAINT FAILED: transfer amount cannot be negative')
+            val hasSettlementTransfers = try {
+                db.query("SELECT 1 FROM sqlite_master WHERE type='table' AND name='settlement_transfers'").use { it.moveToFirst() }
+            } catch (e: Exception) {
+                false
+            }
+            if (hasSettlementTransfers) {
+                db.execSQL("""
+                    CREATE TRIGGER IF NOT EXISTS trg_check_settlement_transfer_insert
+                    BEFORE INSERT ON settlement_transfers
+                    BEGIN
+                        SELECT CASE
+                            WHEN NEW.amount < 0 THEN RAISE(ABORT, 'CHECK CONSTRAINT FAILED: transfer amount cannot be negative')
+                        END;
                     END;
-                END;
-            """.trimIndent())
+                """.trimIndent())
 
             db.execSQL("""
                 CREATE TRIGGER IF NOT EXISTS trg_check_settlement_transfer_update
@@ -863,16 +869,17 @@ abstract class AppDatabase : RoomDatabase() {
                 END;
             """.trimIndent())
 
-            db.execSQL("""
-                CREATE TRIGGER IF NOT EXISTS trg_prevent_settlement_transfer_delete_when_settled
-                BEFORE DELETE ON settlement_transfers
-                BEGIN
-                    SELECT CASE
-                        WHEN (SELECT isSettled FROM trips WHERE id = OLD.tripId) = 1
-                            THEN RAISE(ABORT, 'SETTLEMENT LOCKED: Chuyến đi đã khóa sổ quyết toán. Không thể xóa gợi ý chuyển khoản!')
+                db.execSQL("""
+                    CREATE TRIGGER IF NOT EXISTS trg_prevent_settlement_transfer_delete_when_settled
+                    BEFORE DELETE ON settlement_transfers
+                    BEGIN
+                        SELECT CASE
+                            WHEN (SELECT isSettled FROM trips WHERE id = OLD.tripId) = 1
+                                THEN RAISE(ABORT, 'SETTLEMENT LOCKED: Chuyến đi đã khóa sổ quyết toán. Không thể xóa gợi ý chuyển khoản!')
+                        END;
                     END;
-                END;
-            """.trimIndent())
+                """.trimIndent())
+            }
         }
     }
 }

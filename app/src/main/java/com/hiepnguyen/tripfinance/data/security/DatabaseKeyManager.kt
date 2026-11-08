@@ -258,9 +258,8 @@ class InMemoryKeyProvider(
 object DatabaseKeyManager : KeyProvider {
 
     @Volatile
-    var keyProvider: KeyProvider = AndroidKeyStoreKeyProvider()
-        @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-        internal set
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    internal var keyProvider: KeyProvider = AndroidKeyStoreKeyProvider()
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     internal fun resetKeyProvider() {

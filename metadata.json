@@ -2,5 +2,5 @@
   "name": "R.Trip share",
   "description": "Quản lý tài chính đoàn công tác và du lịch: theo dõi thu chi, phân bổ chi phí, quản lý quỹ và quyết toán tối ưu",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

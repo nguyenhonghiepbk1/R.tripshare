@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
+import java.text.Normalizer
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -33,6 +34,22 @@ object PdfReportExporter {
 
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("vi", "VN"))
     private val dateOnlyFormat = SimpleDateFormat("dd/MM/yyyy", Locale("vi", "VN"))
+
+    /**
+     * Chuẩn hóa tên chuyến đi để đặt tên file xuất (PDF/XLSX):
+     * - Giữ chữ cái tiếng Việt bằng cách chuẩn hóa NFD, bỏ dấu (kể cả đ/Đ)
+     * - Thay ký tự không hợp lệ bằng "_"
+     * - Giới hạn tối đa 40 ký tự
+     */
+    fun sanitizeTitleForFileName(rawTitle: String?): String {
+        val base = rawTitle?.trim()?.ifEmpty { "Trip" } ?: "Trip"
+        val nfd = Normalizer.normalize(base, Normalizer.Form.NFD)
+        val withoutMarks = nfd.replace("\\p{InCombiningDiacriticalMarks}+".toRegex(), "")
+            .replace('đ', 'd')
+            .replace('Đ', 'D')
+        val sanitized = withoutMarks.replace("[^a-zA-Z0-9]".toRegex(), "_").ifEmpty { "Trip" }
+        return if (sanitized.length > 40) sanitized.take(40) else sanitized
+    }
 
     /**
      * Dọn dẹp các tệp báo cáo (PDF, XLSX) cũ hơn 24 giờ trong thư mục cache/reports khi ứng dụng khởi động
@@ -599,7 +616,7 @@ object PdfReportExporter {
 
             // Write PDF to cache directory
             val reportsDir = File(context.cacheDir, "reports").apply { if (!exists()) mkdirs() }
-            val sanitizeTripTitle = (trip?.title ?: "Trip").replace("[^a-zA-Z0-9]".toRegex(), "_")
+            val sanitizeTripTitle = sanitizeTitleForFileName(trip?.title)
             val prefix = if (language == AppLanguage.VI) "BaoCaoQuyetToan" else "SettlementReport"
             val pdfFile = File(reportsDir, "${prefix}_${sanitizeTripTitle}_${System.currentTimeMillis()}.pdf")
             
@@ -662,7 +679,7 @@ object PdfReportExporter {
     ): File? = withContext(Dispatchers.IO) {
         try {
             val reportsDir = File(context.cacheDir, "reports").apply { if (!exists()) mkdirs() }
-            val sanitizeTripTitle = (trip?.title ?: "Trip").replace("[^a-zA-Z0-9]".toRegex(), "_")
+            val sanitizeTripTitle = sanitizeTitleForFileName(trip?.title)
             val dateStr = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
             val prefix = if (language == AppLanguage.VI) "BaoCaoExcel" else "SettlementExcel"
             val xlsxFile = File(reportsDir, "${prefix}_${sanitizeTripTitle}_${dateStr}.xlsx")
