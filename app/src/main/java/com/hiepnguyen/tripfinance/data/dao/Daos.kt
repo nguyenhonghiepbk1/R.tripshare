@@ -33,6 +33,9 @@ interface TripDao {
     @Query("UPDATE trips SET isSettled = 0, settledAt = NULL, version = version + 1 WHERE id = :tripId AND version = :expectedVersion AND isSettled = 1")
     suspend fun reopenSettlementWithOptimisticLock(tripId: String, expectedVersion: Long): Int
 
+    @Query("UPDATE trips SET isSettled = 0 WHERE id = :tripId")
+    suspend fun unlockTripForDeletion(tripId: String)
+
     @Query("DELETE FROM trips WHERE id = :tripId")
     suspend fun deleteTripById(tripId: String)
 }
@@ -202,6 +205,9 @@ interface SettlementDao {
 
     @Query("SELECT * FROM settlement_snapshots WHERE tripId = :tripId ORDER BY createdAt DESC")
     fun getSnapshotsByTrip(tripId: String): Flow<List<SettlementSnapshotEntity>>
+
+    @Query("SELECT * FROM settlement_snapshots WHERE tripId = :tripId ORDER BY createdAt DESC")
+    suspend fun getSnapshotsByTripOnce(tripId: String): List<SettlementSnapshotEntity>
 
     @Query("SELECT * FROM settlement_snapshots WHERE id = :snapshotId LIMIT 1")
     suspend fun getSnapshotById(snapshotId: String): SettlementSnapshotEntity?

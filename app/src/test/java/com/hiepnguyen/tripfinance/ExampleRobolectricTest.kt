@@ -2688,6 +2688,399 @@ class ExampleRobolectricTest {
         assertNotNull(restoredLegacyTrip)
         assertEquals("Đoàn Backup Cũ", restoredLegacyTrip?.title)
     }
+
+    @Test
+    fun `test migration from v4 to latest v6 preserves all data without bank columns and foreign key check is clean`(): Unit = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val dbFile = context.getDatabasePath("test_migration_v4_all_entities.db")
+        if (dbFile.exists()) dbFile.delete()
+
+        // 1. Tạo SQLite CSDL v4 chứa đầy đủ đoàn, thành viên (có 3 cột ngân hàng), chi tiêu, splits, quỹ, snapshots, tỷ giá, audit logs
+        val sqlite = android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(dbFile, null)
+        sqlite.version = 4
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `trips` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `joinCode` TEXT NOT NULL, `startDate` INTEGER NOT NULL, `endDate` INTEGER NOT NULL, `baseCurrency` TEXT NOT NULL, `isSettled` INTEGER NOT NULL, `settledAt` INTEGER, `createdAt` INTEGER NOT NULL, `version` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+        sqlite.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_trips_joinCode` ON `trips` (`joinCode`)")
+        sqlite.execSQL("""
+            CREATE TABLE IF NOT EXISTS `trip_members` (
+                `id` TEXT NOT NULL,
+                `tripId` TEXT NOT NULL,
+                `userId` TEXT NOT NULL,
+                `name` TEXT NOT NULL,
+                `role` TEXT NOT NULL,
+                `isActive` INTEGER NOT NULL,
+                `bankName` TEXT,
+                `bankAccount` TEXT,
+                `bankAccountHolder` TEXT,
+                `joinedAt` INTEGER NOT NULL,
+                PRIMARY KEY(`id`),
+                FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+            )
+        """.trimIndent())
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `expenses` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `title` TEXT NOT NULL, `category` TEXT NOT NULL, `payerType` TEXT NOT NULL, `payerMemberId` TEXT, `totalAmount` REAL NOT NULL, `currency` TEXT NOT NULL, `exchangeRate` REAL NOT NULL, `convertedTotalAmount` INTEGER NOT NULL, `splitType` TEXT NOT NULL, `receiptImageUri` TEXT, `note` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `createdMemberId` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`payerMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`createdMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `expense_splits` (`id` TEXT NOT NULL, `expenseId` TEXT NOT NULL, `tripId` TEXT NOT NULL, `memberId` TEXT NOT NULL, `amount` INTEGER NOT NULL, `percentage` REAL, PRIMARY KEY(`id`), FOREIGN KEY(`expenseId`) REFERENCES `expenses`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`memberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `fund_contributions` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `memberId` TEXT NOT NULL, `amount` INTEGER NOT NULL, `currency` TEXT NOT NULL, `exchangeRate` REAL NOT NULL, `convertedAmount` INTEGER NOT NULL, `note` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `recordedByMemberId` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`memberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`recordedByMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `exchange_rates` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `currencyCode` TEXT NOT NULL, `rateToBase` REAL NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `settlement_snapshots` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `snapshotTitle` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `totalExpenses` INTEGER NOT NULL, `totalFundCollected` INTEGER NOT NULL, `totalFundSpent` INTEGER NOT NULL, `remainingFund` INTEGER NOT NULL, `settlementJson` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `audit_logs` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `actorMemberId` TEXT NOT NULL, `actorName` TEXT NOT NULL, `action` TEXT NOT NULL, `description` TEXT NOT NULL, `detailBefore` TEXT, `detailAfter` TEXT, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_trip_members_tripId` ON `trip_members` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_trip_members_tripId_name` ON `trip_members` (`tripId`, `name`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_tripId` ON `expenses` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_payerMemberId` ON `expenses` (`payerMemberId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_createdMemberId` ON `expenses` (`createdMemberId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expense_splits_expenseId` ON `expense_splits` (`expenseId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expense_splits_tripId` ON `expense_splits` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expense_splits_memberId` ON `expense_splits` (`memberId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_fund_contributions_tripId` ON `fund_contributions` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_fund_contributions_memberId` ON `fund_contributions` (`memberId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_fund_contributions_recordedByMemberId` ON `fund_contributions` (`recordedByMemberId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_exchange_rates_tripId` ON `exchange_rates` (`tripId`)")
+        sqlite.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_exchange_rates_tripId_currencyCode` ON `exchange_rates` (`tripId`, `currencyCode`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_settlement_snapshots_tripId` ON `settlement_snapshots` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_audit_logs_tripId` ON `audit_logs` (`tripId`)")
+
+        // Chèn dữ liệu mẫu
+        sqlite.execSQL("INSERT INTO `trips` VALUES('trip-full-v4', 'Đà Nẵng V4', 'Hành trình biển', 'DN-V4', 1000, 2000, 'VND', 0, NULL, 1000, 1)")
+        sqlite.execSQL("INSERT INTO `trip_members` VALUES('mem-a', 'trip-full-v4', 'u-a', 'Nguyễn Thị A', 'ADMIN', 1, 'Vietcombank', '0123456789', 'NGUYEN THI A', 1000)")
+        sqlite.execSQL("INSERT INTO `trip_members` VALUES('mem-b', 'trip-full-v4', 'u-b', 'Trần Văn B', 'MEMBER', 1, 'Techcombank', '9876543210', 'TRAN VAN B', 1100)")
+        sqlite.execSQL("INSERT INTO `expenses` VALUES('exp-1', 'trip-full-v4', 'Hải sản Mỹ Khê', 'FOOD', 'MEMBER', 'mem-a', 200000.0, 'VND', 1.0, 200000, 'EQUAL', NULL, 'Ăn tối', 1200, 'mem-a', 1200, 1)")
+        sqlite.execSQL("INSERT INTO `expense_splits` VALUES('sp-1', 'exp-1', 'trip-full-v4', 'mem-a', 100000, NULL)")
+        sqlite.execSQL("INSERT INTO `expense_splits` VALUES('sp-2', 'exp-1', 'trip-full-v4', 'mem-b', 100000, NULL)")
+        sqlite.execSQL("INSERT INTO `fund_contributions` VALUES('fc-1', 'trip-full-v4', 'mem-b', 500000, 'VND', 1.0, 500000, 'Đóng quỹ đoàn', 1300, 'mem-a')")
+        sqlite.execSQL("INSERT INTO `exchange_rates` VALUES('ex-usd', 'trip-full-v4', 'USD', 25450.0, 1000)")
+        sqlite.execSQL("INSERT INTO `settlement_snapshots` VALUES('snap-v4', 'trip-full-v4', 'Quyết toán sơ bộ', 1400, 200000, 500000, 0, 500000, '{\"total\":200000}')")
+        sqlite.execSQL("INSERT INTO `audit_logs` VALUES('log-1', 'trip-full-v4', 'mem-a', 'Nguyễn Thị A', 'CREATE_EXPENSE', 'Tạo khoản chi Hải sản Mỹ Khê', NULL, NULL, 1200)")
+        sqlite.close()
+
+        // 2. Nâng cấp lên phiên bản mới nhất v6 qua Room
+        val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration_v4_all_entities.db")
+            .addMigrations(
+                AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6,
+                AppDatabase.MIGRATION_4_6
+            )
+            .build()
+
+        // 3. Xác nhận toàn bộ dữ liệu còn nguyên vẹn
+        val trip = migratedDb.tripDao().getTripByIdOnce("trip-full-v4")
+        assertNotNull(trip)
+        assertEquals("Đà Nẵng V4", trip?.title)
+
+        val members = migratedDb.tripMemberDao().getAllMembersOnce()
+        assertEquals(2, members.size)
+        val memA = members.first { it.id == "mem-a" }
+        assertEquals("Nguyễn Thị A", memA.name)
+        assertEquals("ADMIN", memA.role)
+        assertTrue(memA.isActive)
+
+        val expenses = migratedDb.expenseDao().getAllExpensesOnce()
+        assertEquals(1, expenses.size)
+        assertEquals("Hải sản Mỹ Khê", expenses[0].title)
+        assertEquals(200000.0, expenses[0].totalAmount, 0.001)
+
+        val splits = migratedDb.expenseDao().getAllSplitsByTripOnce("trip-full-v4")
+        assertEquals(2, splits.size)
+        assertEquals(100000L, splits.first { it.memberId == "mem-a" }.amount)
+        assertEquals(100000L, splits.first { it.memberId == "mem-b" }.amount)
+
+        val funds = migratedDb.fundDao().getAllFundsOnce()
+        assertEquals(1, funds.size)
+        assertEquals(500000L, funds[0].amount)
+        assertEquals("mem-b", funds[0].memberId)
+
+        val rates = migratedDb.exchangeRateDao().getAllExchangeRatesOnce()
+        assertEquals(1, rates.size)
+        assertEquals(25450.0, rates[0].rateToBase, 0.001)
+
+        val snapshots = migratedDb.settlementDao().getAllSnapshotsOnce()
+        assertEquals(1, snapshots.size)
+        assertEquals("Quyết toán sơ bộ", snapshots[0].snapshotTitle)
+
+        val logs = migratedDb.auditLogDao().getAllAuditLogsOnce()
+        assertEquals(1, logs.size)
+        assertEquals("Tạo khoản chi Hải sản Mỹ Khê", logs[0].description)
+
+        // Bảng mới v6 settlement_transfers sẵn sàng hoạt động
+        val transfers = migratedDb.settlementDao().getAllTransfersOnce()
+        assertTrue(transfers.isEmpty())
+
+        // 4. Xác nhận PRAGMA foreign_key_check trả về rỗng (tất cả foreign keys đều toàn vẹn)
+        val fkCursor = migratedDb.openHelper.writableDatabase.query("PRAGMA foreign_key_check")
+        val fkViolations = fkCursor.count
+        fkCursor.close()
+        assertEquals("PRAGMA foreign_key_check phải trả về rỗng (0 vi phạm)", 0, fkViolations)
+
+        migratedDb.close()
+        dbFile.delete()
+    }
+
+    @Test
+    fun `test deleteTripCascade succeeds on settled trip with settlement_transfers without trigger abort`(): Unit = runBlocking {
+        // 1. Tạo đoàn và 2 thành viên
+        val tripId = repository.createTrip(
+            title = "Đoàn Xóa Cascade Khóa Sổ",
+            description = "Kiểm tra xóa đoàn khi đã quyết toán",
+            joinCode = "CASCADE2026",
+            startDate = 1000L,
+            endDate = 2000L,
+            adminName = "Trưởng Đoàn X"
+        )
+        val admin = repository.getMembers(tripId).first().first()
+        val bobId = repository.addMember(tripId, "Thành Viên Y", "MEMBER", admin)
+        val bob = repository.getMembers(tripId).first().first { it.id == bobId }
+
+        // 2. Thêm khoản chi và khóa sổ chuyến đi
+        val expId = UUID.randomUUID().toString()
+        val expense = ExpenseEntity(
+            id = expId,
+            tripId = tripId,
+            title = "Bữa ăn chung",
+            category = "FOOD",
+            payerType = "MEMBER",
+            payerMemberId = admin.id,
+            totalAmount = 200000.0,
+            currency = "VND",
+            exchangeRate = 1.0,
+            convertedTotalAmount = 200000L,
+            splitType = "EQUAL",
+            receiptImageUri = null,
+            note = "Ăn tối",
+            timestamp = 1500L,
+            createdMemberId = admin.id,
+            updatedAt = 1500L,
+            isSynced = true
+        )
+        val splits = listOf(
+            ExpenseSplitEntity(UUID.randomUUID().toString(), expId, tripId, admin.id, 100000L),
+            ExpenseSplitEntity(UUID.randomUUID().toString(), expId, tripId, bob.id, 100000L)
+        )
+        repository.addExpenseWithSplits(expense, splits, admin)
+
+        val freshTrip = db.tripDao().getTripByIdOnce(tripId)!!
+        val (summary, _) = repository.calculateFinancialSummaryAndStatuses(
+            members = listOf(admin, bob),
+            expenses = listOf(expense),
+            splits = splits,
+            fundContributions = emptyList()
+        )
+        repository.finalizeSettlement(
+            trip = freshTrip,
+            snapshotTitle = "Bản chốt trước xóa",
+            summary = summary,
+            settlementJson = "",
+            actor = admin
+        )
+
+        // Kiểm tra đoàn đã khóa sổ và có gợi ý chuyển khoản
+        val settledTrip = db.tripDao().getTripByIdOnce(tripId)!!
+        assertTrue("Chuyến đi phải ở trạng thái đã khóa sổ", settledTrip.isSettled)
+        val transfersBefore = db.settlementDao().getTransfersByTripOnce(tripId)
+        assertEquals("Phải có 1 gợi ý chuyển khoản từ Bob cho Admin", 1, transfersBefore.size)
+
+        // 3. Gọi deleteTripCascade - phải thành công hoàn toàn, không bị trigger chặn
+        repository.deleteTripCascade(tripId)
+
+        // 4. Xác nhận toàn bộ dữ liệu đã được dọn sạch
+        assertNull("Chuyến đi phải bị xóa hoàn toàn khỏi DB", db.tripDao().getTripByIdOnce(tripId))
+        assertTrue(db.tripMemberDao().getMembersByTripOnce(tripId).isEmpty())
+        assertTrue(db.expenseDao().getExpensesByTripOnce(tripId).isEmpty())
+        assertTrue(db.expenseDao().getAllSplitsByTripOnce(tripId).isEmpty())
+        assertTrue(db.settlementDao().getTransfersByTripOnce(tripId).isEmpty())
+        assertTrue(db.settlementDao().getSnapshotsByTripOnce(tripId).isEmpty())
+    }
+
+    @Test
+    fun `test reopenSettlement clears transfers and re-settling preserves isCompleted for matching suggestions`(): Unit = runBlocking {
+        // 1. Tạo đoàn và 2 thành viên
+        val tripId = repository.createTrip(
+            title = "Đoàn Mở Khóa Sổ & Chốt Lại",
+            description = "Kiểm tra bảo lưu trạng thái isCompleted",
+            joinCode = "REOPEN2026",
+            startDate = 1000L,
+            endDate = 2000L,
+            adminName = "Trưởng Đoàn M"
+        )
+        val admin = repository.getMembers(tripId).first().first()
+        val memberId = repository.addMember(tripId, "Thành Viên N", "MEMBER", admin)
+        val member = repository.getMembers(tripId).first().first { it.id == memberId }
+
+        // 2. Thêm khoản chi: Admin trả 200k chia đều cho cả 2
+        val expId = UUID.randomUUID().toString()
+        val expense = ExpenseEntity(
+            id = expId,
+            tripId = tripId,
+            title = "Chi phí xe cộ",
+            category = "TRANSPORT",
+            payerType = "MEMBER",
+            payerMemberId = admin.id,
+            totalAmount = 200000.0,
+            currency = "VND",
+            exchangeRate = 1.0,
+            convertedTotalAmount = 200000L,
+            splitType = "EQUAL",
+            receiptImageUri = null,
+            note = "Thuê xe",
+            timestamp = 1500L,
+            createdMemberId = admin.id,
+            updatedAt = 1500L,
+            isSynced = true
+        )
+        val splits = listOf(
+            ExpenseSplitEntity(UUID.randomUUID().toString(), expId, tripId, admin.id, 100000L),
+            ExpenseSplitEntity(UUID.randomUUID().toString(), expId, tripId, member.id, 100000L)
+        )
+        repository.addExpenseWithSplits(expense, splits, admin)
+
+        // 3. Khóa sổ lần đầu
+        val trip1 = db.tripDao().getTripByIdOnce(tripId)!!
+        val (summary1, _) = repository.calculateFinancialSummaryAndStatuses(
+            members = listOf(admin, member),
+            expenses = listOf(expense),
+            splits = splits,
+            fundContributions = emptyList()
+        )
+        repository.finalizeSettlement(
+            trip = trip1,
+            snapshotTitle = "Quyết toán lần 1",
+            summary = summary1,
+            settlementJson = "",
+            actor = admin
+        )
+
+        val transfers1 = db.settlementDao().getTransfersByTripOnce(tripId)
+        assertEquals(1, transfers1.size)
+        val transfer1 = transfers1[0]
+        assertFalse(transfer1.isCompleted)
+
+        // Đánh dấu chuyển khoản đã hoàn tất (isCompleted = true)
+        db.settlementDao().updateTransferStatus(transfer1.id, isCompleted = true)
+        val transfer1Updated = db.settlementDao().getTransferById(transfer1.id)!!
+        assertTrue("Gợi ý chuyển khoản đã được đánh dấu hoàn thành", transfer1Updated.isCompleted)
+
+        // 4. Mở khóa sổ chuyến đi (reopenSettlement)
+        val tripSettled = db.tripDao().getTripByIdOnce(tripId)!!
+        repository.reopenSettlement(tripSettled, admin)
+
+        // Kiểm tra sau khi reopen: Chuyến đi chưa khóa sổ và settlement_transfers được xóa/làm mới
+        val tripReopened = db.tripDao().getTripByIdOnce(tripId)!!
+        assertFalse("Chuyến đi đã được mở khóa sổ", tripReopened.isSettled)
+        val transfersAfterReopen = db.settlementDao().getTransfersByTripOnce(tripId)
+        assertTrue("Bảng settlement_transfers phải được xóa/làm mới khi mở khóa sổ", transfersAfterReopen.isEmpty())
+
+        // 5. Khóa sổ lại (re-settle) mà không đổi các bên chuyển tiền
+        val (summary2, _) = repository.calculateFinancialSummaryAndStatuses(
+            members = listOf(admin, member),
+            expenses = listOf(expense),
+            splits = splits,
+            fundContributions = emptyList()
+        )
+        repository.finalizeSettlement(
+            trip = tripReopened,
+            snapshotTitle = "Quyết toán lần 2",
+            summary = summary2,
+            settlementJson = "",
+            actor = admin
+        )
+
+        val tripSettledAgain = db.tripDao().getTripByIdOnce(tripId)!!
+        assertTrue(tripSettledAgain.isSettled)
+
+        val transfersAfterResettle = db.settlementDao().getTransfersByTripOnce(tripId)
+        assertEquals(1, transfersAfterResettle.size)
+        val transferResettled = transfersAfterResettle[0]
+        assertEquals(transfer1.id, transferResettled.id)
+        assertTrue(
+            "Trạng thái isCompleted của gợi ý chuyển khoản còn trùng phải được giữ nguyên là true",
+            transferResettled.isCompleted
+        )
+    }
+
+    @Test
+    fun `test on settled trip updating settlement transfer amount is blocked while updating isCompleted is allowed`(): Unit = runBlocking {
+        // 1. Tạo đoàn và khóa sổ với 1 chuyển khoản
+        val tripId = repository.createTrip(
+            title = "Đoàn Kiểm Tra Trigger Transfer",
+            description = "Kiểm tra trigger bảo vệ số tiền chuyển khoản",
+            joinCode = "TRIGTR2026",
+            startDate = 1000L,
+            endDate = 2000L,
+            adminName = "Trưởng Đoàn T"
+        )
+        val admin = repository.getMembers(tripId).first().first()
+        val bobId = repository.addMember(tripId, "Thành Viên K", "MEMBER", admin)
+        val bob = repository.getMembers(tripId).first().first { it.id == bobId }
+
+        val expId = UUID.randomUUID().toString()
+        val expense = ExpenseEntity(
+            id = expId,
+            tripId = tripId,
+            title = "Vé tham quan",
+            category = "TICKET",
+            payerType = "MEMBER",
+            payerMemberId = admin.id,
+            totalAmount = 300000.0,
+            currency = "VND",
+            exchangeRate = 1.0,
+            convertedTotalAmount = 300000L,
+            splitType = "EQUAL",
+            receiptImageUri = null,
+            note = "Bảo tàng",
+            timestamp = 1500L,
+            createdMemberId = admin.id,
+            updatedAt = 1500L,
+            isSynced = true
+        )
+        val splits = listOf(
+            ExpenseSplitEntity(UUID.randomUUID().toString(), expId, tripId, admin.id, 150000L),
+            ExpenseSplitEntity(UUID.randomUUID().toString(), expId, tripId, bob.id, 150000L)
+        )
+        repository.addExpenseWithSplits(expense, splits, admin)
+
+        val trip = db.tripDao().getTripByIdOnce(tripId)!!
+        val (summary, _) = repository.calculateFinancialSummaryAndStatuses(
+            members = listOf(admin, bob),
+            expenses = listOf(expense),
+            splits = splits,
+            fundContributions = emptyList()
+        )
+        repository.finalizeSettlement(
+            trip = trip,
+            snapshotTitle = "Chốt tham quan",
+            summary = summary,
+            settlementJson = "",
+            actor = admin
+        )
+
+        val transfers = db.settlementDao().getTransfersByTripOnce(tripId)
+        assertEquals(1, transfers.size)
+        val transfer = transfers[0]
+        assertEquals(150000L, transfer.amount)
+        assertFalse(transfer.isCompleted)
+
+        // 2. Thử sửa cột amount khi đoàn đã khóa sổ -> trigger trg_prevent_settlement_transfer_update_when_settled PHẢI CHẶN
+        var amountUpdateBlocked = false
+        try {
+            db.openHelper.writableDatabase.execSQL(
+                "UPDATE settlement_transfers SET amount = 999999 WHERE id = '${transfer.id}'"
+            )
+        } catch (e: android.database.sqlite.SQLiteException) {
+            amountUpdateBlocked = true
+            assertTrue(
+                "Thông điệp ngoại lệ phải cảnh báo về khóa sổ quyết toán",
+                e.message?.contains("SETTLEMENT LOCKED") == true
+            )
+        }
+        assertTrue("Thao tác sửa amount trên chuyến đi đã khóa sổ phải bị SQLite trigger chặn", amountUpdateBlocked)
+
+        // Xác nhận amount trong CSDL vẫn không bị thay đổi
+        val transferAfterFailedUpdate = db.settlementDao().getTransferById(transfer.id)!!
+        assertEquals(150000L, transferAfterFailedUpdate.amount)
+
+        // 3. Cập nhật cột isCompleted khi đoàn đã khóa sổ -> ĐƯỢC PHÉP THÀNH CÔNG
+        db.settlementDao().updateTransferStatus(transfer.id, isCompleted = true)
+
+        val transferAfterStatusUpdate = db.settlementDao().getTransferById(transfer.id)!!
+        assertTrue("Trạng thái isCompleted phải cập nhật thành công thành true", transferAfterStatusUpdate.isCompleted)
+        assertEquals(150000L, transferAfterStatusUpdate.amount)
+    }
 }
 
 

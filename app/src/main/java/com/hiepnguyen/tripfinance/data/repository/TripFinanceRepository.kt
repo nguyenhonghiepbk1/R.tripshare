@@ -139,6 +139,10 @@ class TripFinanceRepository(private val db: AppDatabase) {
     suspend fun deleteTripCascade(tripId: String) {
         db.withTransaction {
             val existing = db.tripDao().getTripByIdOnce(tripId) ?: return@withTransaction
+            // Mở khóa chuyến đi trước khi xóa cascade để không vi phạm trigger bảo vệ dữ liệu khóa sổ
+            if (existing.isSettled) {
+                db.tripDao().unlockTripForDeletion(tripId)
+            }
             // Cascade delete related records atomically
             db.expenseDao().deleteSplitsByTrip(tripId)
             db.expenseDao().deleteExpensesByTrip(tripId)
@@ -671,9 +675,29 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 tripJoinCode = freshTrip.joinCode,
                 remainingFund = freshSummary.remainingFund
             )
+            val previousCompletedMap = mutableMapOf<String, Boolean>()
+            val previousSnapshots = db.settlementDao().getSnapshotsByTripOnce(trip.id)
+            val latestSnapshot = previousSnapshots.maxByOrNull { it.createdAt }
+            if (latestSnapshot != null) {
+                try {
+                    val jsonObj = JSONObject(latestSnapshot.settlementJson)
+                    val trArray = jsonObj.optJSONArray("transfers")
+                    if (trArray != null) {
+                        for (idx in 0 until trArray.length()) {
+                            val trObj = trArray.getJSONObject(idx)
+                            val trId = trObj.optString("id")
+                            val isComp = trObj.optBoolean("isCompleted", false)
+                            if (trId.isNotBlank()) {
+                                previousCompletedMap[trId] = isComp
+                            }
+                        }
+                    }
+                } catch (_: Exception) {}
+            }
             val existingTransfers = db.settlementDao().getTransfersByTripOnce(trip.id).associateBy { it.id }
             val transferEntities = transfers.map { tr ->
                 val existing = existingTransfers[tr.id]
+                val preservedCompleted = existing?.isCompleted ?: previousCompletedMap[tr.id] ?: tr.isCompleted
                 SettlementTransferEntity(
                     id = tr.id,
                     tripId = trip.id,
@@ -681,7 +705,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                     toMemberId = tr.toMember.id,
                     amount = tr.amount,
                     transferNote = tr.transferNote,
-                    isCompleted = existing?.isCompleted ?: tr.isCompleted,
+                    isCompleted = preservedCompleted,
                     updatedAt = existing?.updatedAt ?: settledAt
                 )
             }
@@ -802,6 +826,36 @@ class TripFinanceRepository(private val db: AppDatabase) {
             if (rowsUpdated == 0) {
                 throw java.util.ConcurrentModificationException("Không thể mở khóa sổ do xung đột đồng thời. Vui lòng thử lại sau khi làm mới!")
             }
+
+            // Trước khi xóa/làm mới settlement_transfers, cập nhật trạng thái isCompleted mới nhất vào snapshot gần nhất
+            // để khi khóa sổ lại (re-settle) có thể giữ nguyên trạng thái hoàn thành của các gợi ý còn trùng!
+            val currentTransfers = db.settlementDao().getTransfersByTripOnce(trip.id)
+            if (currentTransfers.isNotEmpty()) {
+                val latestSnapshot = db.settlementDao().getSnapshotsByTripOnce(trip.id).maxByOrNull { it.createdAt }
+                if (latestSnapshot != null) {
+                    try {
+                        val jsonObj = JSONObject(latestSnapshot.settlementJson)
+                        val trArray = jsonObj.optJSONArray("transfers")
+                        if (trArray != null) {
+                            val statusMap = currentTransfers.associate { it.id to it.isCompleted }
+                            for (idx in 0 until trArray.length()) {
+                                val trObj = trArray.getJSONObject(idx)
+                                val trId = trObj.optString("id")
+                                if (statusMap.containsKey(trId)) {
+                                    trObj.put("isCompleted", statusMap[trId] == true)
+                                }
+                            }
+                            val updatedSnapshot = latestSnapshot.copy(settlementJson = jsonObj.toString(2))
+                            db.settlementDao().insertSnapshot(updatedSnapshot)
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.w("TripFinanceRepo", "Syncing transfers to snapshot before reopen: ${e.message}")
+                    }
+                }
+            }
+
+            // Xóa / làm mới các gợi ý chuyển khoản của đợt quyết toán cũ khi mở khóa sổ
+            db.settlementDao().deleteTransfersByTrip(trip.id)
 
             logAction(
                 tripId = trip.id,
