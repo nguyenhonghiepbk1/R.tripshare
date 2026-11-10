@@ -236,7 +236,10 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     val finalTransfers = settlementResult.transfers.map { tr ->
                         val saved = savedTransfersMap[tr.id]
                         if (saved != null) {
-                            tr.copy(isCompleted = saved.isCompleted)
+                            tr.copy(
+                                isCompleted = saved.isCompleted,
+                                completedAmount = saved.completedAmount
+                            )
                         } else {
                             tr
                         }
@@ -1141,14 +1144,23 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
     fun toggleTransferCompleted(transfer: SettlementTransfer) {
         val currentTrip = uiState.value.currentTrip ?: return
         val currentMember = uiState.value.currentMember ?: return
-        val newStatus = !transfer.isCompleted
+
+        if (!currentTrip.isSettled) {
+            showError("Chỉ có thể đánh dấu đã chuyển khoản khi chuyến đi đã khóa sổ!")
+            return
+        }
+
+        val newStatus = !transfer.isEffectivelyCompleted
+        val completedAmount = if (newStatus) transfer.amount else null
+
         viewModelScope.launch {
             try {
                 repository.setTransferCompleted(
                     tripId = currentTrip.id,
                     transfer = transfer,
                     isCompleted = newStatus,
-                    actor = currentMember
+                    actor = currentMember,
+                    completedAmount = completedAmount
                 )
             } catch (e: Exception) {
                 showError(AppStrings.vmUpdateTransferError(e.message, _language.value))

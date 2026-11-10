@@ -510,7 +510,8 @@ object ReportGenerator {
                 settlementTransfers.forEachIndexed { i, t ->
                     val fromName = if (t.fromMember.id == "FUND_ORGANIZATION") fundName else t.fromMember.name
                     val toName = if (t.toMember.id == "FUND_ORGANIZATION") fundName else t.toMember.name
-                    val transferredText = if (t.isCompleted) AppStrings.valTransferredYes(language) else AppStrings.valTransferredNo(language)
+                    val isTransferred = t.isCompleted && t.completedAmount != null && t.completedAmount == t.amount
+                    val transferredText = if (isTransferred) AppStrings.valTransferredYes(language) else AppStrings.valTransferredNo(language)
                     row {
                         cell(i + 1)
                         cell(fromName)

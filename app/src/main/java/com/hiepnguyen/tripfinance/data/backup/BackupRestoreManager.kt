@@ -24,7 +24,7 @@ import java.util.UUID
 data class BackupMetadata(
     val appName: String = "TripFinance",
     val backupVersion: Int = 1,
-    val schemaVersion: Int = 6,
+    val schemaVersion: Int = 7,
     val createdAt: Long = System.currentTimeMillis(),
     val createdAtFormatted: String = "",
     val totalTrips: Int = 0,
@@ -106,7 +106,7 @@ object BackupRestoreManager {
         val metaJson = JSONObject().apply {
             put("appName", "TripFinance")
             put("backupVersion", 1)
-            put("schemaVersion", 6)
+            put("schemaVersion", 7)
             put("createdAt", now)
             put("createdAtFormatted", dateFormat.format(Date(now)))
             put("totalTrips", trips.size)
@@ -252,6 +252,7 @@ object BackupRestoreManager {
                 put("amount", tr.amount)
                 put("transferNote", tr.transferNote)
                 put("isCompleted", tr.isCompleted)
+                put("completedAmount", tr.completedAmount ?: JSONObject.NULL)
                 put("updatedAt", tr.updatedAt)
             })
         }
@@ -535,7 +536,7 @@ object BackupRestoreManager {
                     "exchangeRates" -> readRates(jsonReader, ratesList)
                     "settlementSnapshots" -> readSnapshots(jsonReader, snapshotsList)
                     "auditLogs" -> readLogs(jsonReader, logsList)
-                    "settlementTransfers" -> readTransfers(jsonReader, transfersList)
+                    "settlementTransfers", "transfers" -> readTransfers(jsonReader, transfersList)
                     else -> jsonReader.skipValue()
                 }
             }
@@ -574,7 +575,7 @@ object BackupRestoreManager {
         reader.beginObject()
         var appName = "TripFinance"
         var backupVersion = 1
-        var schemaVersion = 6
+        var schemaVersion = 7
         var createdAt = 0L
         var createdAtFormatted = ""
         var totalTrips = 0
@@ -1055,6 +1056,7 @@ object BackupRestoreManager {
             var amount = 0L
             var transferNote = ""
             var isCompleted = false
+            var completedAmount: Long? = null
             var updatedAt = 0L
 
             while (reader.hasNext()) {
@@ -1066,12 +1068,15 @@ object BackupRestoreManager {
                     "amount" -> amount = reader.nextLongOrDefault(0L)
                     "transferNote" -> transferNote = reader.nextStringOrDefault()
                     "isCompleted" -> isCompleted = reader.nextBooleanOrDefault(false)
+                    "completedAmount" -> completedAmount = reader.nextLongOrNull()
                     "updatedAt" -> updatedAt = reader.nextLongOrDefault(0L)
                     else -> reader.skipValue()
                 }
             }
             reader.endObject()
             if (id.isNotBlank() && tripId.isNotBlank()) {
+                // Nếu backup cũ không có completedAmount (null), coi như chưa chuyển
+                val finalIsCompleted = if (completedAmount == null) false else isCompleted
                 list.add(
                     SettlementTransferEntity(
                         id = id,
@@ -1080,7 +1085,8 @@ object BackupRestoreManager {
                         toMemberId = toMemberId,
                         amount = amount,
                         transferNote = transferNote,
-                        isCompleted = isCompleted,
+                        isCompleted = finalIsCompleted,
+                        completedAmount = if (finalIsCompleted) completedAmount else null,
                         updatedAt = updatedAt
                     )
                 )
@@ -1154,11 +1160,21 @@ object BackupRestoreManager {
     }
 
     private fun JsonReader.nextBooleanOrDefault(default: Boolean = false): Boolean {
-        return if (peek() == JsonToken.NULL) {
-            nextNull()
-            default
-        } else {
-            nextBoolean()
+        return when (peek()) {
+            JsonToken.NULL -> {
+                nextNull()
+                default
+            }
+            JsonToken.BOOLEAN -> nextBoolean()
+            JsonToken.NUMBER -> nextInt() != 0
+            JsonToken.STRING -> {
+                val s = nextString()
+                s.equals("true", ignoreCase = true) || s == "1"
+            }
+            else -> {
+                skipValue()
+                default
+            }
         }
     }
 
@@ -1323,6 +1339,9 @@ object BackupRestoreManager {
                 }
 
                 // Chèn / Hợp nhất dữ liệu an toàn
+                // Lưu lại trạng thái khóa sổ cuối cùng của mỗi chuyến đi để cập nhật sau khi nạp xong dữ liệu con
+                val finalSettledStateMap = mutableMapOf<String, Pair<Boolean, Long?>>()
+
                 for (backupTrip in backupData.trips) {
                     val existingTrip = db.tripDao().getTripByIdOnce(backupTrip.id)
                     if (existingTrip != null) {
@@ -1331,9 +1350,8 @@ object BackupRestoreManager {
                         // TUYỆT ĐỐI KHÔNG cho phép bản backup cũ chưa quyết toán mở niêm phong!
                         val safeIsSettled = existingTrip.isSettled || backupTrip.isSettled
                         val safeSettledAt = existingTrip.settledAt ?: backupTrip.settledAt
+                        finalSettledStateMap[backupTrip.id] = Pair(safeIsSettled, safeSettledAt)
                         val safeTrip = existingTrip.copy(
-                            isSettled = safeIsSettled,
-                            settledAt = safeSettledAt,
                             version = maxOf(existingTrip.version, backupTrip.version)
                         )
                         db.tripDao().updateTrip(safeTrip)
@@ -1349,7 +1367,9 @@ object BackupRestoreManager {
                             }
                             finalJoinCode = freshCode
                         }
-                        db.tripDao().insertTrip(backupTrip.copy(joinCode = finalJoinCode))
+                        finalSettledStateMap[backupTrip.id] = Pair(backupTrip.isSettled, backupTrip.settledAt)
+                        // Tạo mới tạm thời với isSettled = false để nạp dữ liệu con (thành viên, chi tiêu, v.v.) không bị trigger khóa sổ chặn
+                        db.tripDao().insertTrip(backupTrip.copy(joinCode = finalJoinCode, isSettled = false, settledAt = null))
                     }
                 }
 
@@ -1390,6 +1410,17 @@ object BackupRestoreManager {
                 for (log in backupData.auditLogs) {
                     if (db.auditLogDao().getLogById(log.id) == null) {
                         db.auditLogDao().insertLog(log)
+                    }
+                }
+
+                // Cập nhật lại đúng trạng thái khóa sổ sau khi toàn bộ dữ liệu con đã được nạp an toàn
+                for ((tId, settledPair) in finalSettledStateMap) {
+                    val (shouldBeSettled, settledAtTime) = settledPair
+                    if (shouldBeSettled) {
+                        val currentT = db.tripDao().getTripByIdOnce(tId)
+                        if (currentT != null && !currentT.isSettled) {
+                            db.tripDao().updateTrip(currentT.copy(isSettled = true, settledAt = settledAtTime))
+                        }
                     }
                 }
 

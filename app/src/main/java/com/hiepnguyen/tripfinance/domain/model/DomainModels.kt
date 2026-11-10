@@ -36,8 +36,17 @@ data class SettlementTransfer(
     val toMember: TripMemberEntity,
     val amount: Long,
     val transferNote: String,
-    val isCompleted: Boolean = false
-)
+    val isCompleted: Boolean = false,
+    val completedAmount: Long? = null
+) {
+    // Chỉ coi là "Đã chuyển" nếu isCompleted == true và completedAmount == amount
+    val isEffectivelyCompleted: Boolean
+        get() = isCompleted && completedAmount != null && completedAmount == amount
+
+    // Đã từng đánh dấu nhưng số tiền gợi ý hiện tại đã thay đổi so với khi đánh dấu
+    val isAmountChangedAfterMarking: Boolean
+        get() = isCompleted && completedAmount != null && completedAmount != amount
+}
 
 data class CategoryBreakdown(
     val category: String,

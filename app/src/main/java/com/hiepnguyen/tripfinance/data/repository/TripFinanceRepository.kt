@@ -584,13 +584,20 @@ class TripFinanceRepository(private val db: AppDatabase) {
         tripId: String,
         transfer: SettlementTransfer,
         isCompleted: Boolean,
-        actor: TripMemberEntity
+        actor: TripMemberEntity,
+        completedAmount: Long? = if (isCompleted) transfer.amount else null
     ) {
         db.withTransaction {
+            val freshTrip = db.tripDao().getTripByIdOnce(tripId)
+                ?: throw IllegalArgumentException("Chuyến đi không tồn tại trên hệ thống!")
+            if (!freshTrip.isSettled) {
+                throw IllegalStateException("Chỉ được đánh dấu chuyển khoản khi chuyến đi đã khóa sổ!")
+            }
+
             val existing = db.settlementDao().getTransferById(transfer.id)
             val now = System.currentTimeMillis()
             if (existing != null) {
-                db.settlementDao().updateTransferStatus(transfer.id, isCompleted, now)
+                db.settlementDao().updateTransferStatus(transfer.id, isCompleted, completedAmount, now)
             } else {
                 val entity = SettlementTransferEntity(
                     id = transfer.id,
@@ -600,6 +607,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                     amount = transfer.amount,
                     transferNote = transfer.transferNote,
                     isCompleted = isCompleted,
+                    completedAmount = completedAmount,
                     updatedAt = now
                 )
                 db.settlementDao().insertTransfer(entity)
@@ -675,7 +683,9 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 tripJoinCode = freshTrip.joinCode,
                 remainingFund = freshSummary.remainingFund
             )
-            val previousCompletedMap = mutableMapOf<String, Boolean>()
+            // Đọc snapshot gần nhất để lấy lại trạng thái hoàn thành nếu có
+            data class SavedTransferState(val isCompleted: Boolean, val completedAmount: Long?, val amount: Long)
+            val previousTransferStates = mutableMapOf<String, SavedTransferState>()
             val previousSnapshots = db.settlementDao().getSnapshotsByTripOnce(trip.id)
             val latestSnapshot = previousSnapshots.maxByOrNull { it.createdAt }
             if (latestSnapshot != null) {
@@ -687,8 +697,14 @@ class TripFinanceRepository(private val db: AppDatabase) {
                             val trObj = trArray.getJSONObject(idx)
                             val trId = trObj.optString("id")
                             val isComp = trObj.optBoolean("isCompleted", false)
+                            val compAmount = if (trObj.has("completedAmount") && !trObj.isNull("completedAmount")) {
+                                trObj.getLong("completedAmount")
+                            } else if (isComp) {
+                                trObj.optLong("amount", 0L)
+                            } else null
+                            val amt = trObj.optLong("amount", 0L)
                             if (trId.isNotBlank()) {
-                                previousCompletedMap[trId] = isComp
+                                previousTransferStates[trId] = SavedTransferState(isComp, compAmount, amt)
                             }
                         }
                     }
@@ -697,7 +713,31 @@ class TripFinanceRepository(private val db: AppDatabase) {
             val existingTransfers = db.settlementDao().getTransfersByTripOnce(trip.id).associateBy { it.id }
             val transferEntities = transfers.map { tr ->
                 val existing = existingTransfers[tr.id]
-                val preservedCompleted = existing?.isCompleted ?: previousCompletedMap[tr.id] ?: tr.isCompleted
+                val (preservedCompleted, preservedCompletedAmount) = when {
+                    existing != null -> {
+                        // Giữ trạng thái chỉ khi cả ID và số tiền khớp
+                        if (existing.isCompleted && existing.amount == tr.amount && existing.completedAmount == tr.amount) {
+                            Pair(true, tr.amount)
+                        } else if (existing.isCompleted && existing.amount != tr.amount) {
+                            // Số tiền đã đổi so với lần đánh dấu
+                            Pair(true, existing.completedAmount ?: existing.amount)
+                        } else {
+                            Pair(existing.isCompleted, existing.completedAmount)
+                        }
+                    }
+                    previousTransferStates.containsKey(tr.id) -> {
+                        val prev = previousTransferStates[tr.id]!!
+                        if (prev.isCompleted && prev.amount == tr.amount && prev.completedAmount == tr.amount) {
+                            Pair(true, tr.amount)
+                        } else if (prev.isCompleted && prev.amount != tr.amount) {
+                            Pair(true, prev.completedAmount ?: prev.amount)
+                        } else {
+                            Pair(prev.isCompleted, prev.completedAmount)
+                        }
+                    }
+                    else -> Pair(tr.isCompleted, tr.completedAmount)
+                }
+
                 SettlementTransferEntity(
                     id = tr.id,
                     tripId = trip.id,
@@ -706,6 +746,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                     amount = tr.amount,
                     transferNote = tr.transferNote,
                     isCompleted = preservedCompleted,
+                    completedAmount = preservedCompletedAmount,
                     updatedAt = existing?.updatedAt ?: settledAt
                 )
             }
@@ -771,6 +812,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                             put("amount", tr.amount)
                             put("transferNote", tr.transferNote)
                             put("isCompleted", tr.isCompleted)
+                            put("completedAmount", tr.completedAmount ?: JSONObject.NULL)
                         })
                     }
                 })
@@ -837,12 +879,14 @@ class TripFinanceRepository(private val db: AppDatabase) {
                         val jsonObj = JSONObject(latestSnapshot.settlementJson)
                         val trArray = jsonObj.optJSONArray("transfers")
                         if (trArray != null) {
-                            val statusMap = currentTransfers.associate { it.id to it.isCompleted }
+                            val transferMap = currentTransfers.associateBy { it.id }
                             for (idx in 0 until trArray.length()) {
                                 val trObj = trArray.getJSONObject(idx)
                                 val trId = trObj.optString("id")
-                                if (statusMap.containsKey(trId)) {
-                                    trObj.put("isCompleted", statusMap[trId] == true)
+                                val existingTr = transferMap[trId]
+                                if (existingTr != null) {
+                                    trObj.put("isCompleted", existingTr.isCompleted)
+                                    trObj.put("completedAmount", existingTr.completedAmount ?: JSONObject.NULL)
                                 }
                             }
                             val updatedSnapshot = latestSnapshot.copy(settlementJson = jsonObj.toString(2))

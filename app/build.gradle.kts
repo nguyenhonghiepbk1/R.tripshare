@@ -13,8 +13,8 @@ android {
     applicationId = "com.hiepnguyen.tripfinance.oddnis"
     minSdk = 24
     targetSdk = 36
-    versionCode = 20
-    versionName = "20.0"
+    versionCode = 23
+    versionName = "23.0"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

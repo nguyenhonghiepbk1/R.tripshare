@@ -366,7 +366,8 @@ object PdfReportExporter {
                     paint.color = Color.parseColor("#1E293B")
                     canvas.drawText(tr.transferNote.take(24), margin + 305f, currentY + 13f, paint)
 
-                    if (tr.isCompleted) {
+                    val isTransferred = tr.isCompleted && tr.completedAmount != null && tr.completedAmount == tr.amount
+                    if (isTransferred) {
                         paint.color = Color.parseColor("#15803D")
                         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                         canvas.drawText("✓ ${AppStrings.pdfStatusTransferred(language)}", margin + 435f, currentY + 13f, paint)

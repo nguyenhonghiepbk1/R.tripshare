@@ -451,21 +451,26 @@ fun SettlementScreen(
                         HorizontalDivider(color = MaterialTheme.extendedColorScheme.cardBorder)
                         Spacer(modifier = Modifier.height(8.dp))
 
+                        val isSettled = uiState.currentTrip?.isSettled == true
+                        val isTransferred = transfer.isEffectivelyCompleted
+                        val hasAmountChanged = transfer.isAmountChangedAfterMarking
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Checkbox "Đã chuyển" - có thể bấm kể cả khi đoàn đã khóa sổ
+                            // Checkbox "Đã chuyển" - chỉ cho đánh dấu khi đoàn đã khóa sổ
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .testTag("transfer_checkbox_row_${transfer.id}")
-                                    .clickable { onToggleTransferCompleted(transfer) }
+                                    .clickable(enabled = isSettled) { onToggleTransferCompleted(transfer) }
                             ) {
                                 Checkbox(
-                                    checked = transfer.isCompleted,
-                                    onCheckedChange = { onToggleTransferCompleted(transfer) },
+                                    checked = isTransferred,
+                                    onCheckedChange = { if (isSettled) onToggleTransferCompleted(transfer) },
+                                    enabled = isSettled,
                                     modifier = Modifier.testTag("transfer_checkbox_${transfer.id}"),
                                     colors = CheckboxDefaults.colors(
                                         checkedColor = EmeraldPrimary,
@@ -473,12 +478,23 @@ fun SettlementScreen(
                                     )
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text(
-                                    text = AppStrings.transferredCheckboxLabel(lang),
-                                    fontSize = 13.sp,
-                                    fontWeight = if (transfer.isCompleted) FontWeight.Bold else FontWeight.Normal,
-                                    color = if (transfer.isCompleted) EmeraldPrimary else MaterialTheme.colorScheme.onSurface
-                                )
+                                Column {
+                                    Text(
+                                        text = AppStrings.transferredCheckboxLabel(lang),
+                                        fontSize = 13.sp,
+                                        fontWeight = if (isTransferred) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (!isSettled) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                                else if (isTransferred) EmeraldPrimary
+                                                else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    if (!isSettled) {
+                                        Text(
+                                            text = "Khóa sổ để đánh dấu",
+                                            fontSize = 11.sp,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                }
                             }
 
                             if (transfer.transferNote.isNotBlank()) {
@@ -496,6 +512,16 @@ fun SettlementScreen(
                                     Text(AppStrings.copyCd(lang), style = MaterialTheme.typography.labelSmall)
                                 }
                             }
+                        }
+
+                        if (hasAmountChanged) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Số tiền đã thay đổi so với lần đánh dấu trước",
+                                fontSize = 11.sp,
+                                color = DangerRed,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
 
                         if (transfer.transferNote.isNotBlank()) {

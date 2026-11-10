@@ -27,7 +27,7 @@ import java.util.UUID
         AuditLogEntity::class,
         SettlementTransferEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -334,6 +334,58 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `settlement_transfers` ADD COLUMN `completedAmount` INTEGER DEFAULT NULL")
+                createDatabaseCheckConstraints(db)
+            }
+        }
+
+        val MIGRATION_5_7 = object : Migration(5, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_5_6.migrate(db)
+                MIGRATION_6_7.migrate(db)
+            }
+        }
+
+        val MIGRATION_4_7 = object : Migration(4, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+                MIGRATION_6_7.migrate(db)
+            }
+        }
+
+        val MIGRATION_3_7 = object : Migration(3, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+                MIGRATION_6_7.migrate(db)
+            }
+        }
+
+        val MIGRATION_2_7 = object : Migration(2, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_2_3.migrate(db)
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+                MIGRATION_6_7.migrate(db)
+            }
+        }
+
+        val MIGRATION_1_7 = object : Migration(1, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_1_2.migrate(db)
+                MIGRATION_2_3.migrate(db)
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+                MIGRATION_6_7.migrate(db)
+            }
+        }
+
         @Synchronized
         fun resetDatabase(context: Context) {
             try {
@@ -404,7 +456,8 @@ abstract class AppDatabase : RoomDatabase() {
             .addMigrations(
                 MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
                 MIGRATION_1_4, MIGRATION_2_4, MIGRATION_1_5, MIGRATION_2_5, MIGRATION_3_5,
-                MIGRATION_1_6, MIGRATION_2_6, MIGRATION_3_6, MIGRATION_4_6
+                MIGRATION_1_6, MIGRATION_2_6, MIGRATION_3_6, MIGRATION_4_6,
+                MIGRATION_6_7, MIGRATION_5_7, MIGRATION_4_7, MIGRATION_3_7, MIGRATION_2_7, MIGRATION_1_7
             )
 
             if (sqlCipherFactory != null) {
@@ -838,6 +891,7 @@ abstract class AppDatabase : RoomDatabase() {
                     BEGIN
                         SELECT CASE
                             WHEN NEW.amount < 0 THEN RAISE(ABORT, 'CHECK CONSTRAINT FAILED: transfer amount cannot be negative')
+                            WHEN NEW.completedAmount IS NOT NULL AND NEW.completedAmount < 0 THEN RAISE(ABORT, 'CHECK CONSTRAINT FAILED: completedAmount cannot be negative')
                         END;
                     END;
                 """.trimIndent())
@@ -848,6 +902,7 @@ abstract class AppDatabase : RoomDatabase() {
                 BEGIN
                     SELECT CASE
                         WHEN NEW.amount < 0 THEN RAISE(ABORT, 'CHECK CONSTRAINT FAILED: transfer amount cannot be negative')
+                        WHEN NEW.completedAmount IS NOT NULL AND NEW.completedAmount < 0 THEN RAISE(ABORT, 'CHECK CONSTRAINT FAILED: completedAmount cannot be negative')
                     END;
                 END;
             """.trimIndent())

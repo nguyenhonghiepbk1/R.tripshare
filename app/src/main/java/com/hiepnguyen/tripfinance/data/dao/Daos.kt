@@ -237,8 +237,8 @@ interface SettlementDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransfers(transfers: List<SettlementTransferEntity>)
 
-    @Query("UPDATE settlement_transfers SET isCompleted = :isCompleted, updatedAt = :updatedAt WHERE id = :id")
-    suspend fun updateTransferStatus(id: String, isCompleted: Boolean, updatedAt: Long = System.currentTimeMillis())
+    @Query("UPDATE settlement_transfers SET isCompleted = :isCompleted, completedAmount = :completedAmount, updatedAt = :updatedAt WHERE id = :id")
+    suspend fun updateTransferStatus(id: String, isCompleted: Boolean, completedAmount: Long?, updatedAt: Long = System.currentTimeMillis())
 
     @Query("DELETE FROM settlement_transfers WHERE tripId = :tripId")
     suspend fun deleteTransfersByTrip(tripId: String)

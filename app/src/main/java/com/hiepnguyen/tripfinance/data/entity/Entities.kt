@@ -321,10 +321,14 @@ data class SettlementTransferEntity(
     val amount: Long,
     val transferNote: String,
     val isCompleted: Boolean = false,
+    val completedAmount: Long? = null,
     val updatedAt: Long = System.currentTimeMillis()
 ) {
     init {
         require(amount >= 0L && amount <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Transfer amount cannot be negative or exceed limit ($amount)" }
+        if (completedAmount != null) {
+            require(completedAmount >= 0L && completedAmount <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Completed amount cannot be negative or exceed limit ($completedAmount)" }
+        }
     }
 }
 
