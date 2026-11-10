@@ -489,7 +489,7 @@ fun SettlementScreen(
                                     )
                                     if (!isSettled) {
                                         Text(
-                                            text = "Khóa sổ để đánh dấu",
+                                            text = AppStrings.lockTripToMarkTransferred(lang),
                                             fontSize = 11.sp,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                                         )
@@ -517,7 +517,7 @@ fun SettlementScreen(
                         if (hasAmountChanged) {
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Số tiền đã thay đổi so với lần đánh dấu trước",
+                                text = AppStrings.transferAmountChangedNotice(lang),
                                 fontSize = 11.sp,
                                 color = DangerRed,
                                 fontWeight = FontWeight.Medium

@@ -153,5 +153,13 @@ object AppStrings {
     fun auditLogs(lang: AppLanguage) = if (lang == AppLanguage.VI) "Nhật Ký Hoạt Động (Audit Logs)" else "Activity Audit Logs"
     fun languageCardTitle(lang: AppLanguage) = if (lang == AppLanguage.VI) "Ngôn Ngữ Giao Diện / Language" else "Interface Language / Ngôn Ngữ"
     fun selectLanguage(lang: AppLanguage) = if (lang == AppLanguage.VI) "Chọn ngôn ngữ hiển thị:" else "Select display language:"
+
+    // Settlement Transfer Status Strings
+    fun lockTripToMarkTransferred(lang: AppLanguage) =
+        if (lang == AppLanguage.VI) "Khóa sổ để đánh dấu" else "Lock ledger to mark transferred"
+    fun transferAmountChangedNotice(lang: AppLanguage) =
+        if (lang == AppLanguage.VI) "Số tiền đã thay đổi so với lần đánh dấu trước" else "Amount has changed since previously marked"
+    fun vmLockToMarkTransferRequired(lang: AppLanguage) =
+        if (lang == AppLanguage.VI) "Chỉ có thể đánh dấu đã chuyển khoản khi chuyến đi đã khóa sổ!" else "Can only mark as transferred once the trip ledger is locked!"
 }
 

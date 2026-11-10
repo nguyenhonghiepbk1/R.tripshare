@@ -1146,7 +1146,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         val currentMember = uiState.value.currentMember ?: return
 
         if (!currentTrip.isSettled) {
-            showError("Chỉ có thể đánh dấu đã chuyển khoản khi chuyến đi đã khóa sổ!")
+            showError(AppStrings.vmLockToMarkTransferRequired(_language.value))
             return
         }
 
