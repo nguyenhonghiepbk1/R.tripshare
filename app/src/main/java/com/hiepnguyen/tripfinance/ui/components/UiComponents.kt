@@ -19,11 +19,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
@@ -175,6 +181,85 @@ fun BalanceChip(balance: Long, status: BalanceStatus, modifier: Modifier = Modif
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
+fun AutoFitSingleLineText(
+    text: String,
+    modifier: Modifier = Modifier,
+    color: Color = Color.Unspecified,
+    maxFontSize: TextUnit = 14.sp,
+    minFontSize: TextUnit = 8.sp,
+    fontWeight: FontWeight? = null,
+    style: TextStyle = LocalTextStyle.current,
+    textAlign: TextAlign? = null,
+    stepSp: Float = 0.5f,
+    onTextLayout: (TextLayoutResult) -> Unit = {}
+) {
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val resolvedStyle = LocalTextStyle.current.merge(style).let { merged ->
+        merged.copy(
+            color = if (color != Color.Unspecified) color else merged.color,
+            fontWeight = fontWeight ?: merged.fontWeight
+        )
+    }
+
+    BoxWithConstraints(
+        modifier = modifier,
+        contentAlignment = when (textAlign) {
+            TextAlign.Center -> Alignment.Center
+            TextAlign.End -> Alignment.CenterEnd
+            else -> Alignment.CenterStart
+        }
+    ) {
+        val availableWidthPx = constraints.maxWidth
+        val fittedFontSize = remember(
+            text,
+            availableWidthPx,
+            resolvedStyle,
+            maxFontSize,
+            minFontSize,
+            density,
+            textMeasurer
+        ) {
+            if (availableWidthPx == Constraints.Infinity || availableWidthPx <= 0) {
+                maxFontSize
+            } else {
+                var candidate = maxFontSize.value
+                val minVal = minFontSize.value
+                var chosen = minVal
+                while (candidate >= minVal) {
+                    val measured = textMeasurer.measure(
+                        text = AnnotatedString(text),
+                        style = resolvedStyle.copy(fontSize = candidate.sp),
+                        softWrap = false,
+                        maxLines = 1,
+                        constraints = Constraints(maxWidth = Int.MAX_VALUE)
+                    )
+                    if (measured.size.width <= availableWidthPx) {
+                        chosen = candidate
+                        break
+                    }
+                    candidate -= stepSp
+                }
+                chosen.sp
+            }
+        }
+
+        Text(
+            text = text,
+            color = color,
+            fontSize = fittedFontSize,
+            fontWeight = fontWeight,
+            style = style,
+            textAlign = textAlign,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
+            onTextLayout = onTextLayout
         )
     }
 }

@@ -37,10 +37,10 @@ object AppStrings {
 
     fun getTabName(tabId: String, lang: AppLanguage): String {
         return when (tabId) {
-            "DASHBOARD" -> if (lang == AppLanguage.VI) "Tổng Quan" else "Dashboard"
+            "DASHBOARD" -> if (lang == AppLanguage.VI) "Tổng Quan" else "Overview"
             "EXPENSES" -> if (lang == AppLanguage.VI) "Chi Tiêu" else "Expenses"
-            "FUND" -> if (lang == AppLanguage.VI) "Quỹ Đoàn" else "Group Fund"
-            "SETTLEMENT" -> if (lang == AppLanguage.VI) "Quyết Toán" else "Settlement"
+            "FUND" -> if (lang == AppLanguage.VI) "Quỹ Đoàn" else "Fund"
+            "SETTLEMENT" -> if (lang == AppLanguage.VI) "Quyết Toán" else "Settle"
             "SETTINGS" -> if (lang == AppLanguage.VI) "Thành Viên" else "Members"
             else -> tabId
         }

@@ -360,11 +360,15 @@ fun UserGuideScreen(
                                 text = AppStrings.userGuideScreenTitle(lang),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = AppStrings.userGuideScreenSubtitle(lang),
                                 fontSize = 11.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                                 color = Color(0xFF64748B)
                             )
                         }

@@ -2,8 +2,19 @@ package com.hiepnguyen.tripfinance.ui
 
 import android.app.Application
 import android.content.Context
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import com.hiepnguyen.tripfinance.TripFinanceApp
 import com.hiepnguyen.tripfinance.data.db.AppDatabase
@@ -12,6 +23,8 @@ import com.hiepnguyen.tripfinance.data.security.InMemoryKeyProvider
 import com.hiepnguyen.tripfinance.ui.theme.TripFinanceTheme
 import com.hiepnguyen.tripfinance.ui.viewmodel.TripFinanceViewModel
 import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -188,5 +201,77 @@ class LanguageSwitchingIntegrationTest {
         composeTestRule.onNodeWithText("Backup & Recovery").assertDoesNotExist()
         composeTestRule.onNodeWithText("Đóng").performClick()
         composeTestRule.waitForIdle()
+    }
+
+    @Test
+    fun topBrandAndBottomNavigationLabels_neverWrapAcrossPhoneWidthsAndFontScales() {
+        verifyBarsSingleLineAt(widthDp = 320.dp, fontScale = 1.0f)
+    }
+
+    @Test
+    fun topBrandAndBottomNavigationLabels_neverWrapOnStandardPhoneWithLargeFontScale() {
+        verifyBarsSingleLineAt(widthDp = 360.dp, fontScale = 1.3f)
+    }
+
+    private fun verifyBarsSingleLineAt(widthDp: Dp, fontScale: Float) {
+        composeTestRule.setContent {
+            val currentDensity = LocalDensity.current
+            CompositionLocalProvider(
+                LocalDensity provides Density(
+                    density = currentDensity.density,
+                    fontScale = fontScale
+                )
+            ) {
+                TripFinanceTheme(darkTheme = false) {
+                    Box(
+                        modifier = Modifier
+                            .width(widthDp)
+                            .fillMaxHeight()
+                    ) {
+                        TripFinanceApp(viewModel = viewModel)
+                    }
+                }
+            }
+        }
+
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithTag("toggle_language_top_button").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.waitForIdle()
+
+        // Vietnamese mode checks
+        composeTestRule.onNodeWithText("TripFinance", useUnmergedTree = true)
+            .assertSingleLineNoOverflow("TripFinance (VI, $widthDp, scale=$fontScale)")
+        listOf("Tổng Quan", "Chi Tiêu", "Quỹ Đoàn", "Quyết Toán", "Thành Viên").forEach { label ->
+            composeTestRule.onNodeWithText(label, useUnmergedTree = true)
+                .assertSingleLineNoOverflow("$label (VI, $widthDp, scale=$fontScale)")
+        }
+
+        // Switch to English
+        composeTestRule.onNodeWithTag("toggle_language_top_button").performClick()
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            composeTestRule.onAllNodesWithText("🇬🇧 EN", useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.waitForIdle()
+
+        // English mode checks
+        composeTestRule.onNodeWithText("TripFinance", useUnmergedTree = true)
+            .assertSingleLineNoOverflow("TripFinance (EN, $widthDp, scale=$fontScale)")
+        composeTestRule.onNodeWithText("🇬🇧 EN", useUnmergedTree = true)
+            .assertSingleLineNoOverflow("EN chip ($widthDp, scale=$fontScale)")
+        listOf("Overview", "Expenses", "Fund", "Settle", "Members").forEach { label ->
+            composeTestRule.onNodeWithText(label, useUnmergedTree = true)
+                .assertSingleLineNoOverflow("$label (EN, $widthDp, scale=$fontScale)")
+        }
+    }
+
+    private fun SemanticsNodeInteraction.assertSingleLineNoOverflow(label: String) {
+        val node = fetchSemanticsNode()
+        val results = mutableListOf<TextLayoutResult>()
+        node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(results)
+        val layout = results.firstOrNull()
+            ?: throw AssertionError("No TextLayoutResult available for '$label'")
+        assertEquals("Expected 1 line for '$label', got ${layout.lineCount}", 1, layout.lineCount)
+        assertFalse("Expected no width overflow for '$label'", layout.didOverflowWidth)
     }
 }

@@ -21,11 +21,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withTimeoutOrNull
+import com.hiepnguyen.tripfinance.ui.components.AutoFitSingleLineText
 import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
 import com.hiepnguyen.tripfinance.ui.locale.AppStrings
 import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
@@ -170,146 +174,199 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
     CompositionLocalProvider(LocalAppLanguage provides lang) {
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Filled.Shield,
-                                contentDescription = null,
-                                tint = EmeraldPrimary,
-                                modifier = Modifier.size(24.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "TripFinance",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 19.sp,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    },
-                    actions = {
-                        // Language Switcher Button in TopAppBar
-                        Surface(
-                            onClick = { viewModel.toggleLanguage() },
-                            shape = RoundedCornerShape(8.dp),
-                            color = if (lang == AppLanguage.VI) EmeraldPrimaryContainer else Color(0xFFEDE9FE),
-                            border = BorderStroke(1.dp, if (lang == AppLanguage.VI) EmeraldPrimary else Color(0xFF7C3AED)),
-                            modifier = Modifier
-                                .height(30.dp)
-                                .testTag("toggle_language_top_button")
-                        ) {
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val isVeryNarrow = maxWidth < 360.dp
+                    val isCompactPhone = maxWidth < 410.dp
+                    val actionSlotWidth = when {
+                        isVeryNarrow -> 34.dp
+                        isCompactPhone -> 38.dp
+                        else -> 46.dp
+                    }
+                    val actionIconSize = if (isVeryNarrow) 20.dp else 22.dp
+                    val brandIconSize = if (isVeryNarrow) 20.dp else 22.dp
+                    val brandGap = if (isVeryNarrow) 5.dp else 7.dp
+                    val maxBrandFont = if (isVeryNarrow) 16.sp else 18.5.sp
+
+                    TopAppBar(
+                        title = {
                             Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = if (lang == AppLanguage.VI) "🇻🇳 VI" else "🇬🇧 EN",
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (lang == AppLanguage.VI) EmeraldOnPrimaryContainer else Color(0xFF5B21B6)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(4.dp))
-
-                        // Export Report Button in TopAppBar
-                        IconButton(
-                            onClick = { showExportReportDialog = true },
-                            modifier = Modifier.testTag("export_report_top_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Description,
-                                contentDescription = AppStrings.exportReport(lang),
-                                tint = IndigoSecondary
-                            )
-                        }
-
-                        // User Guide Button in TopAppBar
-                        IconButton(
-                            onClick = { showUserGuideScreen = true },
-                            modifier = Modifier.testTag("user_guide_top_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.HelpOutline,
-                                contentDescription = AppStrings.topBarUserGuideCd(lang),
-                                tint = Color(0xFF2563EB)
-                            )
-                        }
-
-                        // Backup & Recovery Button in TopAppBar
-                        IconButton(
-                            onClick = { showBackupRestoreDialog = true },
-                            modifier = Modifier.testTag("backup_restore_top_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.CloudSync,
-                                contentDescription = AppStrings.topBarBackupRestoreCd(lang),
-                                tint = EmeraldPrimary
-                            )
-                        }
-
-                        // Quick trip selector dropdown if user has multiple trips
-                        var tripMenuExpanded by remember { mutableStateOf(false) }
-                        Box {
-                            IconButton(
-                                onClick = { tripMenuExpanded = true },
-                                modifier = Modifier.testTag("switch_trip_top_button")
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Icon(
-                                    imageVector = Icons.Filled.SwapHoriz,
-                                    contentDescription = AppStrings.selectTrip(lang),
-                                    tint = MaterialTheme.colorScheme.onSurface
+                                    imageVector = Icons.Filled.Shield,
+                                    contentDescription = null,
+                                    tint = EmeraldPrimary,
+                                    modifier = Modifier.size(brandIconSize)
+                                )
+                                Spacer(modifier = Modifier.width(brandGap))
+                                AutoFitSingleLineText(
+                                    text = "TripFinance",
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Bold,
+                                    maxFontSize = maxBrandFont,
+                                    minFontSize = 11.sp,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .testTag("top_bar_brand_title")
                                 )
                             }
-
-                            DropdownMenu(
-                                expanded = tripMenuExpanded,
-                                onDismissRequest = { tripMenuExpanded = false }
+                        },
+                        actions = {
+                            CompositionLocalProvider(
+                                LocalMinimumInteractiveComponentSize provides Dp.Unspecified
                             ) {
-                                Text(
-                                    text = AppStrings.selectTrip(lang),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF64748B),
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                )
-                                uiState.allTrips.forEach { trip ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                text = trip.title,
-                                                fontWeight = if (trip.id == uiState.currentTrip?.id) FontWeight.Bold else FontWeight.Normal
-                                            )
-                                        },
-                                        onClick = {
-                                            viewModel.selectTrip(trip.id)
-                                            tripMenuExpanded = false
-                                        },
-                                        leadingIcon = {
-                                            if (trip.id == uiState.currentTrip?.id) {
-                                                Icon(Icons.Filled.Check, contentDescription = null, tint = EmeraldPrimary)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(end = 2.dp)
+                                ) {
+                                    // Language Switcher Button in TopAppBar
+                                    Box(
+                                        contentAlignment = Alignment.Center,
+                                        modifier = Modifier.height(48.dp)
+                                    ) {
+                                        Surface(
+                                            onClick = { viewModel.toggleLanguage() },
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = if (lang == AppLanguage.VI) EmeraldPrimaryContainer else Color(0xFFEDE9FE),
+                                            border = BorderStroke(1.dp, if (lang == AppLanguage.VI) EmeraldPrimary else Color(0xFF7C3AED)),
+                                            modifier = Modifier
+                                                .height(28.dp)
+                                                .testTag("toggle_language_top_button")
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(
+                                                    horizontal = if (isVeryNarrow) 6.dp else 8.dp,
+                                                    vertical = 3.dp
+                                                ),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text(
+                                                    text = if (lang == AppLanguage.VI) "🇻🇳 VI" else "🇬🇧 EN",
+                                                    fontSize = if (isVeryNarrow) 10.5.sp else 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    maxLines = 1,
+                                                    softWrap = false,
+                                                    overflow = TextOverflow.Clip,
+                                                    color = if (lang == AppLanguage.VI) EmeraldOnPrimaryContainer else Color(0xFF5B21B6)
+                                                )
                                             }
                                         }
-                                    )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(if (isVeryNarrow) 2.dp else 4.dp))
+
+                                    // Export Report Button in TopAppBar
+                                    IconButton(
+                                        onClick = { showExportReportDialog = true },
+                                        modifier = Modifier
+                                            .size(width = actionSlotWidth, height = 48.dp)
+                                            .testTag("export_report_top_button")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Description,
+                                            contentDescription = AppStrings.exportReport(lang),
+                                            tint = IndigoSecondary,
+                                            modifier = Modifier.size(actionIconSize)
+                                        )
+                                    }
+
+                                    // User Guide Button in TopAppBar
+                                    IconButton(
+                                        onClick = { showUserGuideScreen = true },
+                                        modifier = Modifier
+                                            .size(width = actionSlotWidth, height = 48.dp)
+                                            .testTag("user_guide_top_button")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.HelpOutline,
+                                            contentDescription = AppStrings.topBarUserGuideCd(lang),
+                                            tint = Color(0xFF2563EB),
+                                            modifier = Modifier.size(actionIconSize)
+                                        )
+                                    }
+
+                                    // Backup & Recovery Button in TopAppBar
+                                    IconButton(
+                                        onClick = { showBackupRestoreDialog = true },
+                                        modifier = Modifier
+                                            .size(width = actionSlotWidth, height = 48.dp)
+                                            .testTag("backup_restore_top_button")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.CloudSync,
+                                            contentDescription = AppStrings.topBarBackupRestoreCd(lang),
+                                            tint = EmeraldPrimary,
+                                            modifier = Modifier.size(actionIconSize)
+                                        )
+                                    }
+
+                                    // Quick trip selector dropdown if user has multiple trips
+                                    var tripMenuExpanded by remember { mutableStateOf(false) }
+                                    Box {
+                                        IconButton(
+                                            onClick = { tripMenuExpanded = true },
+                                            modifier = Modifier
+                                                .size(width = actionSlotWidth, height = 48.dp)
+                                                .testTag("switch_trip_top_button")
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.SwapHoriz,
+                                                contentDescription = AppStrings.selectTrip(lang),
+                                                tint = MaterialTheme.colorScheme.onSurface,
+                                                modifier = Modifier.size(actionIconSize)
+                                            )
+                                        }
+
+                                        DropdownMenu(
+                                            expanded = tripMenuExpanded,
+                                            onDismissRequest = { tripMenuExpanded = false }
+                                        ) {
+                                            Text(
+                                                text = AppStrings.selectTrip(lang),
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color(0xFF64748B),
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                            )
+                                            uiState.allTrips.forEach { trip ->
+                                                DropdownMenuItem(
+                                                    text = {
+                                                        Text(
+                                                            text = trip.title,
+                                                            fontWeight = if (trip.id == uiState.currentTrip?.id) FontWeight.Bold else FontWeight.Normal
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        viewModel.selectTrip(trip.id)
+                                                        tripMenuExpanded = false
+                                                    },
+                                                    leadingIcon = {
+                                                        if (trip.id == uiState.currentTrip?.id) {
+                                                            Icon(Icons.Filled.Check, contentDescription = null, tint = EmeraldPrimary)
+                                                        }
+                                                    }
+                                                )
+                                            }
+                                            HorizontalDivider()
+                                            DropdownMenuItem(
+                                                text = { Text(AppStrings.createNewTrip(lang)) },
+                                                onClick = {
+                                                    showCreateTripDialog = true
+                                                    tripMenuExpanded = false
+                                                },
+                                                leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) }
+                                            )
+                                        }
+                                    }
                                 }
-                                HorizontalDivider()
-                                DropdownMenuItem(
-                                    text = { Text(AppStrings.createNewTrip(lang)) },
-                                    onClick = {
-                                        showCreateTripDialog = true
-                                        tripMenuExpanded = false
-                                    },
-                                    leadingIcon = { Icon(Icons.Filled.Add, contentDescription = null) }
-                                )
                             }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
                     )
-                )
+                }
             },
             bottomBar = {
                 NavigationBar(
@@ -329,10 +386,16 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
                                 )
                             },
                             label = {
-                                Text(
+                                AutoFitSingleLineText(
                                     text = tabTitle,
-                                    fontSize = 11.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    maxFontSize = 11.sp,
+                                    minFontSize = 8.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    style = LocalTextStyle.current.copy(letterSpacing = 0.sp),
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 2.dp)
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
