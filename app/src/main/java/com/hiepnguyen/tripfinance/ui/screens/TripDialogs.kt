@@ -2,11 +2,12 @@ package com.hiepnguyen.tripfinance.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FlightTakeoff
@@ -31,22 +32,20 @@ import com.hiepnguyen.tripfinance.ui.theme.EmeraldPrimary
 
 @Composable
 fun CreateTripDialog(
+    lang: AppLanguage = LocalAppLanguage.current,
     onDismiss: () -> Unit,
     onConfirm: (
         title: String,
         description: String,
-        joinCode: String,
         startDate: Long,
         endDate: Long,
         adminName: String,
         baseCurrency: String
     ) -> Unit
 ) {
-    val lang = LocalAppLanguage.current
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
     var adminName by remember { mutableStateOf("") }
-    var joinCodeInput by remember { mutableStateOf(com.hiepnguyen.tripfinance.domain.model.TripCodeGenerator.generateCode("TRIP-")) }
     var selectedBaseCurrency by remember { mutableStateOf("VND") }
     var currencyDropdownExpanded by remember { mutableStateOf(false) }
 
@@ -73,7 +72,10 @@ fun CreateTripDialog(
             }
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
@@ -113,13 +115,14 @@ fun CreateTripDialog(
                                 .testTag("create_trip_currency_selector")
                         ) {
                             val currInfo = com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.LIST.find { it.code == selectedBaseCurrency }
+                            val currName = if (lang == AppLanguage.VI) currInfo?.nameVi else currInfo?.nameEn
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "${currInfo?.code ?: selectedBaseCurrency} (${currInfo?.symbol ?: ""}) - ${currInfo?.nameVi ?: ""}",
+                                    text = "${currInfo?.code ?: selectedBaseCurrency} (${currInfo?.symbol ?: ""}) - ${currName ?: ""}",
                                     fontWeight = FontWeight.Bold,
                                     color = EmeraldPrimary,
                                     fontSize = 13.5.sp
@@ -133,6 +136,7 @@ fun CreateTripDialog(
                             onDismissRequest = { currencyDropdownExpanded = false }
                         ) {
                             com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.LIST.forEach { curr ->
+                                val itemCurrName = if (lang == AppLanguage.VI) curr.nameVi else curr.nameEn
                                 DropdownMenuItem(
                                     text = {
                                         Row(
@@ -141,7 +145,7 @@ fun CreateTripDialog(
                                         ) {
                                             Text("${curr.code} (${curr.symbol})", fontWeight = FontWeight.Bold)
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Text(curr.nameVi, fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                                            Text(itemCurrName, fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
                                         }
                                     },
                                     onClick = {
@@ -165,31 +169,14 @@ fun CreateTripDialog(
                     onValueChange = { adminName = it },
                     label = { Text(AppStrings.adminNameInputLabel(lang)) },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = joinCodeInput,
-                    onValueChange = { input ->
-                        val filtered = input.uppercase().filter { it.isLetterOrDigit() || it == '-' || it == '_' }
-                        if (filtered.length <= 16) joinCodeInput = filtered
-                    },
-                    label = { Text(AppStrings.tripJoinCodeInputLabel(lang)) },
-                    singleLine = true,
-                    trailingIcon = {
-                        IconButton(onClick = {
-                            joinCodeInput = com.hiepnguyen.tripfinance.domain.model.TripCodeGenerator.generateCode("TRIP-")
-                        }) {
-                            Icon(Icons.Filled.Edit, contentDescription = AppStrings.generateNewCodeCd(lang), tint = EmeraldPrimary)
-                        }
-                    },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = {
                         focusManager.clearFocus()
                         keyboardController?.hide()
                     }),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("create_trip_admin_name_input")
                 )
             }
         },
@@ -199,13 +186,9 @@ fun CreateTripDialog(
                     focusManager.clearFocus()
                     keyboardController?.hide()
                     val now = System.currentTimeMillis()
-                    val finalCode = joinCodeInput.trim().ifEmpty {
-                        com.hiepnguyen.tripfinance.domain.model.TripCodeGenerator.generateCode("TRIP-")
-                    }
                     onConfirm(
                         title.trim(),
                         description.trim(),
-                        finalCode,
                         now,
                         now + 86400000L * 5,
                         adminName.trim(),
@@ -228,10 +211,10 @@ fun CreateTripDialog(
 @Composable
 fun EditTripDialog(
     trip: TripEntity,
+    lang: AppLanguage = LocalAppLanguage.current,
     onDismiss: () -> Unit,
     onConfirm: (title: String, description: String, startDate: Long, endDate: Long, baseCurrency: String) -> Unit
 ) {
-    val lang = LocalAppLanguage.current
     var title by remember { mutableStateOf(trip.title) }
     var description by remember { mutableStateOf(trip.description) }
     var baseCurrency by remember { mutableStateOf(trip.baseCurrency) }
@@ -260,7 +243,10 @@ fun EditTripDialog(
             }
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
@@ -302,13 +288,14 @@ fun EditTripDialog(
                                 .testTag("edit_trip_currency_selector")
                         ) {
                             val currInfo = com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.LIST.find { it.code == baseCurrency }
+                            val currName = if (lang == AppLanguage.VI) currInfo?.nameVi else currInfo?.nameEn
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "${currInfo?.code ?: baseCurrency} (${currInfo?.symbol ?: ""}) - ${currInfo?.nameVi ?: ""}",
+                                    text = "${currInfo?.code ?: baseCurrency} (${currInfo?.symbol ?: ""}) - ${currName ?: ""}",
                                     fontWeight = FontWeight.Bold,
                                     color = EmeraldPrimary,
                                     fontSize = 13.5.sp
@@ -322,6 +309,7 @@ fun EditTripDialog(
                             onDismissRequest = { currencyDropdownExpanded = false }
                         ) {
                             com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.LIST.forEach { curr ->
+                                val itemCurrName = if (lang == AppLanguage.VI) curr.nameVi else curr.nameEn
                                 DropdownMenuItem(
                                     text = {
                                         Row(
@@ -330,7 +318,7 @@ fun EditTripDialog(
                                         ) {
                                             Text("${curr.code} (${curr.symbol})", fontWeight = FontWeight.Bold)
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Text(curr.nameVi, fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
+                                            Text(itemCurrName, fontSize = 12.sp, color = MaterialTheme.colorScheme.outline)
                                         }
                                     },
                                     onClick = {
@@ -373,10 +361,10 @@ fun EditTripDialog(
 @Composable
 fun DeleteTripDialog(
     tripTitle: String,
+    lang: AppLanguage = LocalAppLanguage.current,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit
 ) {
-    val lang = LocalAppLanguage.current
     BackHandler { onDismiss() }
 
     AlertDialog(
@@ -430,12 +418,6 @@ fun AppStrings.baseCurrencyExplanation(lang: AppLanguage) =
 
 fun AppStrings.adminNameInputLabel(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Họ tên bạn (Trưởng đoàn / Người ghi chép) *" else "Your Name (Leader / Bookkeeper) *"
-
-fun AppStrings.tripJoinCodeInputLabel(lang: AppLanguage) =
-    if (lang == AppLanguage.VI) "Mã đoàn (Dùng để chia sẻ / nhập đoàn)" else "Trip Code (For sharing / importing)"
-
-fun AppStrings.generateNewCodeCd(lang: AppLanguage) =
-    if (lang == AppLanguage.VI) "Tạo mã ngẫu nhiên mới" else "Generate random code"
 
 fun AppStrings.createTripSubmitBtn(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Tạo đoàn" else "Create Trip"

@@ -9,19 +9,24 @@ import kotlin.math.roundToLong
  * Thống nhất toàn bộ ứng dụng tại một nguồn duy nhất (Single Source of Truth).
  */
 object SupportedCurrencies {
-    data class CurrencyInfo(val code: String, val nameVi: String, val symbol: String)
+    data class CurrencyInfo(
+        val code: String,
+        val nameVi: String,
+        val nameEn: String,
+        val symbol: String
+    )
 
     val LIST = listOf(
-        CurrencyInfo("VND", "Việt Nam Đồng", "₫"),
-        CurrencyInfo("USD", "Đô la Mỹ", "$"),
-        CurrencyInfo("EUR", "Euro", "€"),
-        CurrencyInfo("JPY", "Yên Nhật", "¥"),
-        CurrencyInfo("KRW", "Won Hàn Quốc", "₩"),
-        CurrencyInfo("SGD", "Đô la Singapore", "S$"),
-        CurrencyInfo("THB", "Baht Thái", "฿"),
-        CurrencyInfo("CNY", "Nhân dân tệ", "¥"),
-        CurrencyInfo("GBP", "Bảng Anh", "£"),
-        CurrencyInfo("AUD", "Đô la Úc", "A$")
+        CurrencyInfo("VND", "Việt Nam Đồng", "Vietnamese Dong", "₫"),
+        CurrencyInfo("USD", "Đô la Mỹ", "US Dollar", "$"),
+        CurrencyInfo("EUR", "Euro", "Euro", "€"),
+        CurrencyInfo("JPY", "Yên Nhật", "Japanese Yen", "¥"),
+        CurrencyInfo("KRW", "Won Hàn Quốc", "South Korean Won", "₩"),
+        CurrencyInfo("SGD", "Đô la Singapore", "Singapore Dollar", "S$"),
+        CurrencyInfo("THB", "Baht Thái", "Thai Baht", "฿"),
+        CurrencyInfo("CNY", "Nhân dân tệ", "Chinese Yuan", "¥"),
+        CurrencyInfo("GBP", "Bảng Anh", "British Pound", "£"),
+        CurrencyInfo("AUD", "Đô la Úc", "Australian Dollar", "A$")
     )
 
     fun getSymbol(code: String): String {

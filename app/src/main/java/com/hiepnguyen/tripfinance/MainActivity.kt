@@ -61,8 +61,10 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                     is com.hiepnguyen.tripfinance.ui.viewmodel.DatabaseInitState.Error -> {
+                        val lang by viewModel.language.collectAsStateWithLifecycle()
                         EmergencyDatabaseRecoveryScreen(
                             error = state,
+                            lang = lang,
                             onRetry = { viewModel.retryDatabaseInit() },
                             onRestoreBackup = { json, password ->
                                 viewModel.restoreFromEmergencyBackup(json, password)
@@ -83,11 +85,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun TripFinanceApp(viewModel: TripFinanceViewModel) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val lang by viewModel.language.collectAsStateWithLifecycle()
     val aiInsight by viewModel.aiInsight.collectAsStateWithLifecycle()
     val isLoadingAi by viewModel.isLoadingAi.collectAsStateWithLifecycle()
     val isExportingPdf by viewModel.isExportingPdf.collectAsStateWithLifecycle()
     val isExportingXlsx by viewModel.isExportingXlsx.collectAsStateWithLifecycle()
-    val lang = uiState.language
     var currentTab by remember { mutableStateOf(NavigationTab.DASHBOARD) }
 
     // Dialog state controllers
@@ -149,7 +151,7 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
 
     LaunchedEffect(Unit) {
         viewModel.deletedExpenseEvent.collectLatest { deletedUndo ->
-            val currentLang = viewModel.uiState.value.language
+            val currentLang = viewModel.language.value
             val message = if (currentLang == AppLanguage.VI) "Đã xóa. Hoàn tác" else "Deleted. Undo"
             val actionLabel = if (currentLang == AppLanguage.VI) "Hoàn tác" else "Undo"
             val result = withTimeoutOrNull(5000L) {
@@ -438,91 +440,106 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
                 }
             }
         }
-    }
 
-    // Modal Dialogs
-    if (showBackupRestoreDialog) {
-        BackupRestoreDialog(
-            viewModel = viewModel,
-            onDismiss = { showBackupRestoreDialog = false }
-        )
-    }
-
-    if (showExportReportDialog) {
-        ExportReportDialog(
-            uiState = uiState,
-            isExportingPdf = isExportingPdf,
-            onExportPdf = { viewModel.exportAndSharePdf(it) },
-            isExportingXlsx = isExportingXlsx,
-            onExportXlsx = { viewModel.exportAndShareXlsx(it) },
-            onDismiss = { showExportReportDialog = false }
-        )
-    }
-
-    // Modal Dialogs
-    if (showAddExpenseDialog) {
-        AddExpenseDialog(
-            members = uiState.members,
-            exchangeRates = uiState.exchangeRates,
-            currentMemberId = uiState.currentMember?.id,
-            baseCurrency = uiState.currentTrip?.baseCurrency ?: "VND",
-            onDismiss = { showAddExpenseDialog = false },
-            onSave = { title, category, payerType, payerMemberId, amount, currency, rate, splitType, splits, note, timestamp ->
-                viewModel.addExpense(
-                    title, category, payerType, payerMemberId, amount, currency, rate, splitType, splits, note, timestamp
-                )
-            }
-        )
-    }
-
-    if (showAddFundDialog) {
-        AddFundContributionDialog(
-            members = uiState.members,
-            baseCurrency = uiState.currentTrip?.baseCurrency ?: "VND",
-            onDismiss = { showAddFundDialog = false },
-            onSave = { memberId, amount, currency, rate, note ->
-                viewModel.addFundContribution(memberId, amount, currency, rate, note)
-            }
-        )
-    }
-
-    if (showCreateTripDialog) {
-        CreateTripDialog(
-            onDismiss = { showCreateTripDialog = false },
-            onConfirm = { title, desc, code, start, end, admin, baseCurr ->
-                viewModel.createTrip(title, desc, code, start, end, admin, baseCurr)
-                showCreateTripDialog = false
-            }
-        )
-    }
-
-    if (showUserGuideScreen) {
-        androidx.compose.ui.window.Dialog(
-            onDismissRequest = { showUserGuideScreen = false },
-            properties = androidx.compose.ui.window.DialogProperties(
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false
+        // Modal Dialogs
+        if (showBackupRestoreDialog) {
+            BackupRestoreDialog(
+                viewModel = viewModel,
+                lang = lang,
+                onDismiss = { showBackupRestoreDialog = false }
             )
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.background
-            ) {
-                UserGuideScreen(
-                    onBack = { showUserGuideScreen = false }
+        }
+
+        if (showExportReportDialog) {
+            ExportReportDialog(
+                uiState = uiState,
+                isExportingPdf = isExportingPdf,
+                onExportPdf = { viewModel.exportAndSharePdf(it) },
+                isExportingXlsx = isExportingXlsx,
+                onExportXlsx = { viewModel.exportAndShareXlsx(it) },
+                lang = lang,
+                onDismiss = { showExportReportDialog = false }
+            )
+        }
+
+        // Modal Dialogs
+        if (showAddExpenseDialog) {
+            AddExpenseDialog(
+                members = uiState.members,
+                exchangeRates = uiState.exchangeRates,
+                currentMemberId = uiState.currentMember?.id,
+                baseCurrency = uiState.currentTrip?.baseCurrency ?: "VND",
+                lang = lang,
+                onDismiss = { showAddExpenseDialog = false },
+                onSave = { title, category, payerType, payerMemberId, amount, currency, rate, splitType, splits, note, timestamp ->
+                    viewModel.addExpense(
+                        title, category, payerType, payerMemberId, amount, currency, rate, splitType, splits, note, timestamp
+                    )
+                }
+            )
+        }
+
+        if (showAddFundDialog) {
+            AddFundContributionDialog(
+                members = uiState.members,
+                baseCurrency = uiState.currentTrip?.baseCurrency ?: "VND",
+                lang = lang,
+                onDismiss = { showAddFundDialog = false },
+                onSave = { memberId, amount, currency, rate, note ->
+                    viewModel.addFundContribution(memberId, amount, currency, rate, note)
+                }
+            )
+        }
+
+        if (showCreateTripDialog) {
+            CreateTripDialog(
+                lang = lang,
+                onDismiss = { showCreateTripDialog = false },
+                onConfirm = { title, desc, start, end, admin, baseCurr ->
+                    viewModel.createTrip(
+                        title = title,
+                        description = desc,
+                        joinCode = "",
+                        startDate = start,
+                        endDate = end,
+                        adminName = admin,
+                        baseCurrency = baseCurr
+                    )
+                    showCreateTripDialog = false
+                }
+            )
+        }
+
+        if (showUserGuideScreen) {
+            androidx.compose.ui.window.Dialog(
+                onDismissRequest = { showUserGuideScreen = false },
+                properties = androidx.compose.ui.window.DialogProperties(
+                    usePlatformDefaultWidth = false,
+                    decorFitsSystemWindows = false
                 )
+            ) {
+                CompositionLocalProvider(LocalAppLanguage provides lang) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        UserGuideScreen(
+                            lang = lang,
+                            onBack = { showUserGuideScreen = false }
+                        )
+                    }
+                }
             }
         }
-    }
 
-
-
-    if (aiInsight != null || isLoadingAi) {
-        com.hiepnguyen.tripfinance.ui.components.AiSpendingAdvisorDialog(
-            insight = aiInsight,
-            isLoading = isLoadingAi,
-            onDismiss = { viewModel.clearAiInsight() }
-        )
+        if (aiInsight != null || isLoadingAi) {
+            com.hiepnguyen.tripfinance.ui.components.AiSpendingAdvisorDialog(
+                insight = aiInsight,
+                isLoading = isLoadingAi,
+                lang = lang,
+                onDismiss = { viewModel.clearAiInsight() }
+            )
+        }
     }
 }
 

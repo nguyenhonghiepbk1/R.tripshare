@@ -893,6 +893,7 @@ fun DashboardScreen(
     tripToEdit?.let { trip ->
         EditTripDialog(
             trip = trip,
+            lang = lang,
             onDismiss = { tripToEdit = null },
             onConfirm = { title, desc, start, end, baseCurr ->
                 onEditTrip(trip, title, desc, start, end, baseCurr)
@@ -904,6 +905,7 @@ fun DashboardScreen(
     tripToDelete?.let { trip ->
         DeleteTripDialog(
             tripTitle = trip.title,
+            lang = lang,
             onDismiss = { tripToDelete = null },
             onConfirm = {
                 onDeleteTrip(trip)

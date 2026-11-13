@@ -91,6 +91,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
     private val _language = MutableStateFlow(
         if (sharedPrefs.getString("app_language", "vi") == "en") AppLanguage.EN else AppLanguage.VI
     )
+    val language: StateFlow<AppLanguage> = _language.asStateFlow()
 
     val uiState: StateFlow<UiState>
 
@@ -283,7 +284,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
 .stateIn(
     scope = viewModelScope,
     started = SharingStarted.WhileSubscribed(5000),
-    initialValue = UiState()
+    initialValue = UiState(language = _language.value)
 )
 
         // Dọn dẹp các tệp PDF báo cáo cũ hơn 24 giờ trong cache/reports khi khởi động

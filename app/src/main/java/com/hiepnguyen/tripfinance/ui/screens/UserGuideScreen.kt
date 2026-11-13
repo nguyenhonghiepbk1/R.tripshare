@@ -70,10 +70,10 @@ data class GuideItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserGuideScreen(
+    lang: AppLanguage = LocalAppLanguage.current,
     onBack: () -> Unit
 ) {
     BackHandler { onBack() }
-    val lang = LocalAppLanguage.current
     val uriHandler = LocalUriHandler.current
     var selectedCategory by remember { mutableStateOf(GuideCategory.ALL) }
     var searchQuery by remember { mutableStateOf("") }
@@ -392,7 +392,8 @@ fun UserGuideScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 16.dp)
+                .testTag("user_guide_list"),
             verticalArrangement = Arrangement.spacedBy(14.dp),
             contentPadding = PaddingValues(top = 12.dp, bottom = 40.dp)
         ) {
@@ -463,7 +464,7 @@ fun UserGuideScreen(
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Filled.Close, contentDescription = "Clear", tint = Color(0xFF64748B))
+                                Icon(Icons.Filled.Close, contentDescription = if (lang == AppLanguage.VI) "Xóa" else "Clear", tint = Color(0xFF64748B))
                             }
                         }
                     },
@@ -648,6 +649,7 @@ fun UserGuideScreen(
                     GuideAccordionCard(
                         item = item,
                         isExpanded = isExpanded,
+                        lang = lang,
                         onToggle = {
                             expandedItemIds = if (isExpanded) {
                                 expandedItemIds - item.id
@@ -700,6 +702,7 @@ fun UserGuideScreen(
 
     if (showPrivacyDialog) {
         PrivacyPolicyDialog(
+            lang = lang,
             onDismiss = { showPrivacyDialog = false }
         )
     }
@@ -709,9 +712,9 @@ fun UserGuideScreen(
 fun GuideAccordionCard(
     item: GuideItem,
     isExpanded: Boolean,
+    lang: AppLanguage = LocalAppLanguage.current,
     onToggle: () -> Unit
 ) {
-    val lang = LocalAppLanguage.current
     val title = if (lang == AppLanguage.VI) item.titleVi else item.titleEn
     val summary = if (lang == AppLanguage.VI) item.summaryVi else item.summaryEn
     val steps = if (lang == AppLanguage.VI) item.stepsVi else item.stepsEn

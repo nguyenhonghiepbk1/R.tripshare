@@ -1,6 +1,7 @@
 package com.hiepnguyen.tripfinance.ui.screens
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
@@ -25,8 +26,9 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.DialogProperties
-import androidx.activity.compose.BackHandler
+import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.AppStrings
+import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
 import com.hiepnguyen.tripfinance.ui.theme.DangerRed
 import com.hiepnguyen.tripfinance.ui.theme.EmeraldPrimary
 import com.hiepnguyen.tripfinance.ui.viewmodel.DatabaseInitState
@@ -34,6 +36,7 @@ import com.hiepnguyen.tripfinance.ui.viewmodel.DatabaseInitState
 @Composable
 fun EmergencyDatabaseRecoveryScreen(
     error: DatabaseInitState.Error,
+    lang: AppLanguage = LocalAppLanguage.current,
     onRetry: () -> Unit,
     onRestoreBackup: (jsonContent: String, password: String?) -> Unit,
     onResetFresh: () -> Unit
@@ -57,10 +60,9 @@ fun EmergencyDatabaseRecoveryScreen(
                 val inputStream = context.contentResolver.openInputStream(uri)
                 val content = inputStream?.bufferedReader()?.use { it.readText() } ?: ""
                 if (content.isBlank()) {
-                    fileReadError = "Tệp sao lưu rỗng hoặc không thể đọc."
+                    fileReadError = AppStrings.recoveryEmptyFileError(lang)
                 } else {
                     pendingBackupJson = content
-                    // Kiểm tra xem tệp có mã hóa mật khẩu không
                     val isEncrypted = com.hiepnguyen.tripfinance.data.backup.BackupCryptoUtils.isEncryptedBackup(content)
                     if (isEncrypted) {
                         showPasswordDialog = true
@@ -69,7 +71,7 @@ fun EmergencyDatabaseRecoveryScreen(
                     }
                 }
             } catch (e: Exception) {
-                fileReadError = "Lỗi khi đọc tệp sao lưu: ${e.message}"
+                fileReadError = AppStrings.recoveryReadError(e.message, lang)
             } finally {
                 isReadingFile = false
             }
@@ -90,7 +92,6 @@ fun EmergencyDatabaseRecoveryScreen(
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Icon Shield / Security Error
             Box(
                 modifier = Modifier
                     .size(88.dp)
@@ -106,9 +107,8 @@ fun EmergencyDatabaseRecoveryScreen(
                 )
             }
 
-            // Title & Subtitle
             Text(
-                text = "Bảo Vệ An Toàn Dữ Liệu",
+                text = AppStrings.recoveryTitle(lang),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -116,14 +116,13 @@ fun EmergencyDatabaseRecoveryScreen(
             )
 
             Text(
-                text = "Hệ thống bảo mật phần cứng Android KeyStore hoặc thư viện mã hóa SQLCipher không thể mở khóa cơ sở dữ liệu.",
+                text = AppStrings.recoverySubtitle(lang),
                 fontSize = 14.sp,
                 color = Color(0xFF64748B),
                 textAlign = TextAlign.Center,
                 lineHeight = 20.sp
             )
 
-            // Diagnostic Box
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
                 shape = RoundedCornerShape(12.dp),
@@ -140,7 +139,7 @@ fun EmergencyDatabaseRecoveryScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "Chi tiết sự cố bảo mật (Fail-Closed):",
+                            text = AppStrings.recoveryDetailHeader(lang),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF334155)
@@ -148,7 +147,7 @@ fun EmergencyDatabaseRecoveryScreen(
                     }
 
                     Text(
-                        text = "Mã lỗi: ${error.errorType.name}",
+                        text = AppStrings.recoveryErrorCode(error.errorType.name, lang),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = DangerRed,
@@ -163,7 +162,7 @@ fun EmergencyDatabaseRecoveryScreen(
                     )
 
                     Text(
-                        text = "Ứng dụng tuân thủ nguyên tắc bảo mật đóng (Fail-Closed), tuyệt đối không mở CSDL không mã hóa để ngăn ngừa rò rỉ thông tin tài chính của bạn.",
+                        text = AppStrings.recoveryFailClosedNote(lang),
                         fontSize = 11.sp,
                         color = Color(0xFF64748B),
                         fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
@@ -171,7 +170,6 @@ fun EmergencyDatabaseRecoveryScreen(
                 }
             }
 
-            // File read error if any
             AnimatedVisibility(visible = fileReadError != null) {
                 fileReadError?.let {
                     Surface(
@@ -191,7 +189,6 @@ fun EmergencyDatabaseRecoveryScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Action 1: Retry
             Button(
                 onClick = onRetry,
                 modifier = Modifier
@@ -200,12 +197,11 @@ fun EmergencyDatabaseRecoveryScreen(
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
             ) {
-                Icon(Icons.Filled.Refresh, contentDescription = "Thử Lại Mở Khóa")
+                Icon(Icons.Filled.Refresh, contentDescription = AppStrings.recoveryRetryBtn(lang))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Thử Lại Mở Khóa", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(AppStrings.recoveryRetryBtn(lang), fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
 
-            // Action 2: Restore from Backup
             OutlinedButton(
                 onClick = { filePickerLauncher.launch("*/*") },
                 modifier = Modifier
@@ -217,25 +213,23 @@ fun EmergencyDatabaseRecoveryScreen(
                 if (isReadingFile) {
                     CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
-                    Icon(Icons.Filled.CloudUpload, contentDescription = "Khôi Phục Từ Tệp Sao Lưu")
+                    Icon(Icons.Filled.CloudUpload, contentDescription = AppStrings.recoveryRestoreBtn(lang))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Khôi Phục Từ Tệp Sao Lưu (.json)", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                    Text(AppStrings.recoveryRestoreJsonBtn(lang), fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
             }
 
-            // Action 3: Reset database fresh
             TextButton(
                 onClick = { showResetConfirmDialog = true },
                 colors = ButtonDefaults.textButtonColors(contentColor = DangerRed)
             ) {
-                Icon(Icons.Filled.DeleteForever, contentDescription = "Xóa CSDL Hỏng & Tạo Mới Từ Đầu", modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.DeleteForever, contentDescription = AppStrings.recoveryResetBtn(lang), modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Xóa CSDL Hỏng & Tạo Mới Từ Đầu", fontSize = 13.sp)
+                Text(AppStrings.recoveryResetBtn(lang), fontSize = 13.sp)
             }
         }
     }
 
-    // Password Prompt Dialog for Encrypted Backup
     if (showPasswordDialog && pendingBackupJson != null) {
         AlertDialog(
             onDismissRequest = {
@@ -247,20 +241,20 @@ fun EmergencyDatabaseRecoveryScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.Lock, contentDescription = null, tint = EmeraldPrimary)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Mật Khẩu Sao Lưu", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(AppStrings.recoveryPasswordTitle(lang), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        "Bản sao lưu này đã được mã hóa bảo mật. Vui lòng nhập mật khẩu bạn đã đặt khi sao lưu để giải mã dữ liệu:",
+                        AppStrings.recoveryPasswordPrompt(lang),
                         fontSize = 13.sp,
                         color = Color(0xFF475569)
                     )
                     OutlinedTextField(
                         value = backupPassword,
                         onValueChange = { backupPassword = it },
-                        label = { Text("Mật khẩu bảo vệ") },
+                        label = { Text(AppStrings.recoveryPasswordLabel(lang)) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth()
@@ -281,7 +275,7 @@ fun EmergencyDatabaseRecoveryScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                 ) {
-                    Text("Mở Khóa & Phục Hồi")
+                    Text(AppStrings.recoveryUnlockRestoreBtn(lang))
                 }
             },
             dismissButton = {
@@ -290,13 +284,12 @@ fun EmergencyDatabaseRecoveryScreen(
                     pendingBackupJson = null
                     backupPassword = ""
                 }) {
-                    Text("Hủy")
+                    Text(AppStrings.recoveryCancelBtn(lang))
                 }
             }
         )
     }
 
-    // Confirmation Dialog for Resetting Database
     if (showResetConfirmDialog) {
         AlertDialog(
             onDismissRequest = { showResetConfirmDialog = false },
@@ -304,13 +297,12 @@ fun EmergencyDatabaseRecoveryScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Filled.Warning, contentDescription = null, tint = DangerRed)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Xác Nhận Xóa Dữ Liệu?", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Text(AppStrings.recoveryConfirmResetTitle(lang), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 }
             },
             text = {
                 Text(
-                    "Thao tác này sẽ xóa sạch CSDL hiện tại trên máy và tạo mới khóa bảo mật KeyStore hoàn toàn sạch sẽ. " +
-                            "Toàn bộ dữ liệu chưa được sao lưu sẽ bị mất vĩnh viễn. Bạn có chắc chắn muốn tiếp tục?",
+                    AppStrings.recoveryConfirmResetBody(lang),
                     fontSize = 13.sp,
                     color = Color(0xFF334155),
                     lineHeight = 20.sp
@@ -324,14 +316,77 @@ fun EmergencyDatabaseRecoveryScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = DangerRed)
                 ) {
-                    Text("Xác Nhận Xóa & Tạo Mới")
+                    Text(AppStrings.recoveryConfirmResetBtn(lang))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showResetConfirmDialog = false }) {
-                    Text("Hủy Bỏ")
+                    Text(AppStrings.recoveryCancelBtn(lang))
                 }
             }
         )
     }
 }
+
+fun AppStrings.recoveryEmptyFileError(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Tệp sao lưu rỗng hoặc không thể đọc." else "Backup file is empty or unreadable."
+
+fun AppStrings.recoveryReadError(err: String?, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Lỗi khi đọc tệp sao lưu: ${err ?: ""}" else "Failed to read backup file: ${err ?: ""}"
+
+fun AppStrings.recoveryTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bảo Vệ An Toàn Dữ Liệu" else "Data Security Protection"
+
+fun AppStrings.recoverySubtitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hệ thống bảo mật phần cứng Android KeyStore hoặc thư viện mã hóa SQLCipher không thể mở khóa cơ sở dữ liệu."
+    else "Android KeyStore hardware security or SQLCipher encryption could not unlock the database."
+
+fun AppStrings.recoveryDetailHeader(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Chi tiết sự cố bảo mật (Fail-Closed):" else "Security Incident Details (Fail-Closed):"
+
+fun AppStrings.recoveryErrorCode(code: String, lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mã lỗi: $code" else "Error code: $code"
+
+fun AppStrings.recoveryFailClosedNote(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Ứng dụng tuân thủ nguyên tắc bảo mật đóng (Fail-Closed), tuyệt đối không mở CSDL không mã hóa để ngăn ngừa rò rỉ thông tin tài chính của bạn."
+    else "The app strictly follows a Fail-Closed security architecture and will never open an unencrypted database to prevent financial data leaks."
+
+fun AppStrings.recoveryRetryBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Thử Lại Mở Khóa" else "Retry Unlock"
+
+fun AppStrings.recoveryRestoreBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Khôi Phục Từ Tệp Sao Lưu" else "Restore From Backup"
+
+fun AppStrings.recoveryRestoreJsonBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Khôi Phục Từ Tệp Sao Lưu (.json)" else "Restore From Backup File (.json)"
+
+fun AppStrings.recoveryResetBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xóa CSDL Hỏng & Tạo Mới Từ Đầu" else "Wipe Corrupted DB & Start Fresh"
+
+fun AppStrings.recoveryPasswordTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mật Khẩu Sao Lưu" else "Backup Password"
+
+fun AppStrings.recoveryPasswordPrompt(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Bản sao lưu này đã được mã hóa bảo mật. Vui lòng nhập mật khẩu bạn đã đặt khi sao lưu để giải mã dữ liệu:"
+    else "This backup is encrypted. Please enter the password used when creating the backup to decrypt your data:"
+
+fun AppStrings.recoveryPasswordLabel(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mật khẩu bảo vệ" else "Protection password"
+
+fun AppStrings.recoveryUnlockRestoreBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Mở Khóa & Phục Hồi" else "Unlock & Restore"
+
+fun AppStrings.recoveryCancelBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Hủy Bỏ" else "Cancel"
+
+fun AppStrings.recoveryConfirmResetTitle(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xác Nhận Xóa Dữ Liệu?" else "Confirm Data Wipe?"
+
+fun AppStrings.recoveryConfirmResetBody(lang: AppLanguage) =
+    if (lang == AppLanguage.VI)
+        "Thao tác này sẽ xóa sạch CSDL hiện tại trên máy và tạo mới khóa bảo mật KeyStore hoàn toàn sạch sẽ. Toàn bộ dữ liệu chưa được sao lưu sẽ bị mất vĩnh viễn. Bạn có chắc chắn muốn tiếp tục?"
+    else
+        "This action will wipe the current database on this device and generate a fresh KeyStore security key. All unbacked-up data will be permanently lost. Are you sure you want to continue?"
+
+fun AppStrings.recoveryConfirmResetBtn(lang: AppLanguage) =
+    if (lang == AppLanguage.VI) "Xác Nhận Xóa & Tạo Mới" else "Confirm Wipe & Reset"

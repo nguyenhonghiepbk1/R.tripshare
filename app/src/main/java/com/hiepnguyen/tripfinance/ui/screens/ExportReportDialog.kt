@@ -49,18 +49,18 @@ fun ExportReportDialog(
     onExportPdf: ((Context) -> Unit)? = null,
     isExportingXlsx: Boolean = false,
     onExportXlsx: ((Context) -> Unit)? = null,
+    lang: AppLanguage = LocalAppLanguage.current,
     onDismiss: () -> Unit
 ) {
     BackHandler { onDismiss() }
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
-    val lang = LocalAppLanguage.current
     var selectedReportType by remember { mutableStateOf(ReportType.FULL_SETTLEMENT) }
     var exportFormat by remember { mutableStateOf("PDF") } // PDF, TEXT, XLSX
     var copiedNotice by remember { mutableStateOf<String?>(null) }
     var reportTypeDropdownExpanded by remember { mutableStateOf(false) }
 
-    val reportText = remember(selectedReportType, uiState) {
+    val reportText = remember(selectedReportType, uiState, lang) {
         ReportGenerator.generateTextReport(
             trip = uiState.currentTrip,
             members = uiState.members,
@@ -71,7 +71,8 @@ fun ExportReportDialog(
             fundContributions = uiState.fundContributions,
             splits = uiState.allSplits,
             reportType = selectedReportType,
-            creatorName = uiState.currentMember?.name ?: AppStrings.defaultMemberCreatorName(lang)
+            creatorName = uiState.currentMember?.name ?: AppStrings.defaultMemberCreatorName(lang),
+            language = lang
         )
     }
 
@@ -239,14 +240,14 @@ fun ExportReportDialog(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = selectedReportType.title,
+                                        text = AppStrings.reportTypeTitle(selectedReportType, lang),
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
                                         fontFamily = AppFontFamily,
                                         color = Color(0xFF1E293B)
                                     )
                                     Text(
-                                        text = selectedReportType.description,
+                                        text = AppStrings.reportTypeDescription(selectedReportType, lang),
                                         fontSize = 10.sp,
                                         fontFamily = AppFontFamily,
                                         color = Color(0xFF64748B),
@@ -281,14 +282,14 @@ fun ExportReportDialog(
                                     text = {
                                         Column {
                                             Text(
-                                                text = rType.title,
+                                                text = AppStrings.reportTypeTitle(rType, lang),
                                                 fontSize = 12.sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                                 fontFamily = AppFontFamily,
                                                 color = if (isSelected) IndigoSecondary else Color(0xFF1E293B)
                                             )
                                             Text(
-                                                text = rType.description,
+                                                text = AppStrings.reportTypeDescription(rType, lang),
                                                 fontSize = 10.sp,
                                                 fontFamily = AppFontFamily,
                                                 color = Color(0xFF64748B)
@@ -575,3 +576,17 @@ fun AppStrings.shareReportSubject(tripTitle: String, lang: AppLanguage) =
 
 fun AppStrings.shareReportChooserTitle(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Chia sẻ báo cáo tài chính qua..." else "Share financial report via..."
+
+fun AppStrings.reportTypeTitle(type: ReportType, lang: AppLanguage) = when (type) {
+    ReportType.FULL_SETTLEMENT -> if (lang == AppLanguage.VI) "Báo Cáo Tổng Hợp Quyết Toán" else "Full Settlement Report"
+    ReportType.EXPENSE_LEDGER -> if (lang == AppLanguage.VI) "Bảng Kê Chi Tiết Thu - Chi" else "Detailed Income & Expense Ledger"
+    ReportType.TRANSFER_INSTRUCTIONS -> if (lang == AppLanguage.VI) "Kế Hoạch Bù Trừ Công Nợ" else "Debt Netting & Transfer Plan"
+    ReportType.MEMBER_BREAKDOWN -> if (lang == AppLanguage.VI) "Báo Cáo Phân Bổ Theo Từng Thành Viên" else "Member Allocation Breakdown"
+}
+
+fun AppStrings.reportTypeDescription(type: ReportType, lang: AppLanguage) = when (type) {
+    ReportType.FULL_SETTLEMENT -> if (lang == AppLanguage.VI) "Đầy đủ thống kê, số dư từng người, kế hoạch bù trừ công nợ & đối soát" else "Complete stats, member balances, debt netting plan & reconciliation"
+    ReportType.EXPENSE_LEDGER -> if (lang == AppLanguage.VI) "Danh sách từng khoản chi tiêu, người thanh toán và đóng góp quỹ" else "Itemized list of expenses, payers, and group fund contributions"
+    ReportType.TRANSFER_INSTRUCTIONS -> if (lang == AppLanguage.VI) "Vắn tắt người nộp, người nhận, số tiền và nội dung đối soát" else "Concise payer, payee, amount, and reference notes"
+    ReportType.MEMBER_BREAKDOWN -> if (lang == AppLanguage.VI) "Bảng kê chi tiết tiền đã chi và tiền chịu chi của mỗi cá nhân" else "Detailed paid vs owed breakdown per member"
+}

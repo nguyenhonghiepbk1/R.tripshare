@@ -334,10 +334,10 @@ fun FundScreen(
 fun AddFundContributionDialog(
     members: List<TripMemberEntity>,
     baseCurrency: String = "VND",
+    lang: AppLanguage = LocalAppLanguage.current,
     onDismiss: () -> Unit,
     onSave: (memberId: String, amount: Long, currency: String, exchangeRate: Double, note: String) -> Unit
 ) {
-    val lang = LocalAppLanguage.current
     var selectedMemberId by remember { mutableStateOf(members.firstOrNull()?.id ?: "") }
     var amountText by remember { mutableStateOf("") }
     var note by remember { mutableStateOf(AppStrings.defaultRoundOneNote(lang)) }

@@ -8,6 +8,10 @@ import com.hiepnguyen.tripfinance.domain.model.BalanceStatus
 import com.hiepnguyen.tripfinance.domain.model.FinancialSummary
 import com.hiepnguyen.tripfinance.domain.model.MemberFinancialStatus
 import com.hiepnguyen.tripfinance.domain.model.SettlementTransfer
+import androidx.compose.runtime.CompositionLocalProvider
+import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
+import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
+import com.hiepnguyen.tripfinance.ui.screens.CreateTripDialog
 import com.hiepnguyen.tripfinance.ui.screens.DashboardScreen
 import com.hiepnguyen.tripfinance.ui.screens.SettlementScreen
 import com.hiepnguyen.tripfinance.ui.theme.TripFinanceTheme
@@ -207,5 +211,100 @@ class ComposeScreenshotUiTest {
         composeTestRule.onNodeWithText("Kế Hoạch Bù Trừ Công Nợ").assertIsDisplayed()
         composeTestRule.onNodeWithText("Trần Thị B").assertIsDisplayed()
         composeTestRule.onNodeWithText("Nguyễn Văn A").assertIsDisplayed()
+    }
+
+    @Test
+    fun createTripDialog_englishLocalization_hasNoVietnameseAndNoJoinCode() {
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalAppLanguage provides AppLanguage.EN) {
+                TripFinanceTheme(darkTheme = false) {
+                    CreateTripDialog(
+                        onDismiss = {},
+                        onConfirm = { _, _, _, _, _, _ -> }
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Create New Trip / Group").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Group/Trip Name (e.g. Da Nang Trip 2026) *").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("Description / Trip Purpose").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("Trip Base Currency *").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("VND (₫) - Vietnamese Dong").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("Your Name (Leader / Bookkeeper) *").performScrollTo().assertIsDisplayed()
+        composeTestRule.onNodeWithText("Create Trip").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Cancel").assertIsDisplayed()
+
+        // Must NOT show any Vietnamese strings or join code input
+        composeTestRule.onNodeWithText("Tạo Chuyến Đi / Đoàn Mới").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Việt Nam Đồng", substring = true).assertDoesNotExist()
+        composeTestRule.onNodeWithText("Tạo đoàn").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Mã đoàn", substring = true).assertDoesNotExist()
+        composeTestRule.onNodeWithText("Trip Code", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun createTripDialog_vietnameseLocalization_hasNoJoinCodeField() {
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalAppLanguage provides AppLanguage.VI) {
+                TripFinanceTheme(darkTheme = false) {
+                    CreateTripDialog(
+                        onDismiss = {},
+                        onConfirm = { _, _, _, _, _, _ -> }
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Tạo Chuyến Đi / Đoàn Mới").assertIsDisplayed()
+        composeTestRule.onNodeWithText("VND (₫) - Việt Nam Đồng").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Tạo đoàn").assertIsDisplayed()
+
+        composeTestRule.onNodeWithText("Mã đoàn", substring = true).assertDoesNotExist()
+        composeTestRule.onNodeWithContentDescription("Tạo mã ngẫu nhiên mới").assertDoesNotExist()
+    }
+
+    @Test
+    fun userGuideScreen_englishLocalization_translatesContentAndItems() {
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalAppLanguage provides AppLanguage.EN) {
+                TripFinanceTheme(darkTheme = false) {
+                    com.hiepnguyen.tripfinance.ui.screens.UserGuideScreen(
+                        lang = AppLanguage.EN,
+                        onBack = {}
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("User Guide & Help").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Trip finance handbook").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Welcome to TripFinance").assertIsDisplayed()
+
+        composeTestRule.onNodeWithTag("user_guide_list")
+            .performScrollToNode(hasTestTag("guide_item_quick_start_flow"))
+        composeTestRule.onNodeWithText("1. 4-Step Group Finance Management Workflow").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Step 1: Create a new trip on your device.").assertIsDisplayed()
+        composeTestRule.onNodeWithText("1. Quy trình 4 bước quản lý tài chính đoàn").assertDoesNotExist()
+    }
+
+    @Test
+    fun userGuideScreen_vietnameseLocalization_showsVietnameseContent() {
+        composeTestRule.setContent {
+            CompositionLocalProvider(LocalAppLanguage provides AppLanguage.VI) {
+                TripFinanceTheme(darkTheme = false) {
+                    com.hiepnguyen.tripfinance.ui.screens.UserGuideScreen(
+                        lang = AppLanguage.VI,
+                        onBack = {}
+                    )
+                }
+            }
+        }
+
+        composeTestRule.onNodeWithText("Hướng Dẫn Sử Dụng").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Cẩm nang quản lý tài chính đoàn").assertIsDisplayed()
+        composeTestRule.onNodeWithTag("user_guide_list")
+            .performScrollToNode(hasTestTag("guide_item_quick_start_flow"))
+        composeTestRule.onNodeWithText("1. Quy trình 4 bước quản lý tài chính đoàn").assertIsDisplayed()
     }
 }

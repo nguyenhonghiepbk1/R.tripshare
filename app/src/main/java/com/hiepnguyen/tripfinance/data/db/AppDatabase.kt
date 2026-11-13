@@ -420,9 +420,10 @@ abstract class AppDatabase : RoomDatabase() {
                 try {
                     System.loadLibrary("sqlcipher")
                 } catch (loadErr: Throwable) {
-                    if (!isTest) {
-                        android.util.Log.w("AppDatabase", "Explicit System.loadLibrary(sqlcipher) note: ${loadErr.message}")
+                    if (isTest) {
+                        throw loadErr
                     }
+                    android.util.Log.w("AppDatabase", "Explicit System.loadLibrary(sqlcipher) note: ${loadErr.message}")
                 }
                 SupportOpenHelperFactory(passphrase)
             } catch (e: Throwable) {

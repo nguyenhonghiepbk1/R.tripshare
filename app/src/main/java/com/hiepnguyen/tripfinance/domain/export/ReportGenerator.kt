@@ -38,71 +38,110 @@ object ReportGenerator {
         fundContributions: List<FundContributionEntity>,
         splits: List<ExpenseSplitEntity> = emptyList(),
         reportType: ReportType,
-        creatorName: String
+        creatorName: String,
+        language: AppLanguage = AppLanguage.VI
     ): String {
         val now = Date()
-        val tripTitle = trip?.title ?: "ĐOÀN CÔNG TÁC / DU LỊCH"
-        val joinCode = trip?.joinCode ?: "---"
+        val tripTitle = trip?.title ?: AppStrings.valDefaultTripTitle(language)
+        val joinCode = trip?.joinCode?.takeIf { it.isNotBlank() }
 
         return when (reportType) {
             ReportType.FULL_SETTLEMENT -> generateFullSettlementReport(
-                tripTitle, joinCode, members, financialSummary, memberStatuses, settlementTransfers, expenses, creatorName, now
+                tripTitle, joinCode, members, financialSummary, memberStatuses, settlementTransfers, expenses, creatorName, now, language
             )
             ReportType.EXPENSE_LEDGER -> generateExpenseLedgerReport(
-                tripTitle, joinCode, members, financialSummary, expenses, fundContributions, splits, creatorName, now
+                tripTitle, joinCode, members, financialSummary, expenses, fundContributions, splits, creatorName, now, language
             )
             ReportType.TRANSFER_INSTRUCTIONS -> generateTransferInstructionsReport(
-                tripTitle, joinCode, settlementTransfers, creatorName, now
+                tripTitle, joinCode, settlementTransfers, creatorName, now, language
             )
             ReportType.MEMBER_BREAKDOWN -> generateMemberBreakdownReport(
-                tripTitle, joinCode, members, memberStatuses, creatorName, now
+                tripTitle, joinCode, members, memberStatuses, creatorName, now, language
             )
         }
     }
 
     private fun generateFullSettlementReport(
         tripTitle: String,
-        joinCode: String,
+        joinCode: String?,
         members: List<TripMemberEntity>,
         summary: FinancialSummary,
         statuses: List<MemberFinancialStatus>,
         transfers: List<SettlementTransfer>,
         expenses: List<ExpenseEntity>,
         creatorName: String,
-        date: Date
+        date: Date,
+        lang: AppLanguage
     ): String = buildString {
+        val isVi = lang == AppLanguage.VI
+        val fmt = if (isVi) dateFormat else SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
         appendLine("================================================================================")
-        appendLine("                       CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM")
-        appendLine("                            Độc lập - Tự do - Hạnh phúc")
-        appendLine("                                     -------o0o-------")
-        appendLine()
-        appendLine("                   BÁO CÁO TỔNG HỢP QUYẾT TOÁN TÀI CHÍNH")
-        appendLine("                             ĐOÀN: ${tripTitle.uppercase()}")
-        appendLine("                               (Mã đoàn: $joinCode)")
+        if (isVi) {
+            appendLine("                       CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM")
+            appendLine("                            Độc lập - Tự do - Hạnh phúc")
+            appendLine("                                     -------o0o-------")
+            appendLine()
+            appendLine("                   BÁO CÁO TỔNG HỢP QUYẾT TOÁN TÀI CHÍNH")
+            appendLine("                             ĐOÀN: ${tripTitle.uppercase()}")
+            if (joinCode != null) appendLine("                               (Mã đoàn: $joinCode)")
+        } else {
+            appendLine("                  FINANCIAL SETTLEMENT & RECONCILIATION REPORT")
+            appendLine("                             GROUP: ${tripTitle.uppercase()}")
+            if (joinCode != null) appendLine("                               (Code: $joinCode)")
+        }
         appendLine("================================================================================")
-        appendLine("Thời gian lập báo cáo : ${dateFormat.format(date)}")
-        appendLine("Người lập báo cáo     : $creatorName")
-        appendLine("Tổng số thành viên    : ${members.size} người")
-        appendLine("Tình trạng đối soát   : ${if (summary.isBalanced) "HỢP LỆ (Tổng số dư cân bằng = 0 đ)" else "CẢNH BÁO LỆCH: " + NumberFormatUtils.formatVnd(summary.balanceDiscrepancy)}")
+        if (isVi) {
+            appendLine("Thời gian lập báo cáo : ${fmt.format(date)}")
+            appendLine("Người lập báo cáo     : $creatorName")
+            appendLine("Tổng số thành viên    : ${members.size} người")
+            appendLine("Tình trạng đối soát   : ${if (summary.isBalanced) "HỢP LỆ (Tổng số dư cân bằng = 0 đ)" else "CẢNH BÁO LỆCH: " + NumberFormatUtils.formatVnd(summary.balanceDiscrepancy)}")
+        } else {
+            appendLine("Report Generated At   : ${fmt.format(date)}")
+            appendLine("Prepared By           : $creatorName")
+            appendLine("Total Members         : ${members.size} members")
+            appendLine("Reconciliation Status : ${if (summary.isBalanced) "VALID (Total net balance = 0)" else "DISCREPANCY WARNING: " + NumberFormatUtils.formatVnd(summary.balanceDiscrepancy)}")
+        }
         appendLine("--------------------------------------------------------------------------------")
         appendLine()
-        appendLine("I. TỔNG QUAN THU - CHI ĐOÀN")
-        appendLine("  1. Tổng chi tiêu toàn đoàn       : ${NumberFormatUtils.formatVnd(summary.totalExpenses)}")
-        appendLine("     - Thành viên tự chi hộ (Paid)  : ${NumberFormatUtils.formatVnd(summary.personalPaidExpenses)}")
-        appendLine("     - Chi từ nguồn Quỹ chung đoàn  : ${NumberFormatUtils.formatVnd(summary.fundPaidExpenses)}")
-        appendLine("  2. Tình hình Quỹ chung:")
-        appendLine("     - Tổng tiền đã thu vào quỹ     : ${NumberFormatUtils.formatVnd(summary.totalFundCollected)}")
-        appendLine("     - Tổng tiền quỹ đã giải ngân   : ${NumberFormatUtils.formatVnd(summary.fundPaidExpenses)}")
-        appendLine("     - Số dư quỹ chung còn lại      : ${NumberFormatUtils.formatVnd(summary.remainingFund)}")
-        appendLine()
-        appendLine("II. BẢNG TỔNG HỢP SỐ DƯ & QUYẾT TOÁN TỪNG THÀNH VIÊN")
-        appendLine(String.format("%-4s | %-18s | %-12s | %-12s | %-12s | %-18s", "STT", "Họ và tên", "Đã chi hộ", "Nộp quỹ", "Phải chịu", "Số dư / Trạng thái"))
+        if (isVi) {
+            appendLine("I. TỔNG QUAN THU - CHI ĐOÀN")
+            appendLine("  1. Tổng chi tiêu toàn đoàn       : ${NumberFormatUtils.formatVnd(summary.totalExpenses)}")
+            appendLine("     - Thành viên tự chi hộ (Paid)  : ${NumberFormatUtils.formatVnd(summary.personalPaidExpenses)}")
+            appendLine("     - Chi từ nguồn Quỹ chung đoàn  : ${NumberFormatUtils.formatVnd(summary.fundPaidExpenses)}")
+            appendLine("  2. Tình hình Quỹ chung:")
+            appendLine("     - Tổng tiền đã thu vào quỹ     : ${NumberFormatUtils.formatVnd(summary.totalFundCollected)}")
+            appendLine("     - Tổng tiền quỹ đã giải ngân   : ${NumberFormatUtils.formatVnd(summary.fundPaidExpenses)}")
+            appendLine("     - Số dư quỹ chung còn lại      : ${NumberFormatUtils.formatVnd(summary.remainingFund)}")
+            appendLine()
+            appendLine("II. BẢNG TỔNG HỢP SỐ DƯ & QUYẾT TOÁN TỪNG THÀNH VIÊN")
+            appendLine(String.format("%-4s | %-18s | %-12s | %-12s | %-12s | %-18s", "STT", "Họ và tên", "Đã chi hộ", "Nộp quỹ", "Phải chịu", "Số dư / Trạng thái"))
+        } else {
+            appendLine("I. GROUP INCOME & EXPENSE OVERVIEW")
+            appendLine("  1. Total Group Expenses          : ${NumberFormatUtils.formatVnd(summary.totalExpenses)}")
+            appendLine("     - Personal Out-of-Pocket Paid  : ${NumberFormatUtils.formatVnd(summary.personalPaidExpenses)}")
+            appendLine("     - Paid from Group Fund         : ${NumberFormatUtils.formatVnd(summary.fundPaidExpenses)}")
+            appendLine("  2. Group Fund Summary:")
+            appendLine("     - Total Fund Collected         : ${NumberFormatUtils.formatVnd(summary.totalFundCollected)}")
+            appendLine("     - Total Disbursed from Fund    : ${NumberFormatUtils.formatVnd(summary.fundPaidExpenses)}")
+            appendLine("     - Remaining Fund Balance       : ${NumberFormatUtils.formatVnd(summary.remainingFund)}")
+            appendLine()
+            appendLine("II. MEMBER BALANCE & SETTLEMENT SUMMARY")
+            appendLine(String.format("%-4s | %-18s | %-12s | %-12s | %-12s | %-18s", "No.", "Full Name", "Paid", "Fund", "Owed", "Balance / Status"))
+        }
         appendLine("--------------------------------------------------------------------------------")
         statuses.forEachIndexed { index, st ->
-            val statusStr = when {
-                st.balance > 0 -> "+${NumberFormatUtils.formatVnd(st.balance)} (Nhận lại)"
-                st.balance < 0 -> "${NumberFormatUtils.formatVnd(st.balance)} (Cần nộp)"
-                else -> "0 đ (Đã cân bằng)"
+            val statusStr = if (isVi) {
+                when {
+                    st.balance > 0 -> "+${NumberFormatUtils.formatVnd(st.balance)} (Nhận lại)"
+                    st.balance < 0 -> "${NumberFormatUtils.formatVnd(st.balance)} (Cần nộp)"
+                    else -> "0 đ (Đã cân bằng)"
+                }
+            } else {
+                when {
+                    st.balance > 0 -> "+${NumberFormatUtils.formatVnd(st.balance)} (To receive)"
+                    st.balance < 0 -> "${NumberFormatUtils.formatVnd(st.balance)} (To pay)"
+                    else -> "0 (Settled)"
+                }
             }
             appendLine(
                 String.format(
@@ -118,45 +157,59 @@ object ReportGenerator {
         }
         appendLine("--------------------------------------------------------------------------------")
         appendLine()
-        appendLine("III. KẾ HOẠCH BÙ TRỪ CÔNG NỢ THANH TOÁN (TỐI ƯU HÓA DÒNG TIỀN)")
+        appendLine(if (isVi) "III. KẾ HOẠCH BÙ TRỪ CÔNG NỢ THANH TOÁN (TỐI ƯU HÓA DÒNG TIỀN)" else "III. OPTIMAL DEBT SETTLEMENT PLAN (MIN-TRANSFERS)")
         if (transfers.isEmpty()) {
-            appendLine("  -> Tất cả các thành viên đã cân bằng tài chính. Không cần bù trừ thêm.")
+            appendLine(if (isVi) "  -> Tất cả các thành viên đã cân bằng tài chính. Không cần bù trừ thêm." else "  -> All members are financially balanced. No transfers needed.")
         } else {
-            appendLine("  (Thuật toán tham lam đã rút gọn còn ${transfers.size} giao dịch bù trừ tối thiểu):")
+            appendLine(
+                if (isVi) "  (Thuật toán tham lam đã rút gọn còn ${transfers.size} giao dịch bù trừ tối thiểu):"
+                else "  (Simplified to ${transfers.size} minimum settlement transfers):"
+            )
             appendLine()
+            val fundLabel = AppStrings.valGroupFundFull(lang)
             transfers.forEachIndexed { idx, tr ->
-                val fromName = if (tr.fromMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else tr.fromMember.name
-                val toName = if (tr.toMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else tr.toMember.name
-                appendLine("  [Giao dịch #${idx + 1}]")
-                appendLine("  • Người chuyển (Nộp) : $fromName")
-                appendLine("  • Người nhận tiền    : $toName")
-                appendLine("  • Số tiền            : ${NumberFormatUtils.formatVnd(tr.amount)}")
-                appendLine("  • Nội dung gợi ý     : ${tr.transferNote}")
+                val fromName = if (tr.fromMember.id == "FUND_ORGANIZATION") fundLabel else tr.fromMember.name
+                val toName = if (tr.toMember.id == "FUND_ORGANIZATION") fundLabel else tr.toMember.name
+                if (isVi) {
+                    appendLine("  [Giao dịch #${idx + 1}]")
+                    appendLine("  • Người chuyển (Nộp) : $fromName")
+                    appendLine("  • Người nhận tiền    : $toName")
+                    appendLine("  • Số tiền            : ${NumberFormatUtils.formatVnd(tr.amount)}")
+                    appendLine("  • Nội dung gợi ý     : ${tr.transferNote}")
+                } else {
+                    appendLine("  [Transfer #${idx + 1}]")
+                    appendLine("  • Payer (From)       : $fromName")
+                    appendLine("  • Recipient (To)     : $toName")
+                    appendLine("  • Amount             : ${NumberFormatUtils.formatVnd(tr.amount)}")
+                    appendLine("  • Suggested Note     : ${tr.transferNote}")
+                }
                 appendLine()
             }
         }
-        appendLine("IV. PHÂN LOẠI CHI TIÊU THEO DANH MỤC")
-        val catMap = mapOf(
-            "FOOD" to "Ăn uống",
-            "TRANSPORT" to "Di chuyển",
-            "HOTEL" to "Khách sạn/Lưu trú",
-            "SIGHTSEEING" to "Vé tham quan",
-            "ENTERTAINMENT" to "Vui chơi/Giải trí",
-            "SHOPPING" to "Mua sắm",
-            "OTHER" to "Chi phí khác"
-        )
+        appendLine(if (isVi) "IV. PHÂN LOẠI CHI TIÊU THEO DANH MỤC" else "IV. EXPENSE BREAKDOWN BY CATEGORY")
         expenses.groupBy { it.category }.forEach { (cat, list) ->
             val sum = list.sumOfSafe { it.convertedTotalAmount }
             val pct = if (summary.totalExpenses > 0) (sum * 100.0 / summary.totalExpenses) else 0.0
-            appendLine(String.format("  • %-20s: %15s (%4.1f%%) - %d khoản", catMap[cat] ?: cat, NumberFormatUtils.formatVnd(sum), pct, list.size))
+            val catLabel = AppStrings.getCategoryName(cat, lang)
+            val suffix = if (isVi) "khoản" else "items"
+            appendLine(String.format("  • %-20s: %15s (%4.1f%%) - %d %s", catLabel, NumberFormatUtils.formatVnd(sum), pct, list.size, suffix))
         }
         appendLine()
-        appendLine("Ghi chú: Đây là gợi ý bù trừ công nợ, ứng dụng không thực hiện giao dịch chuyển khoản.")
+        appendLine(
+            if (isVi) "Ghi chú: Đây là gợi ý bù trừ công nợ, ứng dụng không thực hiện giao dịch chuyển khoản."
+            else "Note: These are settlement suggestions only; the app does not execute financial transfers."
+        )
         appendLine()
         appendLine("================================================================================")
-        appendLine("                                   XÁC NHẬN")
-        appendLine("           TRƯỞNG ĐOÀN                                THỦ QUỸ")
-        appendLine("        (Ký và ghi rõ họ tên)                  (Ký và ghi rõ họ tên)")
+        if (isVi) {
+            appendLine("                                   XÁC NHẬN")
+            appendLine("           TRƯỞNG ĐOÀN                                THỦ QUỸ")
+            appendLine("        (Ký và ghi rõ họ tên)                  (Ký và ghi rõ họ tên)")
+        } else {
+            appendLine("                                 APPROVAL")
+            appendLine("           GROUP LEADER                              TREASURER")
+            appendLine("       (Signature & Full Name)                 (Signature & Full Name)")
+        }
         appendLine()
         appendLine()
         appendLine("================================================================================")
@@ -164,72 +217,87 @@ object ReportGenerator {
 
     private fun generateExpenseLedgerReport(
         tripTitle: String,
-        joinCode: String,
+        joinCode: String?,
         members: List<TripMemberEntity>,
         summary: FinancialSummary,
         expenses: List<ExpenseEntity>,
         funds: List<FundContributionEntity>,
         splits: List<ExpenseSplitEntity>,
         creatorName: String,
-        date: Date
+        date: Date,
+        lang: AppLanguage
     ): String = buildString {
+        val isVi = lang == AppLanguage.VI
+        val fmt = if (isVi) dateFormat else SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
         appendLine("================================================================================")
-        appendLine("                   BẢNG KÊ CHI TIẾT CÁC KHOẢN THU - CHI ĐOÀN")
-        appendLine("                             ĐOÀN: ${tripTitle.uppercase()} (Mã: $joinCode)")
-        appendLine("================================================================================")
-        appendLine("Ngày lập: ${dateFormat.format(date)} | Người lập: $creatorName")
-        appendLine()
-        appendLine("PHẦN 1: DANH SÁCH CHI TIÊU (${expenses.size} khoản chi)")
-        appendLine(String.format("%-4s | %-14s | %-20s | %-14s | %-12s | %-10s", "STT", "Thời gian", "Tên khoản chi", "Nguồn chi", "Số tiền", "Kiểu chia"))
+        if (isVi) {
+            appendLine("                   BẢNG KÊ CHI TIẾT CÁC KHOẢN THU - CHI ĐOÀN")
+            appendLine("                             ĐOÀN: ${tripTitle.uppercase()}" + if (joinCode != null) " (Mã: $joinCode)" else "")
+            appendLine("================================================================================")
+            appendLine("Ngày lập: ${fmt.format(date)} | Người lập: $creatorName")
+            appendLine()
+            appendLine("PHẦN 1: DANH SÁCH CHI TIÊU (${expenses.size} khoản chi)")
+            appendLine(String.format("%-4s | %-14s | %-20s | %-14s | %-12s | %-10s", "STT", "Thời gian", "Tên khoản chi", "Nguồn chi", "Số tiền", "Kiểu chia"))
+        } else {
+            appendLine("                    DETAILED EXPENSE & GROUP FUND LEDGER")
+            appendLine("                             GROUP: ${tripTitle.uppercase()}" + if (joinCode != null) " (Code: $joinCode)" else "")
+            appendLine("================================================================================")
+            appendLine("Generated: ${fmt.format(date)} | By: $creatorName")
+            appendLine()
+            appendLine("PART 1: EXPENSE LIST (${expenses.size} items)")
+            appendLine(String.format("%-4s | %-14s | %-20s | %-14s | %-12s | %-10s", "No.", "Date/Time", "Expense Title", "Payer", "Amount", "Split"))
+        }
         appendLine("--------------------------------------------------------------------------------")
         expenses.sortedBy { it.timestamp }.forEachIndexed { idx, exp ->
-            val payer = if (exp.payerType == "FUND") "Quỹ đoàn" else (members.find { it.id == exp.payerMemberId }?.name ?: "Cá nhân")
-            val splitMode = when (exp.splitType) {
-                "EQUAL" -> "Chia đều"
-                "CUSTOM_PARTICIPANT" -> "Chọn người"
-                "RATIO" -> "Tỷ lệ %"
-                "CUSTOM_AMOUNT" -> "Tùy nhập"
-                else -> exp.splitType
-            }
+            val payer = if (exp.payerType == "FUND") AppStrings.valGroupFund(lang) else (members.find { it.id == exp.payerMemberId }?.name ?: if (isVi) "Cá nhân" else "Member")
+            val splitMode = AppStrings.getSplitTypeName(exp.splitType, lang)
             appendLine(
                 String.format(
                     "%-4d | %-14s | %-20s | %-14s | %-12s | %-10s",
                     idx + 1,
-                    dateFormat.format(Date(exp.timestamp)),
+                    fmt.format(Date(exp.timestamp)),
                     exp.title.take(20),
                     payer.take(14),
                     NumberFormatUtils.formatVnd(exp.convertedTotalAmount),
-                    splitMode
+                    splitMode.take(10)
                 )
             )
 
-            // Danh sách người tham gia được chọn cho mỗi khoản chi
             val expSplits = splits.filter { it.expenseId == exp.id }
             if (expSplits.isNotEmpty()) {
+                val defaultMem = if (isVi) "Thành viên" else "Member"
                 val participantsDetail = expSplits.joinToString("; ") { sp ->
-                    val memName = members.find { it.id == sp.memberId }?.name ?: "Thành viên"
+                    val memName = members.find { it.id == sp.memberId }?.name ?: defaultMem
                     "$memName: ${NumberFormatUtils.formatVnd(sp.amount)}"
                 }
-                appendLine("       -> Người cùng chịu (${expSplits.size} người): $participantsDetail")
+                appendLine(
+                    if (isVi) "       -> Người cùng chịu (${expSplits.size} người): $participantsDetail"
+                    else "       -> Shared by (${expSplits.size} members): $participantsDetail"
+                )
             }
 
             if (exp.note.isNotBlank()) {
-                appendLine("       -> Ghi chú: ${exp.note}")
+                appendLine((if (isVi) "       -> Ghi chú: " else "       -> Note: ") + exp.note)
             }
         }
         appendLine("--------------------------------------------------------------------------------")
-        appendLine("TỔNG CỘNG CHI TIÊU: ${NumberFormatUtils.formatVnd(summary.totalExpenses)}")
+        appendLine((if (isVi) "TỔNG CỘNG CHI TIÊU: " else "TOTAL EXPENSES: ") + NumberFormatUtils.formatVnd(summary.totalExpenses))
         appendLine()
-        appendLine("PHẦN 2: LỊCH SỬ ĐÓNG GÓP QUỸ (${funds.size} đợt nộp)")
-        appendLine(String.format("%-4s | %-14s | %-20s | %-16s | %-20s", "STT", "Thời gian", "Người nộp", "Số tiền", "Ghi chú"))
+        if (isVi) {
+            appendLine("PHẦN 2: LỊCH SỬ ĐÓNG GÓP QUỸ (${funds.size} đợt nộp)")
+            appendLine(String.format("%-4s | %-14s | %-20s | %-16s | %-20s", "STT", "Thời gian", "Người nộp", "Số tiền", "Ghi chú"))
+        } else {
+            appendLine("PART 2: GROUP FUND CONTRIBUTIONS (${funds.size} entries)")
+            appendLine(String.format("%-4s | %-14s | %-20s | %-16s | %-20s", "No.", "Date/Time", "Contributor", "Amount", "Notes"))
+        }
         appendLine("--------------------------------------------------------------------------------")
         funds.sortedBy { it.timestamp }.forEachIndexed { idx, f ->
-            val contributor = members.find { it.id == f.memberId }?.name ?: "Thành viên"
+            val contributor = members.find { it.id == f.memberId }?.name ?: if (isVi) "Thành viên" else "Member"
             appendLine(
                 String.format(
                     "%-4d | %-14s | %-20s | %-16s | %-20s",
                     idx + 1,
-                    dateFormat.format(Date(f.timestamp)),
+                    fmt.format(Date(f.timestamp)),
                     contributor.take(20),
                     NumberFormatUtils.formatVnd(f.convertedAmount),
                     f.note.take(20)
@@ -237,69 +305,117 @@ object ReportGenerator {
             )
         }
         appendLine("--------------------------------------------------------------------------------")
-        appendLine("TỔNG CỘNG THU QUỸ: ${NumberFormatUtils.formatVnd(summary.totalFundCollected)}")
+        appendLine((if (isVi) "TỔNG CỘNG THU QUỸ: " else "TOTAL FUND COLLECTED: ") + NumberFormatUtils.formatVnd(summary.totalFundCollected))
         appendLine("================================================================================")
     }
 
     private fun generateTransferInstructionsReport(
         tripTitle: String,
-        joinCode: String,
+        joinCode: String?,
         transfers: List<SettlementTransfer>,
         creatorName: String,
-        date: Date
+        date: Date,
+        lang: AppLanguage
     ): String = buildString {
+        val isVi = lang == AppLanguage.VI
+        val fmt = if (isVi) dateFormat else SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
         appendLine("================================================================================")
-        appendLine("             HƯỚNG DẪN THANH TOÁN BÙ TRỪ QUYẾT TOÁN ĐOÀN")
-        appendLine("                      ĐOÀN: ${tripTitle.uppercase()} (Mã: $joinCode)")
-        appendLine("================================================================================")
-        appendLine("Ngày xuất: ${dateFormat.format(date)} | Tạo bởi: $creatorName")
+        if (isVi) {
+            appendLine("             HƯỚNG DẪN THANH TOÁN BÙ TRỪ QUYẾT TOÁN ĐOÀN")
+            appendLine("                      ĐOÀN: ${tripTitle.uppercase()}" + if (joinCode != null) " (Mã: $joinCode)" else "")
+            appendLine("================================================================================")
+            appendLine("Ngày xuất: ${fmt.format(date)} | Tạo bởi: $creatorName")
+        } else {
+            appendLine("                 DEBT SETTLEMENT TRANSFER INSTRUCTIONS")
+            appendLine("                      GROUP: ${tripTitle.uppercase()}" + if (joinCode != null) " (Code: $joinCode)" else "")
+            appendLine("================================================================================")
+            appendLine("Exported: ${fmt.format(date)} | Created by: $creatorName")
+        }
         appendLine()
         if (transfers.isEmpty()) {
-            appendLine("Tất cả thành viên đã hoàn thành quyết toán cân bằng 100%. Không cần bù trừ thêm.")
+            appendLine(if (isVi) "Tất cả thành viên đã hoàn thành quyết toán cân bằng 100%. Không cần bù trừ thêm." else "All members are 100% settled. No additional transfers needed.")
         } else {
+            val fundLabel = AppStrings.valGroupFundFull(lang)
             transfers.forEachIndexed { i, t ->
-                val fromName = if (t.fromMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else t.fromMember.name
-                val toName = if (t.toMember.id == "FUND_ORGANIZATION") "Quỹ chung đoàn" else t.toMember.name
+                val fromName = if (t.fromMember.id == "FUND_ORGANIZATION") fundLabel else t.fromMember.name
+                val toName = if (t.toMember.id == "FUND_ORGANIZATION") fundLabel else t.toMember.name
                 appendLine("--------------------------------------------------------------------------------")
-                appendLine("KHOẢN BÙ TRỪ #${i + 1}:")
-                appendLine("  • Người gửi (Cần nộp) : $fromName")
-                appendLine("  • Người nhận (Hưởng)  : $toName")
-                appendLine("  • Số tiền             : ${NumberFormatUtils.formatVnd(t.amount)}")
-                appendLine("  • Nội dung gợi ý      : ${t.transferNote}")
+                if (isVi) {
+                    appendLine("KHOẢN BÙ TRỪ #${i + 1}:")
+                    appendLine("  • Người gửi (Cần nộp) : $fromName")
+                    appendLine("  • Người nhận (Hưởng)  : $toName")
+                    appendLine("  • Số tiền             : ${NumberFormatUtils.formatVnd(t.amount)}")
+                    appendLine("  • Nội dung gợi ý      : ${t.transferNote}")
+                } else {
+                    appendLine("SETTLEMENT #${i + 1}:")
+                    appendLine("  • Payer (From)        : $fromName")
+                    appendLine("  • Recipient (To)      : $toName")
+                    appendLine("  • Amount              : ${NumberFormatUtils.formatVnd(t.amount)}")
+                    appendLine("  • Suggested Note      : ${t.transferNote}")
+                }
             }
             appendLine("--------------------------------------------------------------------------------")
-            appendLine("Lưu ý: Đây là gợi ý bù trừ công nợ, ứng dụng không thực hiện giao dịch chuyển khoản.")
+            appendLine(
+                if (isVi) "Lưu ý: Đây là gợi ý bù trừ công nợ, ứng dụng không thực hiện giao dịch chuyển khoản."
+                else "Note: These are settlement suggestions only; the app does not execute financial transfers."
+            )
         }
     }
 
     private fun generateMemberBreakdownReport(
         tripTitle: String,
-        joinCode: String,
+        joinCode: String?,
         members: List<TripMemberEntity>,
         statuses: List<MemberFinancialStatus>,
         creatorName: String,
-        date: Date
+        date: Date,
+        lang: AppLanguage
     ): String = buildString {
+        val isVi = lang == AppLanguage.VI
+        val fmt = if (isVi) dateFormat else SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US)
         appendLine("================================================================================")
-        appendLine("                 BÁO CÁO PHÂN BỔ CHI PHÍ TỪNG THÀNH VIÊN")
-        appendLine("                      ĐOÀN: ${tripTitle.uppercase()} (Mã: $joinCode)")
-        appendLine("================================================================================")
-        appendLine("Ngày xuất: ${dateFormat.format(date)} | Người lập: $creatorName")
+        if (isVi) {
+            appendLine("                 BÁO CÁO PHÂN BỔ CHI PHÍ TỪNG THÀNH VIÊN")
+            appendLine("                      ĐOÀN: ${tripTitle.uppercase()}" + if (joinCode != null) " (Mã: $joinCode)" else "")
+            appendLine("================================================================================")
+            appendLine("Ngày xuất: ${fmt.format(date)} | Người lập: $creatorName")
+        } else {
+            appendLine("                   MEMBER COST ALLOCATION BREAKDOWN REPORT")
+            appendLine("                      GROUP: ${tripTitle.uppercase()}" + if (joinCode != null) " (Code: $joinCode)" else "")
+            appendLine("================================================================================")
+            appendLine("Exported: ${fmt.format(date)} | By: $creatorName")
+        }
         appendLine()
         statuses.forEachIndexed { idx, st ->
             appendLine("--------------------------------------------------------------------------------")
-            appendLine("THÀNH VIÊN #${idx + 1}: ${st.member.name.uppercase()} (Vai trò: ${st.member.role})")
-            appendLine("  • Tiền cá nhân tự chi hộ (Out-of-pocket) : ${NumberFormatUtils.formatVnd(st.outOfPocketPaid)}")
-            appendLine("  • Tiền đã nộp vào Quỹ chung              : ${NumberFormatUtils.formatVnd(st.fundContributed)}")
-            appendLine("  • TỔNG CỘNG ĐÃ BỎ RA (A)                 : ${NumberFormatUtils.formatVnd(st.totalPaid)}")
-            appendLine("  • TỔNG CHI PHÍ PHẢI CHỊU (B)             : ${NumberFormatUtils.formatVnd(st.totalOwed)}")
-            appendLine("  • KẾT QUẢ SỐ DƯ (A - B)                  : ${NumberFormatUtils.formatVnd(st.balance)}")
-            if (st.balance > 0) {
-                appendLine("  ==> KẾT LUẬN: ĐƯỢC NHẬN LẠI ${NumberFormatUtils.formatVnd(st.balance)}")
-            } else if (st.balance < 0) {
-                appendLine("  ==> KẾT LUẬN: CẦN NỘP THÊM ${NumberFormatUtils.formatVnd(-st.balance)}")
+            if (isVi) {
+                appendLine("THÀNH VIÊN #${idx + 1}: ${st.member.name.uppercase()} (Vai trò: ${AppStrings.getRoleName(st.member.role, lang)})")
+                appendLine("  • Tiền cá nhân tự chi hộ (Out-of-pocket) : ${NumberFormatUtils.formatVnd(st.outOfPocketPaid)}")
+                appendLine("  • Tiền đã nộp vào Quỹ chung              : ${NumberFormatUtils.formatVnd(st.fundContributed)}")
+                appendLine("  • TỔNG CỘNG ĐÃ BỎ RA (A)                 : ${NumberFormatUtils.formatVnd(st.totalPaid)}")
+                appendLine("  • TỔNG CHI PHÍ PHẢI CHỊU (B)             : ${NumberFormatUtils.formatVnd(st.totalOwed)}")
+                appendLine("  • KẾT QUẢ SỐ DƯ (A - B)                  : ${NumberFormatUtils.formatVnd(st.balance)}")
+                if (st.balance > 0) {
+                    appendLine("  ==> KẾT LUẬN: ĐƯỢC NHẬN LẠI ${NumberFormatUtils.formatVnd(st.balance)}")
+                } else if (st.balance < 0) {
+                    appendLine("  ==> KẾT LUẬN: CẦN NỘP THÊM ${NumberFormatUtils.formatVnd(-st.balance)}")
+                } else {
+                    appendLine("  ==> KẾT LUẬN: ĐÃ CÂN BẰNG TÀI CHÍNH")
+                }
             } else {
-                appendLine("  ==> KẾT LUẬN: ĐÃ CÂN BẰNG TÀI CHÍNH")
+                appendLine("MEMBER #${idx + 1}: ${st.member.name.uppercase()} (Role: ${AppStrings.getRoleName(st.member.role, lang)})")
+                appendLine("  • Personal Out-of-Pocket Paid            : ${NumberFormatUtils.formatVnd(st.outOfPocketPaid)}")
+                appendLine("  • Contributed to Group Fund              : ${NumberFormatUtils.formatVnd(st.fundContributed)}")
+                appendLine("  • TOTAL PAID (A)                         : ${NumberFormatUtils.formatVnd(st.totalPaid)}")
+                appendLine("  • TOTAL COST SHARE / OWED (B)            : ${NumberFormatUtils.formatVnd(st.totalOwed)}")
+                appendLine("  • NET BALANCE (A - B)                    : ${NumberFormatUtils.formatVnd(st.balance)}")
+                if (st.balance > 0) {
+                    appendLine("  ==> RESULT: TO RECEIVE ${NumberFormatUtils.formatVnd(st.balance)}")
+                } else if (st.balance < 0) {
+                    appendLine("  ==> RESULT: TO PAY ${NumberFormatUtils.formatVnd(-st.balance)}")
+                } else {
+                    appendLine("  ==> RESULT: FINANCIALLY SETTLED")
+                }
             }
         }
         appendLine("================================================================================")

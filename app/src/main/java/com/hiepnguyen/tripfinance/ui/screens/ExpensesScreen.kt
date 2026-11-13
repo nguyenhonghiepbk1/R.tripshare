@@ -273,6 +273,7 @@ fun ExpensesScreen(
             initialExpense = exp,
             initialSplits = splitsForExp,
             baseCurrency = uiState.currentTrip?.baseCurrency ?: "VND",
+            lang = lang,
             onDismiss = { expenseToEdit = null },
             onSave = { title, category, payerType, payerMemberId, totalAmount, currency, exchangeRate, splitType, splits, note, timestamp ->
                 onEditExpense(

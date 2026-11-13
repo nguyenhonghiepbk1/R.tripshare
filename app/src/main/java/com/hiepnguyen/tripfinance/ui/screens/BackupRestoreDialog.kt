@@ -43,13 +43,18 @@ import java.util.*
 @Composable
 fun BackupRestoreDialog(
     viewModel: TripFinanceViewModel,
+    lang: AppLanguage = LocalAppLanguage.current,
     onDismiss: () -> Unit
 ) {
     BackHandler { onDismiss() }
-    val lang = LocalAppLanguage.current
     val context = LocalContext.current
     val localBackups by viewModel.localBackups.collectAsState()
-    val dateFormat = remember { SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()) }
+    val dateFormat = remember(lang) {
+        SimpleDateFormat(
+            "dd/MM/yyyy HH:mm:ss",
+            if (lang == AppLanguage.VI) Locale("vi", "VN") else Locale.US
+        )
+    }
 
     var pendingRestoreUri by remember { mutableStateOf<Uri?>(null) }
     var pendingRestoreFile by remember { mutableStateOf<File?>(null) }
@@ -103,6 +108,7 @@ fun BackupRestoreDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
+        CompositionLocalProvider(LocalAppLanguage provides lang) {
         Card(
             shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -404,6 +410,7 @@ fun BackupRestoreDialog(
                     Text(AppStrings.closeBackupBtn(lang), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
+        }
         }
     }
 

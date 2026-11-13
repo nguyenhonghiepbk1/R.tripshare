@@ -450,7 +450,12 @@ fun MembersAndSettingsScreen(
                                         overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "${AppStrings.baseCurrencyLabel(lang)}: ${trip.baseCurrency} • ${AppStrings.joinCodeLabel(trip.joinCode, lang)}",
+                                        text = buildString {
+                                            append("${AppStrings.baseCurrencyLabel(lang)}: ${trip.baseCurrency}")
+                                            if (trip.joinCode.isNotBlank()) {
+                                                append(" • ${AppStrings.joinCodeLabel(trip.joinCode, lang)}")
+                                            }
+                                        },
                                         fontSize = 11.sp,
                                         color = Color(0xFF64748B)
                                     )
@@ -763,6 +768,7 @@ fun MembersAndSettingsScreen(
         uiState.currentTrip?.let { currentTrip ->
             EditTripDialog(
                 trip = currentTrip,
+                lang = lang,
                 onDismiss = { showEditTripDialog = false },
                 onConfirm = { title, desc, sDate, eDate, baseCurr ->
                     onEditTrip(currentTrip, title, desc, sDate, eDate, baseCurr)
@@ -777,6 +783,7 @@ fun MembersAndSettingsScreen(
         uiState.currentTrip?.let { currentTrip ->
             DeleteTripDialog(
                 tripTitle = currentTrip.title,
+                lang = lang,
                 onDismiss = { showDeleteTripDialog = false },
                 onConfirm = {
                     onDeleteTrip(currentTrip)
@@ -797,6 +804,7 @@ fun MembersAndSettingsScreen(
     // Privacy Policy Dialog
     if (showPrivacyPolicyDialog) {
         PrivacyPolicyDialog(
+            lang = lang,
             onDismiss = { showPrivacyPolicyDialog = false }
         )
     }
@@ -1188,10 +1196,9 @@ fun EditMemberDialog(
 
 @Composable
 fun PrivacyPolicyDialog(
+    lang: AppLanguage = LocalAppLanguage.current,
     onDismiss: () -> Unit
 ) {
-    val lang = LocalAppLanguage.current
-
     BackHandler { onDismiss() }
 
     AlertDialog(

@@ -66,6 +66,7 @@ fun AddExpenseDialog(
     initialExpense: com.hiepnguyen.tripfinance.data.entity.ExpenseEntity? = null,
     initialSplits: List<com.hiepnguyen.tripfinance.data.entity.ExpenseSplitEntity> = emptyList(),
     baseCurrency: String = "VND",
+    lang: AppLanguage = LocalAppLanguage.current,
     onDismiss: () -> Unit,
     onSave: (
         title: String,
@@ -81,7 +82,6 @@ fun AddExpenseDialog(
         timestamp: Long
     ) -> Unit
 ) {
-    val lang = LocalAppLanguage.current
     val isEditMode = initialExpense != null
 
     // Basic Information
