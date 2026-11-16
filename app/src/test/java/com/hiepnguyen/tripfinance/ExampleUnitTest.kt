@@ -457,5 +457,133 @@ class ExampleUnitTest {
         assertEquals("Trip", com.hiepnguyen.tripfinance.domain.export.PdfReportExporter.sanitizeTitleForFileName(""))
         assertEquals("Trip", com.hiepnguyen.tripfinance.domain.export.PdfReportExporter.sanitizeTitleForFileName("   "))
     }
+
+    @Test
+    fun `test currency rounding rules - zero decimals for VND THB JPY CNY KRW and two decimals for others`() {
+        // 1. SupportedCurrencies metadata & roundAmountForCurrency
+        val zeroDecimalCodes = listOf("VND", "THB", "JPY", "CNY", "KRW", "thb", "cny")
+        for (code in zeroDecimalCodes) {
+            assertTrue("$code must be zero-decimal", com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.isZeroDecimalCurrency(code))
+            assertEquals(0, com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.getDecimalPlaces(code))
+            assertEquals(1235.0, com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.roundAmountForCurrency(1234.5, code), 0.0001)
+            assertEquals(1234.0, com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.roundAmountForCurrency(1234.4, code), 0.0001)
+        }
+
+        val twoDecimalCodes = listOf("USD", "EUR", "GBP", "SGD", "AUD", "CHF", "usd")
+        for (code in twoDecimalCodes) {
+            assertFalse("$code must use 2 decimals", com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.isZeroDecimalCurrency(code))
+            assertEquals(2, com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.getDecimalPlaces(code))
+            assertEquals(12.35, com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.roundAmountForCurrency(12.345, code), 0.0001)
+            assertEquals(12.34, com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.roundAmountForCurrency(12.344, code), 0.0001)
+            assertEquals(100.0, com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.roundAmountForCurrency(99.995, code), 0.0001)
+        }
+
+        // 2. FinancialInputValidator.parseAmount
+        for (code in listOf("VND", "THB", "JPY", "CNY", "KRW")) {
+            val intRes = com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator.parseAmount("1.500", code)
+            assertTrue("$code should accept 1.500 as 1500", intRes is com.hiepnguyen.tripfinance.domain.model.AmountValidationResult.Success)
+            assertEquals(1500.0, (intRes as com.hiepnguyen.tripfinance.domain.model.AmountValidationResult.Success).amount, 0.001)
+
+            val decErr = com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator.parseAmount("100.5", code)
+            assertTrue("$code should reject fractional input 100.5", decErr is com.hiepnguyen.tripfinance.domain.model.AmountValidationResult.Error)
+        }
+
+        val usdRounded = com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator.parseAmount("12.345", "USD")
+        assertEquals(12.35, (usdRounded as com.hiepnguyen.tripfinance.domain.model.AmountValidationResult.Success).amount, 0.0001)
+
+        val eurRounded = com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator.parseAmount("12,344", "EUR")
+        assertEquals(12.34, (eurRounded as com.hiepnguyen.tripfinance.domain.model.AmountValidationResult.Success).amount, 0.0001)
+
+        val tinyUsd = com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator.parseAmount("0.004", "USD")
+        assertTrue("USD rounding to 0.00 must fail > 0 check", tinyUsd is com.hiepnguyen.tripfinance.domain.model.AmountValidationResult.Error)
+
+        // 3. NumberFormatUtils.formatCurrency(Double, String)
+        assertEquals("50.001 đ", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(50000.5, "VND"))
+        assertEquals("1.501 ฿", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(1500.5, "THB"))
+        assertEquals("¥1.235", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(1234.5, "JPY"))
+        assertEquals("2.500 ¥", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(2500.4, "CNY"))
+        assertEquals("₩1.000", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(999.5, "KRW"))
+
+        assertEquals("$12,35", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(12.345, "USD"))
+        assertEquals("€12,34", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(12.344, "EUR"))
+        assertEquals("£99,99", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(99.994, "GBP"))
+        assertEquals("S$100", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(99.995, "SGD"))
+        assertEquals("A$10,56", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(10.555, "AUD"))
+        assertEquals("45,68 CHF", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(45.675, "CHF"))
+    }
+
+    @Test
+    fun `test generateXlsxReport applies integer vs 2-decimal rounding per currency on Expenses sheet`() {
+        val hiep = createMember("member_hiep", "Nguyễn Hồng Hiệp", "ADMIN")
+        val trip = com.hiepnguyen.tripfinance.data.entity.TripEntity(
+            id = "trip_curr",
+            title = "Currency Rounding Trip",
+            description = "Test",
+            joinCode = "CR2026",
+            startDate = 1000L,
+            endDate = 2000L
+        )
+
+        fun makeExp(id: String, curr: String, amount: Double, ts: Long) = com.hiepnguyen.tripfinance.data.entity.ExpenseEntity(
+            id = id,
+            tripId = "trip_curr",
+            title = "Chi $curr",
+            category = "FOOD",
+            payerType = "MEMBER",
+            payerMemberId = "member_hiep",
+            totalAmount = amount,
+            currency = curr,
+            exchangeRate = 1.0,
+            convertedTotalAmount = 1000L,
+            splitType = "EQUAL",
+            note = "",
+            timestamp = ts,
+            createdMemberId = "member_hiep"
+        )
+
+        val expenses = listOf(
+            makeExp("e_thb", "THB", 1500.6, 100L),
+            makeExp("e_cny", "CNY", 2500.4, 200L),
+            makeExp("e_jpy", "JPY", 1234.5, 300L),
+            makeExp("e_krw", "KRW", 999.5, 400L),
+            makeExp("e_usd", "USD", 12.345, 500L),
+            makeExp("e_eur", "EUR", 99.994, 600L)
+        )
+
+        val baos = java.io.ByteArrayOutputStream()
+        com.hiepnguyen.tripfinance.domain.export.ReportGenerator.generateXlsxReport(
+            outputStream = baos,
+            trip = trip,
+            members = listOf(hiep),
+            summary = com.hiepnguyen.tripfinance.domain.model.FinancialSummary(totalExpenses = 6000L, personalPaidExpenses = 6000L, isBalanced = true),
+            statuses = listOf(MemberFinancialStatus(hiep, 6000L, 6000L, 0L, 6000L, 0L, BalanceStatus.BALANCED)),
+            settlementTransfers = emptyList(),
+            expenses = expenses,
+            funds = emptyList()
+        )
+
+        var sheet2Xml = ""
+        java.util.zip.ZipInputStream(java.io.ByteArrayInputStream(baos.toByteArray())).use { zis ->
+            var entry = zis.nextEntry
+            while (entry != null) {
+                if (entry.name == "xl/worksheets/sheet2.xml") {
+                    sheet2Xml = zis.bufferedReader(Charsets.UTF_8).readText()
+                    break
+                }
+                entry = zis.nextEntry
+            }
+        }
+
+        // Zero-decimal currencies exported as integer style s="2"
+        assertTrue(sheet2Xml.contains("""s="2"><v>1501</v>"""))
+        assertTrue(sheet2Xml.contains("""s="2"><v>2500</v>"""))
+        assertTrue(sheet2Xml.contains("""s="2"><v>1235</v>"""))
+        assertTrue(sheet2Xml.contains("""s="2"><v>1000</v>"""))
+
+        // Other currencies exported rounded to 2 decimal places with style s="3"
+        assertTrue(sheet2Xml.contains("""s="3"><v>12.35</v>"""))
+        assertTrue(sheet2Xml.contains("""s="3"><v>99.99</v>"""))
+    }
 }
+
 

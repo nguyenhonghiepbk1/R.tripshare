@@ -421,7 +421,7 @@ fun ExpenseItemCard(
 
                 if (expense.currency != baseCurrency) {
                     Text(
-                        text = "${expense.totalAmount} ${expense.currency}",
+                        text = NumberFormatUtils.formatCurrency(expense.totalAmount, expense.currency),
                         fontSize = 11.sp,
                         color = Color(0xFF64748B)
                     )
@@ -799,9 +799,11 @@ fun AppStrings.expenseTimeLabel(timeStr: String, lang: AppLanguage) =
 fun AppStrings.convertedTotalAmountLabel(currency: String, lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Tổng số tiền quy đổi ($currency)" else "Converted Total Amount ($currency)"
 
-fun AppStrings.originalAmountAndRate(amount: Double, curr: String, rate: Double, lang: AppLanguage) =
-    if (lang == AppLanguage.VI) "Tiền gốc: $amount $curr • Tỷ giá: $rate"
-    else "Original: $amount $curr • Rate: $rate"
+fun AppStrings.originalAmountAndRate(amount: Double, curr: String, rate: Double, lang: AppLanguage): String {
+    val formattedAmount = NumberFormatUtils.formatCurrency(amount, curr)
+    return if (lang == AppLanguage.VI) "Tiền gốc: $formattedAmount ($curr) • Tỷ giá: $rate"
+    else "Original: $formattedAmount ($curr) • Rate: $rate"
+}
 
 fun AppStrings.expenseCategoryRow(category: String, lang: AppLanguage) =
     if (lang == AppLanguage.VI) "• Danh mục: $category" else "• Category: $category"

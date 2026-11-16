@@ -48,9 +48,11 @@ import com.hiepnguyen.tripfinance.domain.model.RateValidationResult
 import com.hiepnguyen.tripfinance.domain.model.sumOfSafe
 import com.hiepnguyen.tripfinance.domain.engine.SplitCalculator
 import com.hiepnguyen.tripfinance.domain.model.DefaultExchangeRates
+import com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies
 import com.hiepnguyen.tripfinance.ui.components.CategoryIcon
 import com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils
 import com.hiepnguyen.tripfinance.ui.theme.*
+import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import kotlin.math.abs
@@ -107,8 +109,12 @@ fun AddExpenseDialog(
     var amountText by remember {
         mutableStateOf(
             initialExpense?.let { exp ->
-                if (exp.totalAmount % 1.0 == 0.0) exp.totalAmount.toLong().toString()
-                else exp.totalAmount.toString()
+                val rounded = SupportedCurrencies.roundAmountForCurrency(exp.totalAmount, exp.currency)
+                if (SupportedCurrencies.isZeroDecimalCurrency(exp.currency) || rounded % 1.0 == 0.0) {
+                    rounded.toLong().toString()
+                } else {
+                    BigDecimal.valueOf(rounded).stripTrailingZeros().toPlainString()
+                }
             } ?: ""
         )
     }
@@ -417,18 +423,13 @@ fun AddExpenseDialog(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            val isZeroDecimal = SupportedCurrencies.isZeroDecimalCurrency(selectedCurrency)
                             OutlinedTextField(
                                 value = amountText,
                                 onValueChange = { input ->
                                     val trimmed = input.trim()
-                                    if (selectedCurrency == "VND") {
-                                        if (trimmed.all { it.isDigit() || it == '.' || it == ',' || it == ' ' }) {
-                                            amountText = trimmed
-                                        }
-                                    } else {
-                                        if (trimmed.all { it.isDigit() || it == '.' || it == ',' || it == ' ' }) {
-                                            amountText = trimmed
-                                        }
+                                    if (trimmed.all { it.isDigit() || it == '.' || it == ',' || it == ' ' }) {
+                                        amountText = trimmed
                                     }
                                 },
                                 isError = amountText.isNotEmpty() && !isAmountValid,
@@ -438,9 +439,9 @@ fun AddExpenseDialog(
                                     }
                                 },
                                 label = { Text(AppStrings.amountFieldLabel(lang)) },
-                                placeholder = { Text(if (selectedCurrency == "VND") "0" else "0.00") },
+                                placeholder = { Text(if (isZeroDecimal) "0" else "0.00") },
                                 keyboardOptions = KeyboardOptions(
-                                    keyboardType = if (selectedCurrency == "VND") KeyboardType.Number else KeyboardType.Decimal,
+                                    keyboardType = if (isZeroDecimal) KeyboardType.Number else KeyboardType.Decimal,
                                     imeAction = ImeAction.Next
                                 ),
                                 modifier = Modifier
@@ -470,7 +471,7 @@ fun AddExpenseDialog(
                                     expanded = currExpanded,
                                     onDismissRequest = { currExpanded = false }
                                 ) {
-                                    listOf("VND", "USD", "EUR", "JPY", "KRW", "THB", "SGD", "CNY").forEach { c ->
+                                    SupportedCurrencies.LIST.map { it.code }.forEach { c ->
                                         DropdownMenuItem(
                                             text = {
                                                 Row(
@@ -512,8 +513,12 @@ fun AddExpenseDialog(
                                     onClick = {
                                         val parsed = FinancialInputValidator.parseAmount(amountText, selectedCurrency)
                                         val current = (parsed as? AmountValidationResult.Success)?.amount ?: 0.0
-                                        val updated = current + addVal
-                                        amountText = if (selectedCurrency == "VND" || updated % 1.0 == 0.0) updated.toLong().toString() else updated.toString()
+                                        val updated = SupportedCurrencies.roundAmountForCurrency(current + addVal, selectedCurrency)
+                                        amountText = if (SupportedCurrencies.isZeroDecimalCurrency(selectedCurrency) || updated % 1.0 == 0.0) {
+                                            updated.toLong().toString()
+                                        } else {
+                                            BigDecimal.valueOf(updated).stripTrailingZeros().toPlainString()
+                                        }
                                     },
                                     label = { Text(label, fontSize = 11.sp) }
                                 )
@@ -588,7 +593,7 @@ fun AddExpenseDialog(
                             }
                         } else if (parsedAmount > 0) {
                             Text(
-                                text = AppStrings.inWordsLabel(NumberFormatUtils.formatVnd(parsedAmount), lang),
+                                text = AppStrings.inWordsLabel(NumberFormatUtils.formatCurrency(parsedAmount, selectedCurrency), lang),
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = EmeraldPrimary
@@ -1199,7 +1204,7 @@ fun AddExpenseDialog(
                                     color = if (isAllocationExact) Color(0xFF15803D) else Color(0xFFB91C1C)
                                 )
                                 Text(
-                                    text = if (isAllocationExact) AppStrings.allocationValidBadge(lang) else if (splitType == "RATIO" && !isRatioValid) AppStrings.allocationRatioNot100Badge(lang) else AppStrings.allocationDiffBadge(NumberFormatUtils.formatVnd(diff), lang),
+                                    text = if (isAllocationExact) AppStrings.allocationValidBadge(lang) else if (splitType == "RATIO" && !isRatioValid) AppStrings.allocationRatioNot100Badge(lang) else AppStrings.allocationDiffBadge(NumberFormatUtils.formatCurrency(diff, baseCurrency), lang),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isAllocationExact) Color(0xFF15803D) else Color(0xFFDC2626)
@@ -1222,7 +1227,7 @@ fun AddExpenseDialog(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(mName, fontSize = 12.sp, color = Color(0xFF334155))
-                                    Text(NumberFormatUtils.formatVnd(share), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    Text(NumberFormatUtils.formatCurrency(share, baseCurrency), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                                 }
                             }
 
@@ -1234,7 +1239,7 @@ fun AddExpenseDialog(
                             ) {
                                 Text(AppStrings.totalAllocatedLabel(lang), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                 Text(
-                                    "${NumberFormatUtils.formatVnd(currentAllocatedSum)} / ${NumberFormatUtils.formatVnd(convertedTotalVnd)}",
+                                    "${NumberFormatUtils.formatCurrency(currentAllocatedSum, baseCurrency)} / ${NumberFormatUtils.formatCurrency(convertedTotalVnd, baseCurrency)}",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (isAllocationExact) EmeraldPrimary else DangerRed

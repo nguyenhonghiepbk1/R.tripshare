@@ -36,7 +36,9 @@ import androidx.compose.ui.window.DialogProperties
 import com.hiepnguyen.tripfinance.data.entity.TripMemberEntity
 import com.hiepnguyen.tripfinance.domain.model.BalanceStatus
 import com.hiepnguyen.tripfinance.domain.model.SettlementTransfer
+import com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies
 import com.hiepnguyen.tripfinance.ui.theme.*
+import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
@@ -50,19 +52,24 @@ object NumberFormatUtils {
         groupingSeparator = '.'
         decimalSeparator = ','
     }
-    private val formatter = DecimalFormat("#,###", symbols)
-    private val decimalFormatter = DecimalFormat("#,##0.##", symbols)
+    private val formatter = DecimalFormat("#,###", symbols).apply {
+        roundingMode = RoundingMode.HALF_UP
+    }
+    private val decimalFormatter = DecimalFormat("#,##0.##", symbols).apply {
+        roundingMode = RoundingMode.HALF_UP
+    }
 
     fun formatVnd(amount: Long): String {
         return "${formatter.format(amount)} đ"
     }
 
     fun formatVnd(amount: Double): String {
-        return "${formatter.format(kotlin.math.round(amount).toLong())} đ"
+        val rounded = SupportedCurrencies.roundAmountForCurrency(amount, "VND").toLong()
+        return "${formatter.format(rounded)} đ"
     }
 
     fun formatCurrency(amount: Long, currency: String): String {
-        val curr = currency.uppercase()
+        val curr = currency.trim().uppercase(Locale.ROOT)
         return when (curr) {
             "VND" -> "${formatter.format(amount)} đ"
             "USD" -> "$${formatter.format(amount)}"
@@ -79,19 +86,26 @@ object NumberFormatUtils {
     }
 
     fun formatCurrency(amount: Double, currency: String): String {
-        val curr = currency.uppercase()
+        val curr = currency.trim().uppercase(Locale.ROOT)
+        val rounded = SupportedCurrencies.roundAmountForCurrency(amount, curr)
+        if (SupportedCurrencies.isZeroDecimalCurrency(curr)) {
+            val intVal = rounded.toLong()
+            return when (curr) {
+                "VND" -> "${formatter.format(intVal)} đ"
+                "JPY" -> "¥${formatter.format(intVal)}"
+                "KRW" -> "₩${formatter.format(intVal)}"
+                "THB" -> "${formatter.format(intVal)} ฿"
+                "CNY" -> "${formatter.format(intVal)} ¥"
+                else -> "${formatter.format(intVal)} $currency"
+            }
+        }
         return when (curr) {
-            "VND" -> "${formatter.format(kotlin.math.round(amount).toLong())} đ"
-            "USD" -> "$${decimalFormatter.format(amount)}"
-            "EUR" -> "€${decimalFormatter.format(amount)}"
-            "JPY" -> "¥${formatter.format(kotlin.math.round(amount).toLong())}"
-            "KRW" -> "₩${formatter.format(kotlin.math.round(amount).toLong())}"
-            "GBP" -> "£${decimalFormatter.format(amount)}"
-            "SGD" -> "S$${decimalFormatter.format(amount)}"
-            "THB" -> "${decimalFormatter.format(amount)} ฿"
-            "CNY" -> "${decimalFormatter.format(amount)} ¥"
-            "AUD" -> "A$${decimalFormatter.format(amount)}"
-            else -> "${decimalFormatter.format(amount)} $currency"
+            "USD" -> "$${decimalFormatter.format(rounded)}"
+            "EUR" -> "€${decimalFormatter.format(rounded)}"
+            "GBP" -> "£${decimalFormatter.format(rounded)}"
+            "SGD" -> "S$${decimalFormatter.format(rounded)}"
+            "AUD" -> "A$${decimalFormatter.format(rounded)}"
+            else -> "${decimalFormatter.format(rounded)} $currency"
         }
     }
 }

@@ -8,6 +8,7 @@ import com.hiepnguyen.tripfinance.data.entity.TripMemberEntity
 import com.hiepnguyen.tripfinance.domain.model.FinancialSummary
 import com.hiepnguyen.tripfinance.domain.model.MemberFinancialStatus
 import com.hiepnguyen.tripfinance.domain.model.SettlementTransfer
+import com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies
 import com.hiepnguyen.tripfinance.domain.model.sumOfSafe
 import com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils
 import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
@@ -44,19 +45,20 @@ object ReportGenerator {
         val now = Date()
         val tripTitle = trip?.title ?: AppStrings.valDefaultTripTitle(language)
         val joinCode = trip?.joinCode?.takeIf { it.isNotBlank() }
+        val tripCurrency = trip?.baseCurrency ?: "VND"
 
         return when (reportType) {
             ReportType.FULL_SETTLEMENT -> generateFullSettlementReport(
-                tripTitle, joinCode, members, financialSummary, memberStatuses, settlementTransfers, expenses, creatorName, now, language
+                tripTitle, joinCode, tripCurrency, members, financialSummary, memberStatuses, settlementTransfers, expenses, creatorName, now, language
             )
             ReportType.EXPENSE_LEDGER -> generateExpenseLedgerReport(
-                tripTitle, joinCode, members, financialSummary, expenses, fundContributions, splits, creatorName, now, language
+                tripTitle, joinCode, tripCurrency, members, financialSummary, expenses, fundContributions, splits, creatorName, now, language
             )
             ReportType.TRANSFER_INSTRUCTIONS -> generateTransferInstructionsReport(
-                tripTitle, joinCode, settlementTransfers, creatorName, now, language
+                tripTitle, joinCode, tripCurrency, settlementTransfers, creatorName, now, language
             )
             ReportType.MEMBER_BREAKDOWN -> generateMemberBreakdownReport(
-                tripTitle, joinCode, members, memberStatuses, creatorName, now, language
+                tripTitle, joinCode, tripCurrency, members, memberStatuses, creatorName, now, language
             )
         }
     }
@@ -64,6 +66,7 @@ object ReportGenerator {
     private fun generateFullSettlementReport(
         tripTitle: String,
         joinCode: String?,
+        tripCurrency: String,
         members: List<TripMemberEntity>,
         summary: FinancialSummary,
         statuses: List<MemberFinancialStatus>,
@@ -94,36 +97,36 @@ object ReportGenerator {
             appendLine("Thời gian lập báo cáo : ${fmt.format(date)}")
             appendLine("Người lập báo cáo     : $creatorName")
             appendLine("Tổng số thành viên    : ${members.size} người")
-            appendLine("Tình trạng đối soát   : ${if (summary.isBalanced) "HỢP LỆ (Tổng số dư cân bằng = 0 đ)" else "CẢNH BÁO LỆCH: " + NumberFormatUtils.formatVnd(summary.balanceDiscrepancy)}")
+            appendLine("Tình trạng đối soát   : ${if (summary.isBalanced) "HỢP LỆ (Tổng số dư cân bằng = ${NumberFormatUtils.formatCurrency(0L, tripCurrency)})" else "CẢNH BÁO LỆCH: " + NumberFormatUtils.formatCurrency(summary.balanceDiscrepancy, tripCurrency)}")
         } else {
             appendLine("Report Generated At   : ${fmt.format(date)}")
             appendLine("Prepared By           : $creatorName")
             appendLine("Total Members         : ${members.size} members")
-            appendLine("Reconciliation Status : ${if (summary.isBalanced) "VALID (Total net balance = 0)" else "DISCREPANCY WARNING: " + NumberFormatUtils.formatVnd(summary.balanceDiscrepancy)}")
+            appendLine("Reconciliation Status : ${if (summary.isBalanced) "VALID (Total net balance = 0)" else "DISCREPANCY WARNING: " + NumberFormatUtils.formatCurrency(summary.balanceDiscrepancy, tripCurrency)}")
         }
         appendLine("--------------------------------------------------------------------------------")
         appendLine()
         if (isVi) {
             appendLine("I. TỔNG QUAN THU - CHI ĐOÀN")
-            appendLine("  1. Tổng chi tiêu toàn đoàn       : ${NumberFormatUtils.formatVnd(summary.totalExpenses)}")
-            appendLine("     - Thành viên tự chi hộ (Paid)  : ${NumberFormatUtils.formatVnd(summary.personalPaidExpenses)}")
-            appendLine("     - Chi từ nguồn Quỹ chung đoàn  : ${NumberFormatUtils.formatVnd(summary.fundPaidExpenses)}")
+            appendLine("  1. Tổng chi tiêu toàn đoàn       : ${NumberFormatUtils.formatCurrency(summary.totalExpenses, tripCurrency)}")
+            appendLine("     - Thành viên tự chi hộ (Paid)  : ${NumberFormatUtils.formatCurrency(summary.personalPaidExpenses, tripCurrency)}")
+            appendLine("     - Chi từ nguồn Quỹ chung đoàn  : ${NumberFormatUtils.formatCurrency(summary.fundPaidExpenses, tripCurrency)}")
             appendLine("  2. Tình hình Quỹ chung:")
-            appendLine("     - Tổng tiền đã thu vào quỹ     : ${NumberFormatUtils.formatVnd(summary.totalFundCollected)}")
-            appendLine("     - Tổng tiền quỹ đã giải ngân   : ${NumberFormatUtils.formatVnd(summary.fundPaidExpenses)}")
-            appendLine("     - Số dư quỹ chung còn lại      : ${NumberFormatUtils.formatVnd(summary.remainingFund)}")
+            appendLine("     - Tổng tiền đã thu vào quỹ     : ${NumberFormatUtils.formatCurrency(summary.totalFundCollected, tripCurrency)}")
+            appendLine("     - Tổng tiền quỹ đã giải ngân   : ${NumberFormatUtils.formatCurrency(summary.fundPaidExpenses, tripCurrency)}")
+            appendLine("     - Số dư quỹ chung còn lại      : ${NumberFormatUtils.formatCurrency(summary.remainingFund, tripCurrency)}")
             appendLine()
             appendLine("II. BẢNG TỔNG HỢP SỐ DƯ & QUYẾT TOÁN TỪNG THÀNH VIÊN")
             appendLine(String.format("%-4s | %-18s | %-12s | %-12s | %-12s | %-18s", "STT", "Họ và tên", "Đã chi hộ", "Nộp quỹ", "Phải chịu", "Số dư / Trạng thái"))
         } else {
             appendLine("I. GROUP INCOME & EXPENSE OVERVIEW")
-            appendLine("  1. Total Group Expenses          : ${NumberFormatUtils.formatVnd(summary.totalExpenses)}")
-            appendLine("     - Personal Out-of-Pocket Paid  : ${NumberFormatUtils.formatVnd(summary.personalPaidExpenses)}")
-            appendLine("     - Paid from Group Fund         : ${NumberFormatUtils.formatVnd(summary.fundPaidExpenses)}")
+            appendLine("  1. Total Group Expenses          : ${NumberFormatUtils.formatCurrency(summary.totalExpenses, tripCurrency)}")
+            appendLine("     - Personal Out-of-Pocket Paid  : ${NumberFormatUtils.formatCurrency(summary.personalPaidExpenses, tripCurrency)}")
+            appendLine("     - Paid from Group Fund         : ${NumberFormatUtils.formatCurrency(summary.fundPaidExpenses, tripCurrency)}")
             appendLine("  2. Group Fund Summary:")
-            appendLine("     - Total Fund Collected         : ${NumberFormatUtils.formatVnd(summary.totalFundCollected)}")
-            appendLine("     - Total Disbursed from Fund    : ${NumberFormatUtils.formatVnd(summary.fundPaidExpenses)}")
-            appendLine("     - Remaining Fund Balance       : ${NumberFormatUtils.formatVnd(summary.remainingFund)}")
+            appendLine("     - Total Fund Collected         : ${NumberFormatUtils.formatCurrency(summary.totalFundCollected, tripCurrency)}")
+            appendLine("     - Total Disbursed from Fund    : ${NumberFormatUtils.formatCurrency(summary.fundPaidExpenses, tripCurrency)}")
+            appendLine("     - Remaining Fund Balance       : ${NumberFormatUtils.formatCurrency(summary.remainingFund, tripCurrency)}")
             appendLine()
             appendLine("II. MEMBER BALANCE & SETTLEMENT SUMMARY")
             appendLine(String.format("%-4s | %-18s | %-12s | %-12s | %-12s | %-18s", "No.", "Full Name", "Paid", "Fund", "Owed", "Balance / Status"))
@@ -132,15 +135,15 @@ object ReportGenerator {
         statuses.forEachIndexed { index, st ->
             val statusStr = if (isVi) {
                 when {
-                    st.balance > 0 -> "+${NumberFormatUtils.formatVnd(st.balance)} (Nhận lại)"
-                    st.balance < 0 -> "${NumberFormatUtils.formatVnd(st.balance)} (Cần nộp)"
-                    else -> "0 đ (Đã cân bằng)"
+                    st.balance > 0 -> "+${NumberFormatUtils.formatCurrency(st.balance, tripCurrency)} (Nhận lại)"
+                    st.balance < 0 -> "${NumberFormatUtils.formatCurrency(st.balance, tripCurrency)} (Cần nộp)"
+                    else -> "${NumberFormatUtils.formatCurrency(0L, tripCurrency)} (Đã cân bằng)"
                 }
             } else {
                 when {
-                    st.balance > 0 -> "+${NumberFormatUtils.formatVnd(st.balance)} (To receive)"
-                    st.balance < 0 -> "${NumberFormatUtils.formatVnd(st.balance)} (To pay)"
-                    else -> "0 (Settled)"
+                    st.balance > 0 -> "+${NumberFormatUtils.formatCurrency(st.balance, tripCurrency)} (To receive)"
+                    st.balance < 0 -> "${NumberFormatUtils.formatCurrency(st.balance, tripCurrency)} (To pay)"
+                    else -> "${NumberFormatUtils.formatCurrency(0L, tripCurrency)} (Settled)"
                 }
             }
             appendLine(
@@ -148,9 +151,9 @@ object ReportGenerator {
                     "%-4d | %-18s | %-12s | %-12s | %-12s | %-18s",
                     index + 1,
                     st.member.name.take(18),
-                    NumberFormatUtils.formatVnd(st.outOfPocketPaid),
-                    NumberFormatUtils.formatVnd(st.fundContributed),
-                    NumberFormatUtils.formatVnd(st.totalOwed),
+                    NumberFormatUtils.formatCurrency(st.outOfPocketPaid, tripCurrency),
+                    NumberFormatUtils.formatCurrency(st.fundContributed, tripCurrency),
+                    NumberFormatUtils.formatCurrency(st.totalOwed, tripCurrency),
                     statusStr
                 )
             )
@@ -174,13 +177,13 @@ object ReportGenerator {
                     appendLine("  [Giao dịch #${idx + 1}]")
                     appendLine("  • Người chuyển (Nộp) : $fromName")
                     appendLine("  • Người nhận tiền    : $toName")
-                    appendLine("  • Số tiền            : ${NumberFormatUtils.formatVnd(tr.amount)}")
+                    appendLine("  • Số tiền            : ${NumberFormatUtils.formatCurrency(tr.amount, tripCurrency)}")
                     appendLine("  • Nội dung gợi ý     : ${tr.transferNote}")
                 } else {
                     appendLine("  [Transfer #${idx + 1}]")
                     appendLine("  • Payer (From)       : $fromName")
                     appendLine("  • Recipient (To)     : $toName")
-                    appendLine("  • Amount             : ${NumberFormatUtils.formatVnd(tr.amount)}")
+                    appendLine("  • Amount             : ${NumberFormatUtils.formatCurrency(tr.amount, tripCurrency)}")
                     appendLine("  • Suggested Note     : ${tr.transferNote}")
                 }
                 appendLine()
@@ -192,7 +195,7 @@ object ReportGenerator {
             val pct = if (summary.totalExpenses > 0) (sum * 100.0 / summary.totalExpenses) else 0.0
             val catLabel = AppStrings.getCategoryName(cat, lang)
             val suffix = if (isVi) "khoản" else "items"
-            appendLine(String.format("  • %-20s: %15s (%4.1f%%) - %d %s", catLabel, NumberFormatUtils.formatVnd(sum), pct, list.size, suffix))
+            appendLine(String.format("  • %-20s: %15s (%4.1f%%) - %d %s", catLabel, NumberFormatUtils.formatCurrency(sum, tripCurrency), pct, list.size, suffix))
         }
         appendLine()
         appendLine(
@@ -218,6 +221,7 @@ object ReportGenerator {
     private fun generateExpenseLedgerReport(
         tripTitle: String,
         joinCode: String?,
+        tripCurrency: String,
         members: List<TripMemberEntity>,
         summary: FinancialSummary,
         expenses: List<ExpenseEntity>,
@@ -258,7 +262,7 @@ object ReportGenerator {
                     fmt.format(Date(exp.timestamp)),
                     exp.title.take(20),
                     payer.take(14),
-                    NumberFormatUtils.formatVnd(exp.convertedTotalAmount),
+                    NumberFormatUtils.formatCurrency(exp.convertedTotalAmount, tripCurrency),
                     splitMode.take(10)
                 )
             )
@@ -268,7 +272,7 @@ object ReportGenerator {
                 val defaultMem = if (isVi) "Thành viên" else "Member"
                 val participantsDetail = expSplits.joinToString("; ") { sp ->
                     val memName = members.find { it.id == sp.memberId }?.name ?: defaultMem
-                    "$memName: ${NumberFormatUtils.formatVnd(sp.amount)}"
+                    "$memName: ${NumberFormatUtils.formatCurrency(sp.amount, tripCurrency)}"
                 }
                 appendLine(
                     if (isVi) "       -> Người cùng chịu (${expSplits.size} người): $participantsDetail"
@@ -281,7 +285,7 @@ object ReportGenerator {
             }
         }
         appendLine("--------------------------------------------------------------------------------")
-        appendLine((if (isVi) "TỔNG CỘNG CHI TIÊU: " else "TOTAL EXPENSES: ") + NumberFormatUtils.formatVnd(summary.totalExpenses))
+        appendLine((if (isVi) "TỔNG CỘNG CHI TIÊU: " else "TOTAL EXPENSES: ") + NumberFormatUtils.formatCurrency(summary.totalExpenses, tripCurrency))
         appendLine()
         if (isVi) {
             appendLine("PHẦN 2: LỊCH SỬ ĐÓNG GÓP QUỸ (${funds.size} đợt nộp)")
@@ -299,19 +303,20 @@ object ReportGenerator {
                     idx + 1,
                     fmt.format(Date(f.timestamp)),
                     contributor.take(20),
-                    NumberFormatUtils.formatVnd(f.convertedAmount),
+                    NumberFormatUtils.formatCurrency(f.convertedAmount, tripCurrency),
                     f.note.take(20)
                 )
             )
         }
         appendLine("--------------------------------------------------------------------------------")
-        appendLine((if (isVi) "TỔNG CỘNG THU QUỸ: " else "TOTAL FUND COLLECTED: ") + NumberFormatUtils.formatVnd(summary.totalFundCollected))
+        appendLine((if (isVi) "TỔNG CỘNG THU QUỸ: " else "TOTAL FUND COLLECTED: ") + NumberFormatUtils.formatCurrency(summary.totalFundCollected, tripCurrency))
         appendLine("================================================================================")
     }
 
     private fun generateTransferInstructionsReport(
         tripTitle: String,
         joinCode: String?,
+        tripCurrency: String,
         transfers: List<SettlementTransfer>,
         creatorName: String,
         date: Date,
@@ -344,13 +349,13 @@ object ReportGenerator {
                     appendLine("KHOẢN BÙ TRỪ #${i + 1}:")
                     appendLine("  • Người gửi (Cần nộp) : $fromName")
                     appendLine("  • Người nhận (Hưởng)  : $toName")
-                    appendLine("  • Số tiền             : ${NumberFormatUtils.formatVnd(t.amount)}")
+                    appendLine("  • Số tiền             : ${NumberFormatUtils.formatCurrency(t.amount, tripCurrency)}")
                     appendLine("  • Nội dung gợi ý      : ${t.transferNote}")
                 } else {
                     appendLine("SETTLEMENT #${i + 1}:")
                     appendLine("  • Payer (From)        : $fromName")
                     appendLine("  • Recipient (To)      : $toName")
-                    appendLine("  • Amount              : ${NumberFormatUtils.formatVnd(t.amount)}")
+                    appendLine("  • Amount              : ${NumberFormatUtils.formatCurrency(t.amount, tripCurrency)}")
                     appendLine("  • Suggested Note      : ${t.transferNote}")
                 }
             }
@@ -365,6 +370,7 @@ object ReportGenerator {
     private fun generateMemberBreakdownReport(
         tripTitle: String,
         joinCode: String?,
+        tripCurrency: String,
         members: List<TripMemberEntity>,
         statuses: List<MemberFinancialStatus>,
         creatorName: String,
@@ -390,29 +396,29 @@ object ReportGenerator {
             appendLine("--------------------------------------------------------------------------------")
             if (isVi) {
                 appendLine("THÀNH VIÊN #${idx + 1}: ${st.member.name.uppercase()} (Vai trò: ${AppStrings.getRoleName(st.member.role, lang)})")
-                appendLine("  • Tiền cá nhân tự chi hộ (Out-of-pocket) : ${NumberFormatUtils.formatVnd(st.outOfPocketPaid)}")
-                appendLine("  • Tiền đã nộp vào Quỹ chung              : ${NumberFormatUtils.formatVnd(st.fundContributed)}")
-                appendLine("  • TỔNG CỘNG ĐÃ BỎ RA (A)                 : ${NumberFormatUtils.formatVnd(st.totalPaid)}")
-                appendLine("  • TỔNG CHI PHÍ PHẢI CHỊU (B)             : ${NumberFormatUtils.formatVnd(st.totalOwed)}")
-                appendLine("  • KẾT QUẢ SỐ DƯ (A - B)                  : ${NumberFormatUtils.formatVnd(st.balance)}")
+                appendLine("  • Tiền cá nhân tự chi hộ (Out-of-pocket) : ${NumberFormatUtils.formatCurrency(st.outOfPocketPaid, tripCurrency)}")
+                appendLine("  • Tiền đã nộp vào Quỹ chung              : ${NumberFormatUtils.formatCurrency(st.fundContributed, tripCurrency)}")
+                appendLine("  • TỔNG CỘNG ĐÃ BỎ RA (A)                 : ${NumberFormatUtils.formatCurrency(st.totalPaid, tripCurrency)}")
+                appendLine("  • TỔNG CHI PHÍ PHẢI CHỊU (B)             : ${NumberFormatUtils.formatCurrency(st.totalOwed, tripCurrency)}")
+                appendLine("  • KẾT QUẢ SỐ DƯ (A - B)                  : ${NumberFormatUtils.formatCurrency(st.balance, tripCurrency)}")
                 if (st.balance > 0) {
-                    appendLine("  ==> KẾT LUẬN: ĐƯỢC NHẬN LẠI ${NumberFormatUtils.formatVnd(st.balance)}")
+                    appendLine("  ==> KẾT LUẬN: ĐƯỢC NHẬN LẠI ${NumberFormatUtils.formatCurrency(st.balance, tripCurrency)}")
                 } else if (st.balance < 0) {
-                    appendLine("  ==> KẾT LUẬN: CẦN NỘP THÊM ${NumberFormatUtils.formatVnd(-st.balance)}")
+                    appendLine("  ==> KẾT LUẬN: CẦN NỘP THÊM ${NumberFormatUtils.formatCurrency(-st.balance, tripCurrency)}")
                 } else {
                     appendLine("  ==> KẾT LUẬN: ĐÃ CÂN BẰNG TÀI CHÍNH")
                 }
             } else {
                 appendLine("MEMBER #${idx + 1}: ${st.member.name.uppercase()} (Role: ${AppStrings.getRoleName(st.member.role, lang)})")
-                appendLine("  • Personal Out-of-Pocket Paid            : ${NumberFormatUtils.formatVnd(st.outOfPocketPaid)}")
-                appendLine("  • Contributed to Group Fund              : ${NumberFormatUtils.formatVnd(st.fundContributed)}")
-                appendLine("  • TOTAL PAID (A)                         : ${NumberFormatUtils.formatVnd(st.totalPaid)}")
-                appendLine("  • TOTAL COST SHARE / OWED (B)            : ${NumberFormatUtils.formatVnd(st.totalOwed)}")
-                appendLine("  • NET BALANCE (A - B)                    : ${NumberFormatUtils.formatVnd(st.balance)}")
+                appendLine("  • Personal Out-of-Pocket Paid            : ${NumberFormatUtils.formatCurrency(st.outOfPocketPaid, tripCurrency)}")
+                appendLine("  • Contributed to Group Fund              : ${NumberFormatUtils.formatCurrency(st.fundContributed, tripCurrency)}")
+                appendLine("  • TOTAL PAID (A)                         : ${NumberFormatUtils.formatCurrency(st.totalPaid, tripCurrency)}")
+                appendLine("  • TOTAL COST SHARE / OWED (B)            : ${NumberFormatUtils.formatCurrency(st.totalOwed, tripCurrency)}")
+                appendLine("  • NET BALANCE (A - B)                    : ${NumberFormatUtils.formatCurrency(st.balance, tripCurrency)}")
                 if (st.balance > 0) {
-                    appendLine("  ==> RESULT: TO RECEIVE ${NumberFormatUtils.formatVnd(st.balance)}")
+                    appendLine("  ==> RESULT: TO RECEIVE ${NumberFormatUtils.formatCurrency(st.balance, tripCurrency)}")
                 } else if (st.balance < 0) {
-                    appendLine("  ==> RESULT: TO PAY ${NumberFormatUtils.formatVnd(-st.balance)}")
+                    appendLine("  ==> RESULT: TO PAY ${NumberFormatUtils.formatCurrency(-st.balance, tripCurrency)}")
                 } else {
                     appendLine("  ==> RESULT: FINANCIALLY SETTLED")
                 }
@@ -444,6 +450,7 @@ object ReportGenerator {
         val now = Date()
         val tripTitle = trip?.title ?: AppStrings.valDefaultTripTitle(language)
         val joinCode = trip?.joinCode ?: "---"
+        val tripCurrency = trip?.baseCurrency ?: "VND"
 
         XlsxWriter(outputStream).use { writer ->
             // ==========================================
@@ -488,7 +495,7 @@ object ReportGenerator {
                     val balancedStatus = if (summary.isBalanced) {
                         AppStrings.rowBalancedStatus(language)
                     } else {
-                        AppStrings.rowDiscrepancyWarning(language) + NumberFormatUtils.formatVnd(summary.balanceDiscrepancy)
+                        AppStrings.rowDiscrepancyWarning(language) + NumberFormatUtils.formatCurrency(summary.balanceDiscrepancy, tripCurrency)
                     }
                     cell(balancedStatus)
                     cell(if (summary.isBalanced) AppStrings.rowStatusValid(language) else AppStrings.rowStatusNeedsCheck(language))
@@ -531,10 +538,11 @@ object ReportGenerator {
                         cell(e.title)
                         cell(catName)
                         cell(payer)
-                        if (e.currency == "VND") {
-                            currencyCell(e.totalAmount.toLong())
+                        val roundedOriginal = SupportedCurrencies.roundAmountForCurrency(e.totalAmount, e.currency)
+                        if (SupportedCurrencies.isZeroDecimalCurrency(e.currency)) {
+                            currencyCell(roundedOriginal.toLong())
                         } else {
-                            decimalCell(e.totalAmount)
+                            decimalCell(roundedOriginal)
                         }
                         cell(e.currency)
                         cell(e.exchangeRate)

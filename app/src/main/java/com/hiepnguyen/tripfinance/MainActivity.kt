@@ -375,7 +375,7 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
                 ) {
                     NavigationTab.values().forEach { tab ->
                         val isSelected = currentTab == tab
-                        val tabTitle = AppStrings.getTabName(tab.name, lang)
+                        val tabTitle = AppStrings.getTabName(tab.tabKey, lang)
                         NavigationBarItem(
                             selected = isSelected,
                             onClick = { currentTab = tab },

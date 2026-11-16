@@ -173,6 +173,7 @@ object PdfReportExporter {
             paint.typeface = Typeface.DEFAULT
             paint.color = Color.parseColor("#E0E7FF")
             val tripTitle = trip?.title ?: AppStrings.pdfDefaultTripName(language)
+            val tripCurrency = trip?.baseCurrency ?: "VND"
             canvas.drawText(tripTitle.uppercase(), margin + (contentWidth / 2f), currentY + 46f, paint)
 
             paint.textSize = 8.5f
@@ -203,14 +204,14 @@ object PdfReportExporter {
             paint.typeface = Typeface.DEFAULT
             paint.textSize = 9f
             paint.color = Color.parseColor("#334155")
-            canvas.drawText(AppStrings.pdfMetricTotalExpenses(language) + NumberFormatUtils.formatVnd(summary.totalExpenses), margin + 12f, currentY + 34f, paint)
-            canvas.drawText(AppStrings.pdfMetricPersonalPaid(language) + NumberFormatUtils.formatVnd(summary.personalPaidExpenses), margin + 12f, currentY + 48f, paint)
-            canvas.drawText(AppStrings.pdfMetricFundPaid(language) + NumberFormatUtils.formatVnd(summary.fundPaidExpenses), margin + 12f, currentY + 62f, paint)
+            canvas.drawText(AppStrings.pdfMetricTotalExpenses(language) + NumberFormatUtils.formatCurrency(summary.totalExpenses, tripCurrency), margin + 12f, currentY + 34f, paint)
+            canvas.drawText(AppStrings.pdfMetricPersonalPaid(language) + NumberFormatUtils.formatCurrency(summary.personalPaidExpenses, tripCurrency), margin + 12f, currentY + 48f, paint)
+            canvas.drawText(AppStrings.pdfMetricFundPaid(language) + NumberFormatUtils.formatCurrency(summary.fundPaidExpenses, tripCurrency), margin + 12f, currentY + 62f, paint)
 
             val col2X = margin + (contentWidth / 2f) + 10f
-            canvas.drawText(AppStrings.pdfMetricTotalFund(language) + NumberFormatUtils.formatVnd(summary.totalFundCollected), col2X, currentY + 34f, paint)
-            canvas.drawText(AppStrings.pdfMetricRemainingFund(language) + NumberFormatUtils.formatVnd(summary.remainingFund), col2X, currentY + 48f, paint)
-            val balanceText = if (summary.isBalanced) AppStrings.pdfAuditBalanced(language) else AppStrings.pdfAuditDiscrepancy(language) + NumberFormatUtils.formatVnd(summary.balanceDiscrepancy)
+            canvas.drawText(AppStrings.pdfMetricTotalFund(language) + NumberFormatUtils.formatCurrency(summary.totalFundCollected, tripCurrency), col2X, currentY + 34f, paint)
+            canvas.drawText(AppStrings.pdfMetricRemainingFund(language) + NumberFormatUtils.formatCurrency(summary.remainingFund, tripCurrency), col2X, currentY + 48f, paint)
+            val balanceText = if (summary.isBalanced) AppStrings.pdfAuditBalanced(language) else AppStrings.pdfAuditDiscrepancy(language) + NumberFormatUtils.formatCurrency(summary.balanceDiscrepancy, tripCurrency)
             canvas.drawText(AppStrings.pdfMetricAudit(language) + balanceText, col2X, currentY + 62f, paint)
 
             currentY += 92f
@@ -258,18 +259,18 @@ object PdfReportExporter {
                 canvas.drawText("${idx + 1}", margin + 4f, currentY + 12f, paint)
                 val memberNameDisplay = if (st.member.name.length > 20) st.member.name.take(19) + "…" else st.member.name
                 canvas.drawText(memberNameDisplay, margin + 28f, currentY + 12f, paint)
-                canvas.drawText(NumberFormatUtils.formatVnd(st.outOfPocketPaid), margin + 148f, currentY + 12f, paint)
-                canvas.drawText(NumberFormatUtils.formatVnd(st.fundContributed), margin + 220f, currentY + 12f, paint)
-                canvas.drawText(NumberFormatUtils.formatVnd(st.totalOwed), margin + 292f, currentY + 12f, paint)
+                canvas.drawText(NumberFormatUtils.formatCurrency(st.outOfPocketPaid, tripCurrency), margin + 148f, currentY + 12f, paint)
+                canvas.drawText(NumberFormatUtils.formatCurrency(st.fundContributed, tripCurrency), margin + 220f, currentY + 12f, paint)
+                canvas.drawText(NumberFormatUtils.formatCurrency(st.totalOwed, tripCurrency), margin + 292f, currentY + 12f, paint)
 
                 if (st.balance > 0) {
                     paint.color = Color.parseColor("#15803D") // Green
                     paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                    canvas.drawText("+${NumberFormatUtils.formatVnd(st.balance)} ${AppStrings.pdfBadgeToReceive(language)}", margin + 372f, currentY + 12f, paint)
+                    canvas.drawText("+${NumberFormatUtils.formatCurrency(st.balance, tripCurrency)} ${AppStrings.pdfBadgeToReceive(language)}", margin + 372f, currentY + 12f, paint)
                 } else if (st.balance < 0) {
                     paint.color = Color.parseColor("#B91C1C") // Red
                     paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-                    canvas.drawText("${NumberFormatUtils.formatVnd(st.balance)} ${AppStrings.pdfBadgeToPay(language)}", margin + 372f, currentY + 12f, paint)
+                    canvas.drawText("${NumberFormatUtils.formatCurrency(st.balance, tripCurrency)} ${AppStrings.pdfBadgeToPay(language)}", margin + 372f, currentY + 12f, paint)
                 } else {
                     paint.color = Color.parseColor("#64748B")
                     paint.typeface = Typeface.DEFAULT
@@ -302,7 +303,7 @@ object PdfReportExporter {
             paint.textSize = 8f
             paint.color = Color.parseColor("#475569")
             val settleDesc = if (settlementTransfers.isNotEmpty()) {
-                AppStrings.pdfSettleDesc(settlementTransfers.size, NumberFormatUtils.formatVnd(totalTransferAmount), language)
+                AppStrings.pdfSettleDesc(settlementTransfers.size, NumberFormatUtils.formatCurrency(totalTransferAmount, tripCurrency), language)
             } else {
                 AppStrings.pdfSettleDescEmpty(language)
             }
@@ -360,7 +361,7 @@ object PdfReportExporter {
 
                     paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                     paint.color = Color.parseColor("#4338CA")
-                    canvas.drawText(NumberFormatUtils.formatVnd(tr.amount), margin + 215f, currentY + 13f, paint)
+                    canvas.drawText(NumberFormatUtils.formatCurrency(tr.amount, tripCurrency), margin + 215f, currentY + 13f, paint)
 
                     paint.typeface = Typeface.DEFAULT
                     paint.color = Color.parseColor("#1E293B")
@@ -429,7 +430,7 @@ object PdfReportExporter {
                 val participantsFullText: String = if (expSplits.isNotEmpty()) {
                     val formattedMembers = expSplits.map { sp ->
                         val mName = members.find { it.id == sp.memberId }?.name ?: defaultMem
-                        "$mName (${NumberFormatUtils.formatVnd(sp.amount)})"
+                        "$mName (${NumberFormatUtils.formatCurrency(sp.amount, tripCurrency)})"
                     }.joinToString(", ")
                     AppStrings.pdfSplitParticipantsText(expSplits.size, formattedMembers, language)
                 } else {
@@ -471,7 +472,7 @@ object PdfReportExporter {
 
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 paint.color = Color.parseColor("#0369A1")
-                canvas.drawText(NumberFormatUtils.formatVnd(exp.convertedTotalAmount), margin + 360f, currentY + 11f, paint)
+                canvas.drawText(NumberFormatUtils.formatCurrency(exp.convertedTotalAmount, tripCurrency), margin + 360f, currentY + 11f, paint)
 
                 paint.typeface = Typeface.DEFAULT
                 paint.color = Color.parseColor("#475569")
@@ -513,7 +514,7 @@ object PdfReportExporter {
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
             paint.textSize = 8.5f
             canvas.drawText(AppStrings.pdfTotalExpensesLabel(language), margin + 110f, currentY + 12f, paint)
-            canvas.drawText(NumberFormatUtils.formatVnd(summary.totalExpenses), margin + 360f, currentY + 12f, paint)
+            canvas.drawText(NumberFormatUtils.formatCurrency(summary.totalExpenses, tripCurrency), margin + 360f, currentY + 12f, paint)
             currentY += 28f
 
             // =========================================================================
@@ -563,7 +564,7 @@ object PdfReportExporter {
 
                     paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                     paint.color = Color.parseColor("#B45309")
-                    canvas.drawText(NumberFormatUtils.formatVnd(fund.convertedAmount), margin + 260f, currentY + 12f, paint)
+                    canvas.drawText(NumberFormatUtils.formatCurrency(fund.convertedAmount, tripCurrency), margin + 260f, currentY + 12f, paint)
 
                     paint.typeface = Typeface.DEFAULT
                     paint.color = Color.parseColor("#475569")
@@ -586,7 +587,7 @@ object PdfReportExporter {
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 paint.textSize = 8.5f
                 canvas.drawText(AppStrings.pdfTotalFundLabel(language), margin + 110f, currentY + 12f, paint)
-                canvas.drawText(NumberFormatUtils.formatVnd(summary.totalFundCollected), margin + 260f, currentY + 12f, paint)
+                canvas.drawText(NumberFormatUtils.formatCurrency(summary.totalFundCollected, tripCurrency), margin + 260f, currentY + 12f, paint)
                 currentY += 28f
             }
 

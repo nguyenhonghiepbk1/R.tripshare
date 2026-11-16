@@ -1,6 +1,9 @@
 package com.hiepnguyen.tripfinance.domain.model
 
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.security.SecureRandom
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToLong
 
@@ -28,6 +31,25 @@ object SupportedCurrencies {
         CurrencyInfo("GBP", "Bảng Anh", "British Pound", "£"),
         CurrencyInfo("AUD", "Đô la Úc", "Australian Dollar", "A$")
     )
+
+    val ZERO_DECIMAL_CURRENCIES: Set<String> = setOf("VND", "THB", "JPY", "CNY", "KRW")
+
+    fun isZeroDecimalCurrency(code: String): Boolean {
+        return ZERO_DECIMAL_CURRENCIES.contains(code.trim().uppercase(Locale.ROOT))
+    }
+
+    fun getDecimalPlaces(code: String): Int {
+        return if (isZeroDecimalCurrency(code)) 0 else 2
+    }
+
+    fun roundAmountForCurrency(amount: Double, currency: String): Double {
+        if (!amount.isFinite() || amount.isNaN()) return 0.0
+        val scale = getDecimalPlaces(currency)
+        val rounded = BigDecimal.valueOf(amount)
+            .setScale(scale, RoundingMode.HALF_UP)
+            .toDouble()
+        return if (rounded == 0.0) 0.0 else rounded
+    }
 
     fun getSymbol(code: String): String {
         return LIST.find { it.code.equals(code, ignoreCase = true) }?.symbol ?: code
@@ -157,17 +179,18 @@ object FinancialInputValidator {
             return AmountValidationResult.Error("Vui lòng nhập số tiền")
         }
 
-        if (currency.equals("VND", ignoreCase = true)) {
+        val upperCurr = currency.trim().uppercase(Locale.ROOT).ifEmpty { "VND" }
+        if (SupportedCurrencies.isZeroDecimalCurrency(upperCurr)) {
             val normalized = trimmed.replace(" ", "")
 
             // 1. Chặn nếu có cả . và , (Ví dụ: 1.500.000,50) -> Số thập phân
             if (normalized.contains('.') && normalized.contains(',')) {
-                return AmountValidationResult.Error("Tiền VND không hỗ trợ số thập phân")
+                return AmountValidationResult.Error("Tiền $upperCurr không hỗ trợ số thập phân")
             }
 
             // 2. Chặn ký tự lạ
             if (!normalized.all { it.isDigit() || it == '.' || it == ',' }) {
-                return AmountValidationResult.Error("Số tiền VND chỉ bao gồm các chữ số")
+                return AmountValidationResult.Error("Số tiền $upperCurr chỉ bao gồm các chữ số")
             }
 
             // 3. Số nguyên thuần túy (VD: 1500, 25450, 1500000)
@@ -176,7 +199,7 @@ object FinancialInputValidator {
                     ?: return AmountValidationResult.Error("Số tiền vượt quá giới hạn xử lý")
                 if (longVal <= 0L) return AmountValidationResult.Error("Số tiền phải lớn hơn 0")
                 if (longVal > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
-                    return AmountValidationResult.Error("Số tiền tối đa là 100 tỷ VND")
+                    return AmountValidationResult.Error("Số tiền tối đa là 100 tỷ $upperCurr")
                 }
                 return AmountValidationResult.Success(longVal.toDouble(), isWholeNumber = true)
             }
@@ -184,7 +207,7 @@ object FinancialInputValidator {
             // 4. Có dấu chấm '.'
             if (normalized.contains('.')) {
                 val parts = normalized.split('.')
-                // Kiểm tra xem có phải định dạng phân cách hàng nghìn chuẩn Việt Nam không:
+                // Kiểm tra xem có phải định dạng phân cách hàng nghìn không:
                 // Phần đầu 1..3 chữ số, tất cả các phần sau ĐÚNG 3 chữ số (VD: 1.500, 25.450, 1.500.000)
                 val isThousandGrouping = parts.size > 1 &&
                         parts.all { it.isNotEmpty() && it.all { c -> c.isDigit() } } &&
@@ -197,12 +220,12 @@ object FinancialInputValidator {
                         ?: return AmountValidationResult.Error("Số tiền vượt quá giới hạn xử lý")
                     if (longVal <= 0L) return AmountValidationResult.Error("Số tiền phải lớn hơn 0")
                     if (longVal > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
-                        return AmountValidationResult.Error("Số tiền tối đa là 100 tỷ VND")
+                        return AmountValidationResult.Error("Số tiền tối đa là 100 tỷ $upperCurr")
                     }
                     return AmountValidationResult.Success(longVal.toDouble(), isWholeNumber = true)
                 } else {
                     // Chứa dấu chấm nhưng không phải phân cách hàng nghìn (VD: 1.5, 25.45, 1.50)
-                    return AmountValidationResult.Error("Tiền VND không hỗ trợ số thập phân (Ví dụ gõ 1.500 cho 1 nghìn 5 trăm đồng)")
+                    return AmountValidationResult.Error("Tiền $upperCurr không hỗ trợ số thập phân (Ví dụ gõ 1.500 cho 1 nghìn 5 trăm)")
                 }
             }
 
@@ -220,17 +243,17 @@ object FinancialInputValidator {
                         ?: return AmountValidationResult.Error("Số tiền vượt quá giới hạn xử lý")
                     if (longVal <= 0L) return AmountValidationResult.Error("Số tiền phải lớn hơn 0")
                     if (longVal > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
-                        return AmountValidationResult.Error("Số tiền tối đa là 100 tỷ VND")
+                        return AmountValidationResult.Error("Số tiền tối đa là 100 tỷ $upperCurr")
                     }
                     return AmountValidationResult.Success(longVal.toDouble(), isWholeNumber = true)
                 } else {
-                    return AmountValidationResult.Error("Tiền VND không hỗ trợ số thập phân (Ví dụ gõ 1,500 cho 1 nghìn 5 trăm đồng)")
+                    return AmountValidationResult.Error("Tiền $upperCurr không hỗ trợ số thập phân (Ví dụ gõ 1,500 cho 1 nghìn 5 trăm)")
                 }
             }
 
-            return AmountValidationResult.Error("Định dạng số tiền VND không hợp lệ")
+            return AmountValidationResult.Error("Định dạng số tiền $upperCurr không hợp lệ")
         } else {
-            // Ngoại tệ (USD, EUR, ...): Cho phép tối đa 1 dấu phân cách thập phân (. hoặc ,)
+            // Các đồng tiền khác (USD, EUR, SGD, GBP, AUD,...): Cho phép thập phân và làm tròn đến 2 chữ số sau dấu phẩy
             var normalized = trimmed.replace(" ", "")
             if (!normalized.all { it.isDigit() || it == '.' || it == ',' }) {
                 return AmountValidationResult.Error("Định dạng số tiền không hợp lệ")
@@ -289,12 +312,17 @@ object FinancialInputValidator {
             if (doubleVal <= 0.0) {
                 return AmountValidationResult.Error("Số tiền phải lớn hơn 0")
             }
-            if (doubleVal > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
+
+            val roundedVal = SupportedCurrencies.roundAmountForCurrency(doubleVal, upperCurr)
+            if (roundedVal <= 0.0) {
+                return AmountValidationResult.Error("Số tiền phải lớn hơn 0")
+            }
+            if (roundedVal > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
                 return AmountValidationResult.Error("Số tiền tối đa là 100 tỷ")
             }
 
-            val isWhole = (doubleVal % 1.0 == 0.0)
-            return AmountValidationResult.Success(doubleVal, isWholeNumber = isWhole)
+            val isWhole = (roundedVal % 1.0 == 0.0)
+            return AmountValidationResult.Success(roundedVal, isWholeNumber = isWhole)
         }
     }
 

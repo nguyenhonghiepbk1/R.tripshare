@@ -315,7 +315,7 @@ fun FundScreen(
                                 )
                                 if (item.currency != tripCurrency) {
                                     Text(
-                                        text = "${item.amount} ${item.currency}",
+                                        text = NumberFormatUtils.formatCurrency(item.amount, item.currency),
                                         fontSize = 11.sp,
                                         color = Color(0xFF64748B)
                                     )

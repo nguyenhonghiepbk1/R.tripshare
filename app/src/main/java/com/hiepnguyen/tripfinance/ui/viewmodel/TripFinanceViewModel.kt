@@ -619,7 +619,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
-        if (!totalAmount.isFinite() || totalAmount.isNaN() || totalAmount <= 0.0 || totalAmount > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
+        val normalizedAmount = SupportedCurrencies.roundAmountForCurrency(totalAmount, currency)
+        if (!normalizedAmount.isFinite() || normalizedAmount.isNaN() || normalizedAmount <= 0.0 || normalizedAmount > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
             showError(AppStrings.vmInvalidExpenseAmount(_language.value))
             return
         }
@@ -628,7 +629,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
-        val convertedTotal = FinancialInputValidator.convertToVnd(totalAmount, exchangeRate)
+        val convertedTotal = FinancialInputValidator.convertToVnd(normalizedAmount, exchangeRate)
         val totalSplitSum = splits.sumOfSafe { it.second }
         if (totalSplitSum != convertedTotal) {
             showError(AppStrings.vmSplitSumMismatch(totalSplitSum, convertedTotal, _language.value))
@@ -650,7 +651,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     category = category,
                     payerType = payerType,
                     payerMemberId = if (payerType == "MEMBER") payerMemberId else null,
-                    totalAmount = totalAmount,
+                    totalAmount = normalizedAmount,
                     currency = currency,
                     exchangeRate = exchangeRate,
                     convertedTotalAmount = convertedTotal,
@@ -707,7 +708,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
-        if (!totalAmount.isFinite() || totalAmount.isNaN() || totalAmount <= 0.0 || totalAmount > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
+        val normalizedAmount = SupportedCurrencies.roundAmountForCurrency(totalAmount, currency)
+        if (!normalizedAmount.isFinite() || normalizedAmount.isNaN() || normalizedAmount <= 0.0 || normalizedAmount > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
             showError(AppStrings.vmInvalidExpenseAmount(_language.value))
             return
         }
@@ -716,7 +718,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
-        val convertedTotal = FinancialInputValidator.convertToVnd(totalAmount, exchangeRate)
+        val convertedTotal = FinancialInputValidator.convertToVnd(normalizedAmount, exchangeRate)
         val totalSplitSum = splits.sumOfSafe { it.second }
         if (totalSplitSum != convertedTotal) {
             showError(AppStrings.vmSplitSumMismatch(totalSplitSum, convertedTotal, _language.value))
@@ -741,7 +743,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     category = category,
                     payerType = payerType,
                     payerMemberId = if (payerType == "MEMBER") payerMemberId else null,
-                    totalAmount = totalAmount,
+                    totalAmount = normalizedAmount,
                     currency = currency,
                     exchangeRate = exchangeRate,
                     convertedTotalAmount = convertedTotal,
