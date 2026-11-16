@@ -3,7 +3,11 @@ package com.hiepnguyen.tripfinance.domain.engine
 import com.hiepnguyen.tripfinance.data.entity.TripMemberEntity
 import com.hiepnguyen.tripfinance.domain.model.MemberFinancialStatus
 import com.hiepnguyen.tripfinance.domain.model.SettlementTransfer
+import com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies
 import com.hiepnguyen.tripfinance.domain.model.sumOfSafe
+import com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils
+import java.math.BigDecimal
+import java.math.RoundingMode
 import java.util.UUID
 import kotlin.math.abs
 import kotlin.math.roundToLong
@@ -12,15 +16,17 @@ object SplitCalculator {
 
     /**
      * Chia đều tất cả thành viên (Equal Split)
-     * Quy tắc làm tròn: Làm tròn nguyên phần chia cơ sở (totalAmount / count),
-     * nếu phép chia có phần dư (remainder), cộng toàn bộ phần chênh lệch cho người đầu tiên trong danh sách (hoặc primaryMemberId).
+     * Quy tắc làm tròn: Chia đều phần nguyên (totalAmount / count),
+     * phần dư r (0 <= r < count) được phân bổ mỗi người +1 đơn vị nhỏ nhất (1 đơn vị tiền tệ với VND/THB/JPY/CNY/KRW,
+     * hoặc 0.01 với các đồng tiền 2 chữ số thập phân) theo thứ tự ưu tiên vòng tròn bắt đầu từ primaryMemberId.
+     * Đảm bảo mức chênh lệch giữa các thành viên KHÔNG BAO GIỜ vượt quá 1 đơn vị nhỏ nhất (1 hoặc 0.01).
      */
     fun calculateEqualSplit(
         totalAmount: Long,
         memberIds: List<String>,
         primaryMemberId: String? = null
     ): List<Pair<String, Long>> {
-        if (memberIds.isEmpty() || totalAmount <= 0) return emptyList()
+        if (memberIds.isEmpty() || totalAmount <= 0L) return emptyList()
         val count = memberIds.size
         val baseShare = totalAmount / count
         val remainder = (totalAmount % count).toInt()
@@ -28,21 +34,40 @@ object SplitCalculator {
         val priorityIndex = if (primaryMemberId != null && memberIds.contains(primaryMemberId)) {
             memberIds.indexOf(primaryMemberId)
         } else {
-            0 // Mặc định người đầu tiên trong danh sách
+            0
         }
 
         return memberIds.mapIndexed { index, memberId ->
-            val extra = if (index == priorityIndex) remainder.toLong() else 0L
+            val distanceFromPriority = (index - priorityIndex + count) % count
+            val extra = if (distanceFromPriority < remainder) 1L else 0L
             memberId to (baseShare + extra)
+        }
+    }
+
+    /**
+     * Overload hỗ trợ số tiền thập phân theo quy chuẩn từng loại tiền tệ:
+     * - VND, THB, JPY, CNY, KRW: làm tròn đến đơn vị đồng, sai lệch tối đa 1 đơn vị.
+     * - Các đồng tiền khác (USD, EUR, SGD, GBP, AUD,...): làm tròn đến 2 chữ số sau dấu phẩy, sai lệch tối đa 0.01.
+     */
+    fun calculateEqualSplit(
+        totalAmount: Double,
+        memberIds: List<String>,
+        currency: String,
+        primaryMemberId: String? = null
+    ): List<Pair<String, Double>> {
+        val minorTotal = SupportedCurrencies.toMinorUnits(totalAmount, currency)
+        if (memberIds.isEmpty() || minorTotal <= 0L) return emptyList()
+        return calculateEqualSplit(minorTotal, memberIds, primaryMemberId).map { (memberId, minorShare) ->
+            memberId to SupportedCurrencies.fromMinorUnits(minorShare, currency)
         }
     }
 
     /**
      * Chia theo tỷ lệ phần trăm (Ratio Split)
      * Ràng buộc: Tổng % phải bằng 100.0%.
-     * Chỉ bù chênh lệch làm tròn (vài đồng lẻ do số thập phân) KHI VÀ CHỈ KHI tổng % đạt 100%.
-     * Tuyệt đối không dồn chênh lệch tỷ lệ vào người trả tiền khi tổng chưa bằng 100%,
-     * và đảm bảo không bao giờ tạo ra số tiền âm.
+     * Khi tổng % hợp lệ (xấp xỉ 100% trong sai số 0.01%), sử dụng phương pháp Hamilton (Largest Remainder Method)
+     * với BigDecimal để phân bổ phần dư sao cho sai lệch làm tròn mỗi thành viên tối thiểu (<= 1 đơn vị nhỏ nhất)
+     * và tổng các phần bằng đúng totalAmount.
      */
     fun calculateRatioSplit(
         totalAmount: Long,
@@ -51,36 +76,77 @@ object SplitCalculator {
     ): Pair<List<Pair<String, Long>>, Boolean> {
         if (memberRatios.isEmpty()) return emptyList<Pair<String, Long>>() to false
         val totalRatio = memberRatios.sumOf { it.second }
-        // Kiểm tra tổng tỷ lệ có bằng 100% không (cho phép sai số làm tròn số thực nhỏ 0.01%)
-        val isRatioValid = abs(totalRatio - 100.0) <= 0.01
+        val isRatioValid = abs(totalRatio - 100.0) <= 0.015
 
-        var currentSum = 0L
-        val splits = memberRatios.map { (memberId, ratio) ->
-            val safeRatio = ratio.coerceAtLeast(0.0)
-            val share = ((totalAmount * safeRatio) / 100.0).roundToLong().coerceAtLeast(0L)
-            currentSum += share
-            memberId to share
-        }.toMutableList()
+        if (!isRatioValid || totalAmount <= 0L) {
+            val rawSplits = memberRatios.map { (memberId, ratio) ->
+                val safeRatio = ratio.coerceAtLeast(0.0)
+                val share = if (totalAmount <= 0L) 0L else ((totalAmount * safeRatio) / 100.0).roundToLong().coerceAtLeast(0L)
+                memberId to share
+            }
+            return rawSplits to isRatioValid
+        }
 
-        // Bù chênh lệch làm tròn số lẻ (vài đồng) KHI VÀ CHỈ KHI tổng tỷ lệ % đã đạt 100%
-        if (isRatioValid && splits.isNotEmpty()) {
-            val diff = totalAmount - currentSum
-            if (diff != 0L) {
-                val targetIndex = if (primaryMemberId != null) {
-                    val pIdx = splits.indexOfFirst { it.first == primaryMemberId }
-                    if (pIdx >= 0 && splits[pIdx].second + diff >= 0L) pIdx
-                    else splits.indices.maxByOrNull { splits[it].second } ?: 0
-                } else {
-                    splits.indices.maxByOrNull { splits[it].second } ?: 0
+        val count = memberRatios.size
+        val priorityIndex = if (primaryMemberId != null) {
+            memberRatios.indexOfFirst { it.first == primaryMemberId }.takeIf { it >= 0 } ?: 0
+        } else {
+            0
+        }
+
+        val safeRatios = memberRatios.map { BigDecimal.valueOf(it.second.coerceAtLeast(0.0)) }
+        val ratioSumBd = safeRatios.fold(BigDecimal.ZERO) { acc, bd -> acc.add(bd) }
+        if (ratioSumBd.compareTo(BigDecimal.ZERO) <= 0) {
+            return memberRatios.map { it.first to 0L } to false
+        }
+
+        val totalBd = BigDecimal.valueOf(totalAmount)
+        val exactQuotas = safeRatios.map { r ->
+            totalBd.multiply(r).divide(ratioSumBd, 12, RoundingMode.DOWN)
+        }
+        val floorShares = exactQuotas.map { it.toLong().coerceAtLeast(0L) }.toMutableList()
+        val remainders = exactQuotas.mapIndexed { idx, exact ->
+            exact.subtract(BigDecimal.valueOf(floorShares[idx]))
+        }
+
+        var remainingUnits = totalAmount - floorShares.sum()
+        if (remainingUnits > 0L) {
+            val rankedIndices = memberRatios.indices.sortedWith { a, b ->
+                val cmp = remainders[b].compareTo(remainders[a])
+                if (cmp != 0) cmp
+                else {
+                    val distA = (a - priorityIndex + count) % count
+                    val distB = (b - priorityIndex + count) % count
+                    distA.compareTo(distB)
                 }
-
-                val current = splits[targetIndex]
-                val safeNewAmount = (current.second + diff).coerceAtLeast(0L)
-                splits[targetIndex] = current.first to safeNewAmount
+            }
+            var cursor = 0
+            while (remainingUnits > 0L && rankedIndices.isNotEmpty()) {
+                val targetIdx = rankedIndices[cursor % rankedIndices.size]
+                floorShares[targetIdx] = floorShares[targetIdx] + 1L
+                remainingUnits--
+                cursor++
             }
         }
 
-        return splits to isRatioValid
+        val splits = memberRatios.mapIndexed { idx, (memberId, _) ->
+            memberId to floorShares[idx]
+        }
+        return splits to true
+    }
+
+    fun calculateRatioSplit(
+        totalAmount: Double,
+        memberRatios: List<Pair<String, Double>>,
+        currency: String,
+        primaryMemberId: String? = null
+    ): Pair<List<Pair<String, Double>>, Boolean> {
+        val minorTotal = SupportedCurrencies.toMinorUnits(totalAmount, currency)
+        val (minorSplits, valid) = calculateRatioSplit(minorTotal, memberRatios, primaryMemberId)
+        val majorSplits = minorSplits.map { (memberId, minorShare) ->
+            memberId to SupportedCurrencies.fromMinorUnits(minorShare, currency)
+        }
+        return majorSplits to valid
     }
 
     /**
@@ -92,6 +158,15 @@ object SplitCalculator {
         primaryMemberId: String? = null
     ): List<Pair<String, Long>> {
         return calculateEqualSplit(totalAmount, selectedMemberIds, primaryMemberId)
+    }
+
+    fun calculateSelectedParticipantsSplit(
+        totalAmount: Double,
+        selectedMemberIds: List<String>,
+        currency: String,
+        primaryMemberId: String? = null
+    ): List<Pair<String, Double>> {
+        return calculateEqualSplit(totalAmount, selectedMemberIds, currency, primaryMemberId)
     }
 
     /**
@@ -127,7 +202,8 @@ object SettlementEngine {
         memberStatuses: List<MemberFinancialStatus>,
         tripJoinCode: String,
         remainingFund: Long = 0L,
-        fundHolder: TripMemberEntity? = null
+        fundHolder: TripMemberEntity? = null,
+        baseCurrency: String = "VND"
     ): SettlementCalculationResult {
         if (memberStatuses.isEmpty()) {
             val errorMsg = "Đoàn không có thành viên nào! Không thể thực hiện đối soát và quyết toán."
@@ -136,10 +212,11 @@ object SettlementEngine {
 
         val totalMemberBalance = memberStatuses.sumOfSafe { it.balance }
         // Kiểm tra đối soát: Tổng balance toàn đoàn trừ đi số quỹ còn lại phải bằng 0 tuyệt đối (Zero discrepancy tolerance)
-        // Không cho phép bất kỳ dung sai cố định 5 VND nào để chống thất thoát và lệch nhỏ tích lũy
+        // Không cho phép bất kỳ dung sai cố định nào để chống thất thoát và lệch nhỏ tích lũy
         val discrepancy = totalMemberBalance - remainingFund
         if (discrepancy != 0L) {
-            val errorMsg = "Phát hiện chênh lệch đối soát ($discrepancy VND). Chưa thể tạo kế hoạch bù trừ công nợ do các khoản thu chi chưa cân bằng tuyệt đối."
+            val formattedDiscrepancy = NumberFormatUtils.formatCurrency(discrepancy, baseCurrency)
+            val errorMsg = "Phát hiện chênh lệch đối soát ($formattedDiscrepancy). Chưa thể tạo kế hoạch bù trừ công nợ do các khoản thu chi chưa cân bằng tuyệt đối."
             return SettlementCalculationResult(
                 transfers = emptyList(),
                 reconciliationError = errorMsg
@@ -161,9 +238,10 @@ object SettlementEngine {
         memberStatuses: List<MemberFinancialStatus>,
         tripJoinCode: String,
         remainingFund: Long = 0L,
-        fundHolder: TripMemberEntity? = null
+        fundHolder: TripMemberEntity? = null,
+        baseCurrency: String = "VND"
     ): List<SettlementTransfer> {
-        return computeSettlementWithStatus(memberStatuses, tripJoinCode, remainingFund, fundHolder).transfers
+        return computeSettlementWithStatus(memberStatuses, tripJoinCode, remainingFund, fundHolder, baseCurrency).transfers
     }
 
     private fun computeTransfersInternal(

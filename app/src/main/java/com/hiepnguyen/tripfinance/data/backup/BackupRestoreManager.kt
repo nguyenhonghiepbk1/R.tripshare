@@ -24,7 +24,7 @@ import java.util.UUID
 data class BackupMetadata(
     val appName: String = "TripFinance",
     val backupVersion: Int = 1,
-    val schemaVersion: Int = 7,
+    val schemaVersion: Int = 8,
     val createdAt: Long = System.currentTimeMillis(),
     val createdAtFormatted: String = "",
     val totalTrips: Int = 0,
@@ -106,7 +106,7 @@ object BackupRestoreManager {
         val metaJson = JSONObject().apply {
             put("appName", "TripFinance")
             put("backupVersion", 1)
-            put("schemaVersion", 7)
+            put("schemaVersion", 8)
             put("createdAt", now)
             put("createdAtFormatted", dateFormat.format(Date(now)))
             put("totalTrips", trips.size)
@@ -559,16 +559,97 @@ object BackupRestoreManager {
                 settlementTransfers = transfersList
             )
 
+            val originalSchemaVersion = data.metadata.schemaVersion
+            val normalizedData = upgradeBackupDataSchema(data)
+
             // Kiểm tra toàn vẹn ngữ nghĩa và các ràng buộc dữ liệu tài chính
-            val validation = validateBackupData(data)
+            val validation = validateBackupData(normalizedData, originalSchemaVersion)
             if (validation.isFailure) {
                 return Result.failure(validation.exceptionOrNull() ?: IllegalArgumentException("Dữ liệu sao lưu không hợp lệ"))
             }
 
-            Result.success(data)
+            Result.success(normalizedData)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private fun safeScaleMinor(value: Long, scale: Long): Long {
+        if (scale == 1L || value == 0L) return value
+        return try {
+            Math.multiplyExact(value, scale)
+        } catch (_: ArithmeticException) {
+            if (value < 0L) Long.MIN_VALUE else com.hiepnguyen.tripfinance.domain.model.FinancialLimits.MAX_MINOR_TRANSACTION_AMOUNT
+        }
+    }
+
+    /**
+     * Nâng cấp dữ liệu backup từ schemaVersion < 8 lên schema v8:
+     * Với các đoàn có tiền tệ 2 chữ số thập phân (không thuộc VND, THB, JPY, CNY, KRW),
+     * quy đổi các cột số nguyên sang minor units (* 100).
+     */
+    fun upgradeBackupDataSchema(raw: BackupData): BackupData {
+        if (raw.metadata.schemaVersion >= 8) return raw
+        val twoDecimalTripIds = raw.trips
+            .filter { !com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.isZeroDecimalCurrency(it.baseCurrency) }
+            .map { it.id }
+            .toSet()
+
+        if (twoDecimalTripIds.isEmpty() && raw.fundContributions.all {
+                com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.isZeroDecimalCurrency(it.currency)
+            }
+        ) {
+            return raw.copy(metadata = raw.metadata.copy(schemaVersion = 8))
+        }
+
+        val upgradedExpenses = raw.expenses.map { e ->
+            if (twoDecimalTripIds.contains(e.tripId)) {
+                e.copy(convertedTotalAmount = safeScaleMinor(e.convertedTotalAmount, 100L))
+            } else e
+        }
+        val upgradedSplits = raw.splits.map { s ->
+            if (twoDecimalTripIds.contains(s.tripId)) {
+                s.copy(amount = safeScaleMinor(s.amount, 100L))
+            } else s
+        }
+        val upgradedFunds = raw.fundContributions.map { f ->
+            val newAmount = if (!com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.isZeroDecimalCurrency(f.currency)) {
+                safeScaleMinor(f.amount, 100L)
+            } else f.amount
+            val newConverted = if (twoDecimalTripIds.contains(f.tripId)) {
+                safeScaleMinor(f.convertedAmount, 100L)
+            } else f.convertedAmount
+            if (newAmount != f.amount || newConverted != f.convertedAmount) {
+                f.copy(amount = newAmount, convertedAmount = newConverted)
+            } else f
+        }
+        val upgradedTransfers = raw.settlementTransfers.map { tr ->
+            if (twoDecimalTripIds.contains(tr.tripId)) {
+                tr.copy(
+                    amount = safeScaleMinor(tr.amount, 100L),
+                    completedAmount = tr.completedAmount?.let { safeScaleMinor(it, 100L) }
+                )
+            } else tr
+        }
+        val upgradedSnapshots = raw.settlementSnapshots.map { sn ->
+            if (twoDecimalTripIds.contains(sn.tripId)) {
+                sn.copy(
+                    totalExpenses = safeScaleMinor(sn.totalExpenses, 100L),
+                    totalFundCollected = safeScaleMinor(sn.totalFundCollected, 100L),
+                    totalFundSpent = safeScaleMinor(sn.totalFundSpent, 100L),
+                    remainingFund = safeScaleMinor(sn.remainingFund, 100L)
+                )
+            } else sn
+        }
+
+        return raw.copy(
+            metadata = raw.metadata.copy(schemaVersion = 8),
+            expenses = upgradedExpenses,
+            splits = upgradedSplits,
+            fundContributions = upgradedFunds,
+            settlementTransfers = upgradedTransfers,
+            settlementSnapshots = upgradedSnapshots
+        )
     }
 
     private fun readMetadata(reader: JsonReader): BackupMetadata {
@@ -1186,12 +1267,13 @@ object BackupRestoreManager {
      * - Thẩm tra tổng số tiền chia (Expense Splits sum check) phải khớp chính xác với số tiền quy đổi của khoản chi
      * - Chặn đứng các hành vi can thiệp sửa tay làm sai lệch vai trò, thêm nhật ký kiểm toán giả hoặc chỉnh sửa số tiền
      */
-    fun validateBackupData(data: BackupData): Result<Unit> {
+    fun validateBackupData(data: BackupData, originalSchemaVersion: Int = data.metadata.schemaVersion): Result<Unit> {
         val validRoles = setOf("ADMIN", "TREASURER", "MEMBER", "VIEWER")
         val validCategories = setOf("FOOD", "TRANSPORT", "HOTEL", "SIGHTSEEING", "ENTERTAINMENT", "SHOPPING", "OTHER")
         val validPayerTypes = setOf("MEMBER", "FUND")
         val validSplitTypes = setOf("EQUAL", "RATIO", "CUSTOM_AMOUNT", "CUSTOM_PARTICIPANT")
         val tripIds = data.trips.map { it.id }.toSet()
+        val tripBaseCurrencyMap = data.trips.associate { it.id to it.baseCurrency }
 
         // 1. Kiểm tra chuyến đi
         for (trip in data.trips) {
@@ -1238,10 +1320,13 @@ object BackupRestoreManager {
                 return Result.failure(IllegalArgumentException("Người tạo khoản chi '${expense.createdMemberId}' không tồn tại trong đoàn"))
             }
 
+            val baseCurr = tripBaseCurrencyMap[expense.tripId] ?: "VND"
+            val minorScale = com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.getMinorUnitScale(baseCurr)
+            val maxMinorLimit = com.hiepnguyen.tripfinance.domain.model.FinancialLimits.MAX_TRANSACTION_AMOUNT * minorScale
             if (expense.totalAmount < 0.0 || expense.totalAmount > com.hiepnguyen.tripfinance.domain.model.FinancialLimits.MAX_TRANSACTION_AMOUNT) {
                 return Result.failure(IllegalArgumentException("Số tiền chi '${expense.totalAmount}' của '${expense.title}' không hợp lệ hoặc vượt hạn mức"))
             }
-            if (expense.convertedTotalAmount < 0L || expense.convertedTotalAmount > com.hiepnguyen.tripfinance.domain.model.FinancialLimits.MAX_TRANSACTION_AMOUNT) {
+            if (expense.convertedTotalAmount < 0L || expense.convertedTotalAmount > maxMinorLimit) {
                 return Result.failure(IllegalArgumentException("Số tiền quy đổi '${expense.convertedTotalAmount}' không hợp lệ"))
             }
 
@@ -1251,7 +1336,8 @@ object BackupRestoreManager {
                 val totalSplitSum = splits.sumOf { it.amount }
                 val diff = kotlin.math.abs(totalSplitSum - expense.convertedTotalAmount)
                 // Dung sai làm tròn tối đa số thành viên chia đối với chia đều
-                val allowedTolerance = if (expense.splitType == "EQUAL") splits.size.toLong() else 0L
+                val toleranceMultiplier = if (originalSchemaVersion < 8) minorScale else 1L
+                val allowedTolerance = if (expense.splitType == "EQUAL") splits.size.toLong() * toleranceMultiplier else 0L
                 if (diff > allowedTolerance) {
                     return Result.failure(
                         IllegalArgumentException("Kiểm tra toàn vẹn thất bại: Khoản chi '${expense.title}' có tổng tiền chia ($totalSplitSum) không khớp với số tiền quy đổi (${expense.convertedTotalAmount}). Dữ liệu đã bị sửa đổi trái phép!")
@@ -1272,7 +1358,9 @@ object BackupRestoreManager {
             if (!tripMembers.contains(split.memberId)) {
                 return Result.failure(IllegalArgumentException("Thành viên '${split.memberId}' trong phần chia tiền không thuộc đoàn"))
             }
-            if (split.amount < 0L || split.amount > com.hiepnguyen.tripfinance.domain.model.FinancialLimits.MAX_TRANSACTION_AMOUNT) {
+            val splitMaxLimit = com.hiepnguyen.tripfinance.domain.model.FinancialLimits.MAX_TRANSACTION_AMOUNT *
+                com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.getMinorUnitScale(tripBaseCurrencyMap[split.tripId] ?: "VND")
+            if (split.amount < 0L || split.amount > splitMaxLimit) {
                 return Result.failure(IllegalArgumentException("Số tiền chia '${split.amount}' không hợp lệ"))
             }
         }

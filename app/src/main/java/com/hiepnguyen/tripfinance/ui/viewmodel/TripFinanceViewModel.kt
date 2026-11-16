@@ -10,6 +10,7 @@ import com.hiepnguyen.tripfinance.domain.engine.SettlementEngine
 import com.hiepnguyen.tripfinance.domain.engine.SplitCalculator
 import com.hiepnguyen.tripfinance.domain.model.*
 import com.hiepnguyen.tripfinance.domain.export.PdfReportExporter
+import com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils
 import com.hiepnguyen.tripfinance.ui.locale.AppLanguage
 import com.hiepnguyen.tripfinance.ui.locale.AppStrings
 import kotlinx.coroutines.Dispatchers
@@ -230,7 +231,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                         memberStatuses = statuses,
                         tripJoinCode = currentTrip.joinCode,
                         remainingFund = summary.remainingFund,
-                        fundHolder = fundHolder
+                        fundHolder = fundHolder,
+                        baseCurrency = currentTrip.baseCurrency
                     )
 
                     val savedTransfersMap = aux.transfers.associateBy { it.id }
@@ -487,7 +489,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
                     summary = state.financialSummary,
                     categories = state.categoryBreakdowns,
                     members = state.memberStatuses,
-                    lang = state.language.code
+                    lang = state.language.code,
+                    baseCurrency = currentTrip.baseCurrency
                 )
                 _aiInsight.value = insight
             } catch (e: Exception) {
@@ -629,10 +632,10 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
-        val convertedTotal = FinancialInputValidator.convertToVnd(normalizedAmount, exchangeRate)
+        val convertedTotal = FinancialInputValidator.convertToBaseUnits(normalizedAmount, exchangeRate, currentTrip.baseCurrency)
         val totalSplitSum = splits.sumOfSafe { it.second }
         if (totalSplitSum != convertedTotal) {
-            showError(AppStrings.vmSplitSumMismatch(totalSplitSum, convertedTotal, _language.value))
+            showError(AppStrings.vmSplitSumMismatch(totalSplitSum, convertedTotal, _language.value, currentTrip.baseCurrency))
             return
         }
 
@@ -718,10 +721,10 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
-        val convertedTotal = FinancialInputValidator.convertToVnd(normalizedAmount, exchangeRate)
+        val convertedTotal = FinancialInputValidator.convertToBaseUnits(normalizedAmount, exchangeRate, currentTrip.baseCurrency)
         val totalSplitSum = splits.sumOfSafe { it.second }
         if (totalSplitSum != convertedTotal) {
-            showError(AppStrings.vmSplitSumMismatch(totalSplitSum, convertedTotal, _language.value))
+            showError(AppStrings.vmSplitSumMismatch(totalSplitSum, convertedTotal, _language.value, currentTrip.baseCurrency))
             return
         }
 
@@ -848,7 +851,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
-        if (amount <= 0L || amount > FinancialLimits.MAX_TRANSACTION_AMOUNT) {
+        val maxMinorFundAmount = FinancialLimits.MAX_TRANSACTION_AMOUNT * SupportedCurrencies.getMinorUnitScale(currency)
+        if (amount <= 0L || amount > maxMinorFundAmount) {
             showError(AppStrings.vmInvalidFundAmount(_language.value))
             return
         }
@@ -857,7 +861,8 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             return
         }
 
-        val convertedAmount = FinancialInputValidator.convertToVnd(amount.toDouble(), exchangeRate)
+        val majorAmount = SupportedCurrencies.fromMinorUnits(amount, currency)
+        val convertedAmount = FinancialInputValidator.convertToBaseUnits(majorAmount, exchangeRate, currentTrip.baseCurrency)
         val contribution = FundContributionEntity(
             id = UUID.randomUUID().toString(),
             tripId = currentTrip.id,
@@ -875,7 +880,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
             try {
                 val defaultMemberName = if (_language.value == AppLanguage.VI) "Thành viên" else "Member"
                 repository.addFundContribution(contribution, contributor?.name ?: defaultMemberName, currentMember)
-                showSuccess(AppStrings.vmFundContributionSuccess(convertedAmount, contributor?.name ?: "", _language.value))
+                showSuccess(AppStrings.vmFundContributionSuccess(convertedAmount, contributor?.name ?: "", _language.value, currentTrip.baseCurrency))
             } catch (e: Exception) {
                 showError(AppStrings.vmFundContributionError(e.message, _language.value))
             }
@@ -1047,7 +1052,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             try {
                 repository.updateExchangeRate(rateEntity, currentMember)
-                showSuccess(AppStrings.vmUpdateRateSuccess(currencyCode, rateToBase, _language.value))
+                showSuccess(AppStrings.vmUpdateRateSuccess(currencyCode, rateToBase, _language.value, currentTrip.baseCurrency))
             } catch (e: Exception) {
                 showError(AppStrings.vmUpdateRateError(e.message, _language.value))
             }
@@ -1076,7 +1081,7 @@ class TripFinanceViewModel(application: Application) : AndroidViewModel(applicat
         }
 
         if (!state.financialSummary.isBalanced || state.financialSummary.balanceDiscrepancy != 0L) {
-            showError(AppStrings.vmDiscrepancyCannotSettle(state.financialSummary.balanceDiscrepancy, _language.value))
+            showError(AppStrings.vmDiscrepancyCannotSettle(state.financialSummary.balanceDiscrepancy, _language.value, currentTrip.baseCurrency))
             return
         }
 
@@ -1365,9 +1370,12 @@ fun AppStrings.vmInvalidExpenseAmount(lang: AppLanguage) =
 fun AppStrings.vmInvalidExchangeRate(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Tỷ giá quy đổi không hợp lệ." else "Invalid exchange rate."
 
-fun AppStrings.vmSplitSumMismatch(splitSum: Long, total: Long, lang: AppLanguage) =
-    if (lang == AppLanguage.VI) "Tổng tiền phân bổ ($splitSum VND) không bằng tổng khoản chi ($total VND). Vui lòng kiểm tra lại!"
-    else "Split total ($splitSum VND) does not match expense total ($total VND). Please check again!"
+fun AppStrings.vmSplitSumMismatch(splitSum: Long, total: Long, lang: AppLanguage, baseCurrency: String = "VND"): String {
+    val formattedSum = NumberFormatUtils.formatCurrency(splitSum, baseCurrency)
+    val formattedTotal = NumberFormatUtils.formatCurrency(total, baseCurrency)
+    return if (lang == AppLanguage.VI) "Tổng tiền phân bổ ($formattedSum) không bằng tổng khoản chi ($formattedTotal). Vui lòng kiểm tra lại!"
+    else "Split total ($formattedSum) does not match expense total ($formattedTotal). Please check again!"
+}
 
 fun AppStrings.vmNegativeSplitAmount(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Số tiền phân bổ không được âm. Vui lòng kiểm tra lại tỷ lệ chia!" else "Split amount cannot be negative. Please check split ratios!"
@@ -1411,8 +1419,10 @@ fun AppStrings.vmAdminOrTreasurerOnlyFund(lang: AppLanguage) =
 fun AppStrings.vmInvalidFundAmount(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Số tiền nộp quỹ không hợp lệ (phải từ 1 đến 100 tỷ)." else "Invalid contribution amount (must be from 1 to 100B)."
 
-fun AppStrings.vmFundContributionSuccess(amount: Long, contributorName: String, lang: AppLanguage) =
-    if (lang == AppLanguage.VI) "Đã ghi nhận nộp quỹ $amount VND cho $contributorName!" else "Recorded fund contribution of $amount VND for $contributorName!"
+fun AppStrings.vmFundContributionSuccess(amount: Long, contributorName: String, lang: AppLanguage, baseCurrency: String = "VND"): String {
+    val formatted = NumberFormatUtils.formatCurrency(amount, baseCurrency)
+    return if (lang == AppLanguage.VI) "Đã ghi nhận nộp quỹ $formatted cho $contributorName!" else "Recorded fund contribution of $formatted for $contributorName!"
+}
 
 fun AppStrings.vmFundContributionError(err: String?, lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Lỗi nộp quỹ: ${err ?: ""}" else "Failed to record contribution: ${err ?: ""}"
@@ -1483,8 +1493,8 @@ fun AppStrings.vmTripLockedCannotUpdateRate(title: String, lang: AppLanguage) =
 fun AppStrings.vmAdminOrTreasurerOnlyRate(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Chỉ Trưởng đoàn hoặc Thủ quỹ mới có quyền cập nhật tỷ giá!" else "Only Leader or Treasurer can update exchange rates!"
 
-fun AppStrings.vmUpdateRateSuccess(code: String, rate: Double, lang: AppLanguage) =
-    if (lang == AppLanguage.VI) "Đã cập nhật tỷ giá 1 $code = $rate VND" else "Updated rate: 1 $code = $rate VND"
+fun AppStrings.vmUpdateRateSuccess(code: String, rate: Double, lang: AppLanguage, baseCurrency: String = "VND") =
+    if (lang == AppLanguage.VI) "Đã cập nhật tỷ giá 1 $code = $rate $baseCurrency" else "Updated rate: 1 $code = $rate $baseCurrency"
 
 fun AppStrings.vmUpdateRateError(err: String?, lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Lỗi cập nhật tỷ giá: ${err ?: ""}" else "Failed to update exchange rate: ${err ?: ""}"
@@ -1498,9 +1508,11 @@ fun AppStrings.vmAdminOnlyLockSettlement(lang: AppLanguage) =
 fun AppStrings.vmNoMembersCannotSettle(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Đoàn không có thành viên nào! Không thể thực hiện quyết toán và khóa sổ." else "No members in group! Cannot settle or lock trip."
 
-fun AppStrings.vmDiscrepancyCannotSettle(discrepancy: Long, lang: AppLanguage) =
-    if (lang == AppLanguage.VI) "Hệ thống phát hiện chênh lệch đối soát ($discrepancy VND). Toàn bộ chi tiêu phải được phân bổ cân bằng tuyệt đối để khóa sổ!"
-    else "Discrepancy detected ($discrepancy VND). All expenses must be fully balanced to lock!"
+fun AppStrings.vmDiscrepancyCannotSettle(discrepancy: Long, lang: AppLanguage, baseCurrency: String = "VND"): String {
+    val formatted = NumberFormatUtils.formatCurrency(discrepancy, baseCurrency)
+    return if (lang == AppLanguage.VI) "Hệ thống phát hiện chênh lệch đối soát ($formatted). Toàn bộ chi tiêu phải được phân bổ cân bằng tuyệt đối để khóa sổ!"
+    else "Discrepancy detected ($formatted). All expenses must be fully balanced to lock!"
+}
 
 fun AppStrings.vmDefaultSnapshotTitle(timestamp: Long, lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Quyết toán ngày $timestamp" else "Settlement on $timestamp"

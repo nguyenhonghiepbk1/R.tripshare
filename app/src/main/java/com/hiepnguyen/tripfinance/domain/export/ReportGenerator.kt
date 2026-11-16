@@ -29,6 +29,14 @@ object ReportGenerator {
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("vi", "VN"))
     private val dateOnlyFormat = SimpleDateFormat("dd/MM/yyyy", Locale("vi", "VN"))
 
+    private fun RowBuilder.baseCurrencyCell(minorUnits: Long, currency: String) {
+        if (SupportedCurrencies.isZeroDecimalCurrency(currency)) {
+            currencyCell(minorUnits)
+        } else {
+            decimalCell(SupportedCurrencies.fromMinorUnits(minorUnits, currency))
+        }
+    }
+
     fun generateTextReport(
         trip: TripEntity?,
         members: List<TripMemberEntity>,
@@ -466,34 +474,34 @@ object ReportGenerator {
                 row(AppStrings.rowJoinCode(language), joinCode, "")
                 row(AppStrings.rowExportDate(language), dateFormat.format(now), "")
                 row {
-                    cell(AppStrings.rowTotalExpenses(language))
-                    currencyCell(summary.totalExpenses)
+                    cell(AppStrings.rowTotalExpenses(language, tripCurrency))
+                    baseCurrencyCell(summary.totalExpenses, tripCurrency)
                     cell(AppStrings.rowTotalExpensesNote(language))
                 }
                 row {
-                    cell(AppStrings.rowPersonalPaid(language))
-                    currencyCell(summary.personalPaidExpenses)
+                    cell(AppStrings.rowPersonalPaid(language, tripCurrency))
+                    baseCurrencyCell(summary.personalPaidExpenses, tripCurrency)
                     cell(AppStrings.rowPersonalPaidNote(language))
                 }
                 row {
-                    cell(AppStrings.rowFundPaid(language))
-                    currencyCell(summary.fundPaidExpenses)
+                    cell(AppStrings.rowFundPaid(language, tripCurrency))
+                    baseCurrencyCell(summary.fundPaidExpenses, tripCurrency)
                     cell(AppStrings.rowFundPaidNote(language))
                 }
                 row {
-                    cell(AppStrings.rowTotalFundCollected(language))
-                    currencyCell(summary.totalFundCollected)
+                    cell(AppStrings.rowTotalFundCollected(language, tripCurrency))
+                    baseCurrencyCell(summary.totalFundCollected, tripCurrency)
                     cell(AppStrings.rowTotalFundCollectedNote(language))
                 }
                 row {
-                    cell(AppStrings.rowRemainingFund(language))
-                    currencyCell(summary.remainingFund)
+                    cell(AppStrings.rowRemainingFund(language, tripCurrency))
+                    baseCurrencyCell(summary.remainingFund, tripCurrency)
                     cell(AppStrings.rowRemainingFundNote(language))
                 }
                 row {
                     cell(AppStrings.rowReconciliationStatus(language))
                     val balancedStatus = if (summary.isBalanced) {
-                        AppStrings.rowBalancedStatus(language)
+                        AppStrings.rowBalancedStatus(language, tripCurrency)
                     } else {
                         AppStrings.rowDiscrepancyWarning(language) + NumberFormatUtils.formatCurrency(summary.balanceDiscrepancy, tripCurrency)
                     }
@@ -520,7 +528,7 @@ object ReportGenerator {
                     AppStrings.colOriginalAmount(language),
                     AppStrings.colCurrency(language),
                     AppStrings.colExchangeRate(language),
-                    AppStrings.colConvertedVnd(language),
+                    AppStrings.colConvertedVnd(language, tripCurrency),
                     AppStrings.colSplitType(language),
                     AppStrings.colNote(language)
                 )
@@ -546,7 +554,7 @@ object ReportGenerator {
                         }
                         cell(e.currency)
                         cell(e.exchangeRate)
-                        currencyCell(e.convertedTotalAmount)
+                        baseCurrencyCell(e.convertedTotalAmount, tripCurrency)
                         cell(splitTypeName)
                         cell(e.note)
                     }
@@ -561,11 +569,11 @@ object ReportGenerator {
                     AppStrings.colNo(language),
                     AppStrings.colFullName(language),
                     AppStrings.colRole(language),
-                    AppStrings.colPersonalPaidHeader(language),
-                    AppStrings.colFundContributedHeader(language),
-                    AppStrings.colTotalPaidHeader(language),
-                    AppStrings.colTotalOwedHeader(language),
-                    AppStrings.colBalanceHeader(language),
+                    AppStrings.colPersonalPaidHeader(language, tripCurrency),
+                    AppStrings.colFundContributedHeader(language, tripCurrency),
+                    AppStrings.colTotalPaidHeader(language, tripCurrency),
+                    AppStrings.colTotalOwedHeader(language, tripCurrency),
+                    AppStrings.colBalanceHeader(language, tripCurrency),
                     AppStrings.colSettlementStatus(language)
                 )
                 statuses.forEachIndexed { i, s ->
@@ -579,11 +587,11 @@ object ReportGenerator {
                         cell(i + 1)
                         cell(s.member.name)
                         cell(roleName)
-                        currencyCell(s.outOfPocketPaid)
-                        currencyCell(s.fundContributed)
-                        currencyCell(s.totalPaid)
-                        currencyCell(s.totalOwed)
-                        currencyCell(s.balance)
+                        baseCurrencyCell(s.outOfPocketPaid, tripCurrency)
+                        baseCurrencyCell(s.fundContributed, tripCurrency)
+                        baseCurrencyCell(s.totalPaid, tripCurrency)
+                        baseCurrencyCell(s.totalOwed, tripCurrency)
+                        baseCurrencyCell(s.balance, tripCurrency)
                         cell(statusText)
                     }
                 }
@@ -600,7 +608,7 @@ object ReportGenerator {
                     AppStrings.colOriginalAmount(language),
                     AppStrings.colCurrency(language),
                     AppStrings.colExchangeRate(language),
-                    AppStrings.colConvertedVnd(language),
+                    AppStrings.colConvertedVnd(language, tripCurrency),
                     AppStrings.colNote(language)
                 )
                 funds.sortedBy { it.timestamp }.forEachIndexed { i, f ->
@@ -609,10 +617,10 @@ object ReportGenerator {
                         cell(i + 1)
                         cell(dateFormat.format(Date(f.timestamp)))
                         cell(contributor)
-                        currencyCell(f.amount)
+                        baseCurrencyCell(f.amount, f.currency)
                         cell(f.currency)
                         cell(f.exchangeRate)
-                        currencyCell(f.convertedAmount)
+                        baseCurrencyCell(f.convertedAmount, tripCurrency)
                         cell(f.note)
                     }
                 }
@@ -626,7 +634,7 @@ object ReportGenerator {
                     AppStrings.colNo(language),
                     AppStrings.colSender(language),
                     AppStrings.colReceiver(language),
-                    AppStrings.colAmountVnd(language),
+                    AppStrings.colAmountVnd(language, tripCurrency),
                     AppStrings.colSuggestedNote(language),
                     AppStrings.colTransferred(language)
                 )
@@ -640,7 +648,7 @@ object ReportGenerator {
                         cell(i + 1)
                         cell(fromName)
                         cell(toName)
-                        currencyCell(t.amount)
+                        baseCurrencyCell(t.amount, tripCurrency)
                         cell(t.transferNote)
                         cell(transferredText)
                     }
@@ -665,18 +673,18 @@ fun AppStrings.colNotes(lang: AppLanguage) = if (lang == AppLanguage.VI) "Ghi ch
 fun AppStrings.rowTripName(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tên chuyến đi / đoàn" else "Trip / Group Name"
 fun AppStrings.rowJoinCode(lang: AppLanguage) = if (lang == AppLanguage.VI) "Mã đoàn" else "Trip Join Code"
 fun AppStrings.rowExportDate(lang: AppLanguage) = if (lang == AppLanguage.VI) "Ngày xuất báo cáo" else "Report Export Date"
-fun AppStrings.rowTotalExpenses(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tổng chi tiêu đoàn (VND)" else "Total Group Expenses (VND)"
+fun AppStrings.rowTotalExpenses(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Tổng chi tiêu đoàn ($currency)" else "Total Group Expenses ($currency)"
 fun AppStrings.rowTotalExpensesNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Bao gồm tiền thành viên tự chi và tiền quỹ" else "Includes member out-of-pocket and fund expenses"
-fun AppStrings.rowPersonalPaid(lang: AppLanguage) = if (lang == AppLanguage.VI) "Thành viên tự chi hộ (VND)" else "Personal Out-of-Pocket (VND)"
+fun AppStrings.rowPersonalPaid(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Thành viên tự chi hộ ($currency)" else "Personal Out-of-Pocket ($currency)"
 fun AppStrings.rowPersonalPaidNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Các khoản cá nhân bỏ tiền túi chi hộ" else "Expenses paid personally by members"
-fun AppStrings.rowFundPaid(lang: AppLanguage) = if (lang == AppLanguage.VI) "Chi từ nguồn Quỹ chung (VND)" else "Paid from Group Fund (VND)"
+fun AppStrings.rowFundPaid(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Chi từ nguồn Quỹ chung ($currency)" else "Paid from Group Fund ($currency)"
 fun AppStrings.rowFundPaidNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Các khoản chi xuất trực tiếp từ quỹ đoàn" else "Expenses disbursed directly from group fund"
-fun AppStrings.rowTotalFundCollected(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tổng tiền đã thu vào Quỹ (VND)" else "Total Fund Collected (VND)"
+fun AppStrings.rowTotalFundCollected(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Tổng tiền đã thu vào Quỹ ($currency)" else "Total Fund Collected ($currency)"
 fun AppStrings.rowTotalFundCollectedNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tổng đóng góp từ các thành viên" else "Total contributions from members"
-fun AppStrings.rowRemainingFund(lang: AppLanguage) = if (lang == AppLanguage.VI) "Số dư Quỹ chung còn lại (VND)" else "Remaining Group Fund (VND)"
+fun AppStrings.rowRemainingFund(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Số dư Quỹ chung còn lại ($currency)" else "Remaining Group Fund ($currency)"
 fun AppStrings.rowRemainingFundNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tiền quỹ còn tồn sau khi đã chi" else "Remaining fund balance after spending"
 fun AppStrings.rowReconciliationStatus(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tình trạng đối soát" else "Reconciliation Status"
-fun AppStrings.rowBalancedStatus(lang: AppLanguage) = if (lang == AppLanguage.VI) "CÂN BẰNG (0 đ)" else "BALANCED (0 VND)"
+fun AppStrings.rowBalancedStatus(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "CÂN BẰNG (${NumberFormatUtils.formatCurrency(0L, currency)})" else "BALANCED (${NumberFormatUtils.formatCurrency(0L, currency)})"
 fun AppStrings.rowDiscrepancyWarning(lang: AppLanguage) = if (lang == AppLanguage.VI) "CẢNH BÁO LỆCH: " else "WARNING DISCREPANCY: "
 fun AppStrings.rowStatusValid(lang: AppLanguage) = if (lang == AppLanguage.VI) "Hợp lệ" else "Valid"
 fun AppStrings.rowStatusNeedsCheck(lang: AppLanguage) = if (lang == AppLanguage.VI) "Cần kiểm tra lại" else "Needs Review"
@@ -691,18 +699,18 @@ fun AppStrings.colPayer(lang: AppLanguage) = if (lang == AppLanguage.VI) "Ngư�
 fun AppStrings.colOriginalAmount(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tiền gốc" else "Original Amount"
 fun AppStrings.colCurrency(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tiền tệ" else "Currency"
 fun AppStrings.colExchangeRate(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tỷ giá" else "Exchange Rate"
-fun AppStrings.colConvertedVnd(lang: AppLanguage) = if (lang == AppLanguage.VI) "Quy đổi (VND)" else "Converted (VND)"
+fun AppStrings.colConvertedVnd(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Quy đổi ($currency)" else "Converted ($currency)"
 fun AppStrings.colSplitType(lang: AppLanguage) = if (lang == AppLanguage.VI) "Kiểu phân bổ" else "Split Method"
 fun AppStrings.colNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Ghi chú" else "Notes"
 fun AppStrings.valGroupFund(lang: AppLanguage) = if (lang == AppLanguage.VI) "Quỹ chung" else "Group Fund"
 
 fun AppStrings.colFullName(lang: AppLanguage) = if (lang == AppLanguage.VI) "Họ và tên" else "Full Name"
 fun AppStrings.colRole(lang: AppLanguage) = if (lang == AppLanguage.VI) "Vai trò" else "Role"
-fun AppStrings.colPersonalPaidHeader(lang: AppLanguage) = if (lang == AppLanguage.VI) "Chi hộ cá nhân (VND)" else "Personal Out-of-Pocket (VND)"
-fun AppStrings.colFundContributedHeader(lang: AppLanguage) = if (lang == AppLanguage.VI) "Nộp quỹ (VND)" else "Fund Contributed (VND)"
-fun AppStrings.colTotalPaidHeader(lang: AppLanguage) = if (lang == AppLanguage.VI) "Tổng đã chi (VND)" else "Total Paid (VND)"
-fun AppStrings.colTotalOwedHeader(lang: AppLanguage) = if (lang == AppLanguage.VI) "Phải chịu (VND)" else "Total Owed (VND)"
-fun AppStrings.colBalanceHeader(lang: AppLanguage) = if (lang == AppLanguage.VI) "Số dư (VND)" else "Balance (VND)"
+fun AppStrings.colPersonalPaidHeader(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Chi hộ cá nhân ($currency)" else "Personal Out-of-Pocket ($currency)"
+fun AppStrings.colFundContributedHeader(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Nộp quỹ ($currency)" else "Fund Contributed ($currency)"
+fun AppStrings.colTotalPaidHeader(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Tổng đã chi ($currency)" else "Total Paid ($currency)"
+fun AppStrings.colTotalOwedHeader(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Phải chịu ($currency)" else "Total Owed ($currency)"
+fun AppStrings.colBalanceHeader(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Số dư ($currency)" else "Balance ($currency)"
 fun AppStrings.colSettlementStatus(lang: AppLanguage) = if (lang == AppLanguage.VI) "Trạng thái quyết toán" else "Settlement Status"
 fun AppStrings.valToReceive(lang: AppLanguage) = if (lang == AppLanguage.VI) "Được nhận lại" else "To Receive"
 fun AppStrings.valToPay(lang: AppLanguage) = if (lang == AppLanguage.VI) "Cần nộp thêm" else "To Pay"
@@ -712,7 +720,7 @@ fun AppStrings.colTime(lang: AppLanguage) = if (lang == AppLanguage.VI) "Thời 
 fun AppStrings.colContributor(lang: AppLanguage) = if (lang == AppLanguage.VI) "Người nộp" else "Contributor"
 fun AppStrings.colSender(lang: AppLanguage) = if (lang == AppLanguage.VI) "Người trả" else "Sender"
 fun AppStrings.colReceiver(lang: AppLanguage) = if (lang == AppLanguage.VI) "Người nhận" else "Receiver"
-fun AppStrings.colAmountVnd(lang: AppLanguage) = if (lang == AppLanguage.VI) "Số tiền (VND)" else "Amount (VND)"
+fun AppStrings.colAmountVnd(lang: AppLanguage, currency: String = "VND") = if (lang == AppLanguage.VI) "Số tiền ($currency)" else "Amount ($currency)"
 fun AppStrings.colSuggestedNote(lang: AppLanguage) = if (lang == AppLanguage.VI) "Nội dung gợi ý" else "Suggested Note"
 fun AppStrings.colTransferred(lang: AppLanguage) = if (lang == AppLanguage.VI) "Đã chuyển" else "Transferred"
 fun AppStrings.valTransferredYes(lang: AppLanguage) = if (lang == AppLanguage.VI) "Đã chuyển" else "Transferred"

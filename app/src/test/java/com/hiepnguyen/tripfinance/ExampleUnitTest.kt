@@ -584,6 +584,170 @@ class ExampleUnitTest {
         assertTrue(sheet2Xml.contains("""s="3"><v>12.35</v>"""))
         assertTrue(sheet2Xml.contains("""s="3"><v>99.99</v>"""))
     }
+
+    @Test
+    fun `test equal split guarantees max diff 1 minor unit across zero-decimal and 2-decimal currencies`() {
+        val amounts = listOf(1000L, 100L, 10L, 1L, 1001L, 9999L, 7L)
+        val counts = listOf(2, 3, 4, 6, 7, 11)
+        for (total in amounts) {
+            for (n in counts) {
+                val ids = (1..n).map { "m_$it" }
+                for (primaryId in ids) {
+                    val splitList = com.hiepnguyen.tripfinance.domain.engine.SplitCalculator.calculateEqualSplit(total, ids, primaryMemberId = primaryId)
+                    assertEquals(n, splitList.size)
+                    val vals = splitList.map { it.second }
+                    assertEquals("Exact sum required for $total / $n", total, vals.sum())
+                    val maxVal = vals.maxOrNull() ?: 0L
+                    val minVal = vals.minOrNull() ?: 0L
+                    assertTrue("Diff ($maxVal - $minVal) must be <= 1 for $total / $n", maxVal - minVal <= 1L)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `test equal split Double overload respects zero-decimal vs 2-decimal rounding and max diff`() {
+        val ids3 = listOf("a", "b", "c")
+        val ids7 = (1..7).map { "m_$it" }
+
+        // 2-decimal currencies: 10.00 / 3 -> 3.34, 3.33, 3.33 (diff <= 0.01)
+        for (curr in listOf("USD", "EUR", "SGD", "GBP", "AUD", "CHF")) {
+            val res3 = com.hiepnguyen.tripfinance.domain.engine.SplitCalculator.calculateEqualSplit(10.00, ids3, curr).toMap()
+            assertEquals(10.00, res3.values.sum(), 0.0001)
+            val max3 = res3.values.maxOrNull()!!
+            val min3 = res3.values.minOrNull()!!
+            assertTrue("$curr 10.00/3 diff must be <= 0.01 (was ${max3 - min3})", kotlin.math.abs((max3 - min3) - 0.01) <= 0.0001 || max3 == min3)
+            assertEquals(3.34, res3["a"]!!, 0.0001)
+            assertEquals(3.33, res3["b"]!!, 0.0001)
+            assertEquals(3.33, res3["c"]!!, 0.0001)
+
+            val res7 = com.hiepnguyen.tripfinance.domain.engine.SplitCalculator.calculateEqualSplit(100.00, ids7, curr).toMap()
+            assertEquals(100.00, res7.values.sum(), 0.0001)
+            assertTrue((res7.values.maxOrNull()!! - res7.values.minOrNull()!!) <= 0.010001)
+            // Every share must have at most 2 decimals
+            res7.values.forEach { share: Double ->
+                val cents = java.math.BigDecimal.valueOf(share).movePointRight(2)
+                assertEquals(0, cents.remainder(java.math.BigDecimal.ONE).compareTo(java.math.BigDecimal.ZERO))
+            }
+        }
+
+        // Zero-decimal currencies: 1000 / 7 -> 143 x 6 + 142 x 1 (diff <= 1)
+        for (curr in listOf("VND", "THB", "JPY", "CNY", "KRW")) {
+            val res7 = com.hiepnguyen.tripfinance.domain.engine.SplitCalculator.calculateEqualSplit(1000.0, ids7, curr).toMap()
+            assertEquals(1000.0, res7.values.sum(), 0.0001)
+            assertTrue((res7.values.maxOrNull()!! - res7.values.minOrNull()!!) <= 1.000001)
+            res7.values.forEach { share: Double ->
+                assertEquals("$curr share must be integer", 0.0, share % 1.0, 0.0001)
+            }
+        }
+    }
+
+    @Test
+    fun `test ratio split uses Hamilton largest remainder method so max diff never exceeds 1 unit on equal ratios`() {
+        // 3 equal parts (33.33, 33.33, 33.33 -> sum = 99.99) over 100_000L must yield [33334, 33333, 33333]
+        val equalRatio3 = listOf("m1" to 33.33, "m2" to 33.33, "m3" to 33.33)
+        val (pairs1, valid1) = com.hiepnguyen.tripfinance.domain.engine.SplitCalculator.calculateRatioSplit(100_000L, equalRatio3, primaryMemberId = "m1")
+        assertTrue(valid1)
+        val res1 = pairs1.toMap()
+        assertEquals(100_000L, res1.values.sum())
+        assertEquals(1L, res1.values.maxOrNull()!! - res1.values.minOrNull()!!)
+        assertEquals(33334L, res1["m1"])
+        assertEquals(33333L, res1["m2"])
+        assertEquals(33333L, res1["m3"])
+
+        // 10.00 USD (1000 minor units) with [33.33, 33.33, 33.34]
+        val ratio3 = listOf("m1" to 33.33, "m2" to 33.33, "m3" to 33.34)
+        val (pairs2, valid2) = com.hiepnguyen.tripfinance.domain.engine.SplitCalculator.calculateRatioSplit(1000L, ratio3, primaryMemberId = "m1")
+        assertTrue(valid2)
+        val res2 = pairs2.toMap()
+        assertEquals(1000L, res2.values.sum())
+        assertTrue(res2.values.maxOrNull()!! - res2.values.minOrNull()!! <= 1L)
+
+        // Double overload for EUR: 100.00 EUR at 33.33 / 33.33 / 33.33
+        val (pairsDouble, validDouble) = com.hiepnguyen.tripfinance.domain.engine.SplitCalculator.calculateRatioSplit(100.00, equalRatio3, "EUR")
+        assertTrue(validDouble)
+        val resDouble = pairsDouble.toMap()
+        assertEquals(100.00, resDouble.values.sum(), 0.0001)
+        assertTrue((resDouble.values.maxOrNull()!! - resDouble.values.minOrNull()!!) <= 0.010001)
+    }
+
+    @Test
+    fun `test currency conversion minor units formatCurrency and USD XLSX export`() {
+        assertEquals(1050L, com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.toMinorUnits(10.50, "USD"))
+        assertEquals(10.50, com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.fromMinorUnits(1050L, "USD"), 0.0001)
+        assertEquals(1500L, com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies.toMinorUnits(1500.4, "THB"))
+        assertEquals(1235L, com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator.convertToBaseUnits(12.345, 1.0, "USD"))
+        assertEquals(1235L, com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator.convertToBaseUnits(1234.5, 1.0, "JPY"))
+
+        // NumberFormatUtils.formatCurrency(Long, String) converts 2-decimal minor units properly
+        assertEquals("$3,34", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(334L, "USD"))
+        assertEquals("€10,5", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(1050L, "EUR"))
+        assertEquals("€10,55", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(1055L, "EUR"))
+        assertEquals("1.500 ฿", com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(1500L, "THB"))
+
+        // XLSX report on USD trip exports minor units cleanly as decimal dollars (s="3")
+        val a = createMember("m_a", "Alice", "ADMIN")
+        val b = createMember("m_b", "Bob", "MEMBER")
+        val usdTrip = com.hiepnguyen.tripfinance.data.entity.TripEntity(
+            id = "trip_usd",
+            title = "US Trip",
+            description = "Test USD",
+            joinCode = "USD2026",
+            startDate = 1000L,
+            endDate = 2000L,
+            baseCurrency = "USD"
+        )
+        val exp = com.hiepnguyen.tripfinance.data.entity.ExpenseEntity(
+            id = "e_usd_1",
+            tripId = "trip_usd",
+            title = "Dinner",
+            category = "FOOD",
+            payerType = "MEMBER",
+            payerMemberId = "m_a",
+            totalAmount = 10.00,
+            currency = "USD",
+            exchangeRate = 1.0,
+            convertedTotalAmount = 1000L,
+            splitType = "EQUAL",
+            createdMemberId = "m_a"
+        )
+        val baos = java.io.ByteArrayOutputStream()
+        com.hiepnguyen.tripfinance.domain.export.ReportGenerator.generateXlsxReport(
+            outputStream = baos,
+            trip = usdTrip,
+            members = listOf(a, b),
+            summary = com.hiepnguyen.tripfinance.domain.model.FinancialSummary(totalExpenses = 1000L, personalPaidExpenses = 1000L, isBalanced = true),
+            statuses = listOf(
+                MemberFinancialStatus(a, 1000L, 1000L, 0L, 500L, 500L, BalanceStatus.RECEIVE),
+                MemberFinancialStatus(b, 0L, 0L, 0L, 500L, -500L, BalanceStatus.PAY)
+            ),
+            settlementTransfers = listOf(
+                com.hiepnguyen.tripfinance.domain.model.SettlementTransfer(
+                    id = "tr_usd_1",
+                    fromMember = b,
+                    toMember = a,
+                    amount = 500L,
+                    transferNote = "USD2026"
+                )
+            ),
+            expenses = listOf(exp),
+            funds = emptyList()
+        )
+
+        var sheet1Xml = ""
+        var sheet5Xml = ""
+        java.util.zip.ZipInputStream(java.io.ByteArrayInputStream(baos.toByteArray())).use { zis ->
+            var entry = zis.nextEntry
+            while (entry != null) {
+                if (entry.name == "xl/worksheets/sheet1.xml") sheet1Xml = zis.bufferedReader(Charsets.UTF_8).readText()
+                if (entry.name == "xl/worksheets/sheet5.xml") sheet5Xml = zis.bufferedReader(Charsets.UTF_8).readText()
+                entry = zis.nextEntry
+            }
+        }
+        assertTrue("Sheet1 should contain decimal value 10 for 1000 minor units USD", sheet1Xml.contains("""s="3"><v>10</v>"""))
+        assertTrue("Sheet5 should contain decimal transfer value 5 for 500 minor units USD", sheet5Xml.contains("""s="3"><v>5</v>"""))
+    }
 }
+
 
 

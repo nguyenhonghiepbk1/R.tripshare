@@ -211,7 +211,7 @@ object PdfReportExporter {
             val col2X = margin + (contentWidth / 2f) + 10f
             canvas.drawText(AppStrings.pdfMetricTotalFund(language) + NumberFormatUtils.formatCurrency(summary.totalFundCollected, tripCurrency), col2X, currentY + 34f, paint)
             canvas.drawText(AppStrings.pdfMetricRemainingFund(language) + NumberFormatUtils.formatCurrency(summary.remainingFund, tripCurrency), col2X, currentY + 48f, paint)
-            val balanceText = if (summary.isBalanced) AppStrings.pdfAuditBalanced(language) else AppStrings.pdfAuditDiscrepancy(language) + NumberFormatUtils.formatCurrency(summary.balanceDiscrepancy, tripCurrency)
+            val balanceText = if (summary.isBalanced) AppStrings.pdfAuditBalanced(language, tripCurrency) else AppStrings.pdfAuditDiscrepancy(language) + NumberFormatUtils.formatCurrency(summary.balanceDiscrepancy, tripCurrency)
             canvas.drawText(AppStrings.pdfMetricAudit(language) + balanceText, col2X, currentY + 62f, paint)
 
             currentY += 92f
@@ -274,7 +274,7 @@ object PdfReportExporter {
                 } else {
                     paint.color = Color.parseColor("#64748B")
                     paint.typeface = Typeface.DEFAULT
-                    canvas.drawText(AppStrings.pdfBadgeBalanced(language), margin + 372f, currentY + 12f, paint)
+                    canvas.drawText(AppStrings.pdfBadgeBalanced(language, tripCurrency), margin + 372f, currentY + 12f, paint)
                 }
 
                 paint.color = Color.parseColor("#E2E8F0")
@@ -305,7 +305,7 @@ object PdfReportExporter {
             val settleDesc = if (settlementTransfers.isNotEmpty()) {
                 AppStrings.pdfSettleDesc(settlementTransfers.size, NumberFormatUtils.formatCurrency(totalTransferAmount, tripCurrency), language)
             } else {
-                AppStrings.pdfSettleDescEmpty(language)
+                AppStrings.pdfSettleDescEmpty(language, tripCurrency)
             }
             canvas.drawText(settleDesc, margin, currentY, paint)
             currentY += 10f
@@ -324,7 +324,7 @@ object PdfReportExporter {
                 paint.color = Color.parseColor("#15803D")
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 paint.textSize = 8.5f
-                canvas.drawText(AppStrings.pdfSettleAllBalanced(language), margin + 12f, currentY + 18f, paint)
+                canvas.drawText(AppStrings.pdfSettleAllBalanced(language, tripCurrency), margin + 12f, currentY + 18f, paint)
                 currentY += 36f
             } else {
                 // Bảng bù trừ tối ưu
@@ -337,7 +337,7 @@ object PdfReportExporter {
                 paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
                 canvas.drawText(AppStrings.pdfColSender(language), margin + 6f, currentY + 13f, paint)
                 canvas.drawText(AppStrings.pdfColReceiver(language), margin + 110f, currentY + 13f, paint)
-                canvas.drawText(AppStrings.pdfColAmount(language), margin + 215f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColAmount(language, tripCurrency), margin + 215f, currentY + 13f, paint)
                 canvas.drawText(AppStrings.pdfColAuditNote(language), margin + 305f, currentY + 13f, paint)
                 canvas.drawText(AppStrings.pdfColTransferred(language), margin + 435f, currentY + 13f, paint)
                 currentY += 20f
@@ -410,7 +410,7 @@ object PdfReportExporter {
             canvas.drawText(AppStrings.pdfColDate(language), margin + 26f, currentY + 13f, paint)
             canvas.drawText(AppStrings.pdfColExpenseTitleNote(language), margin + 110f, currentY + 13f, paint)
             canvas.drawText(AppStrings.pdfColPayer(language), margin + 270f, currentY + 13f, paint)
-            canvas.drawText(AppStrings.pdfColAmount(language), margin + 360f, currentY + 13f, paint)
+            canvas.drawText(AppStrings.pdfColAmount(language, tripCurrency), margin + 360f, currentY + 13f, paint)
             canvas.drawText(AppStrings.pdfColSplit(language), margin + 450f, currentY + 13f, paint)
             currentY += 20f
 
@@ -540,7 +540,7 @@ object PdfReportExporter {
                 canvas.drawText(AppStrings.pdfColNo(language), margin + 4f, currentY + 13f, paint)
                 canvas.drawText(AppStrings.pdfColDate(language), margin + 26f, currentY + 13f, paint)
                 canvas.drawText(AppStrings.pdfColContributor(language), margin + 110f, currentY + 13f, paint)
-                canvas.drawText(AppStrings.pdfColContributedAmount(language), margin + 260f, currentY + 13f, paint)
+                canvas.drawText(AppStrings.pdfColContributedAmount(language, tripCurrency), margin + 260f, currentY + 13f, paint)
                 canvas.drawText(AppStrings.pdfColFundNote(language), margin + 380f, currentY + 13f, paint)
                 currentY += 20f
 
@@ -774,8 +774,10 @@ fun AppStrings.pdfMetricRemainingFund(lang: AppLanguage) =
 fun AppStrings.pdfMetricAudit(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "• Tình trạng đối soát: " else "• Reconciliation status: "
 
-fun AppStrings.pdfAuditBalanced(lang: AppLanguage) =
-    if (lang == AppLanguage.VI) "HỢP LỆ (Cân bằng = 0 đ)" else "VALID (Balanced = 0 VND)"
+fun AppStrings.pdfAuditBalanced(lang: AppLanguage, currency: String = "VND"): String {
+    val zero = NumberFormatUtils.formatCurrency(0L, currency)
+    return if (lang == AppLanguage.VI) "HỢP LỆ (Cân bằng = $zero)" else "VALID (Balanced = $zero)"
+}
 
 fun AppStrings.pdfAuditDiscrepancy(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "CẢNH BÁO: Lệch " else "WARNING: Discrepancy "
@@ -808,8 +810,10 @@ fun AppStrings.pdfBadgeToReceive(lang: AppLanguage) =
 fun AppStrings.pdfBadgeToPay(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "(Cần nộp)" else "(To Pay)"
 
-fun AppStrings.pdfBadgeBalanced(lang: AppLanguage) =
-    if (lang == AppLanguage.VI) "0 đ (Cân bằng)" else "0 VND (Balanced)"
+fun AppStrings.pdfBadgeBalanced(lang: AppLanguage, currency: String = "VND"): String {
+    val zero = NumberFormatUtils.formatCurrency(0L, currency)
+    return if (lang == AppLanguage.VI) "$zero (Cân bằng)" else "$zero (Balanced)"
+}
 
 fun AppStrings.pdfSecSettlementPlan(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "III. KẾ HOẠCH BÙ TRỪ CÔNG NỢ TỐI ƯU GIỮA CÁC THÀNH VIÊN"
@@ -821,17 +825,21 @@ fun AppStrings.pdfSettleDesc(count: Int, total: String, lang: AppLanguage) =
     else
         "Greedy algorithm optimized down to $count direct netting transfers (Total cashflow: $total):"
 
-fun AppStrings.pdfSettleDescEmpty(lang: AppLanguage) =
-    if (lang == AppLanguage.VI)
-        "Tất cả các thành viên đã cân bằng tài chính hoặc số dư = 0 đ. Không phát sinh giao dịch bù trừ nào."
+fun AppStrings.pdfSettleDescEmpty(lang: AppLanguage, currency: String = "VND"): String {
+    val zero = NumberFormatUtils.formatCurrency(0L, currency)
+    return if (lang == AppLanguage.VI)
+        "Tất cả các thành viên đã cân bằng tài chính hoặc số dư = $zero. Không phát sinh giao dịch bù trừ nào."
     else
-        "All members are financially balanced with 0 VND balance. No netting transfers needed."
+        "All members are financially balanced with $zero balance. No netting transfers needed."
+}
 
-fun AppStrings.pdfSettleAllBalanced(lang: AppLanguage) =
-    if (lang == AppLanguage.VI)
-        "✓ Toàn bộ các thành viên trong đoàn đã cân bằng số dư (0 đ). Quyết toán hoàn tất thành công!"
+fun AppStrings.pdfSettleAllBalanced(lang: AppLanguage, currency: String = "VND"): String {
+    val zero = NumberFormatUtils.formatCurrency(0L, currency)
+    return if (lang == AppLanguage.VI)
+        "✓ Toàn bộ các thành viên trong đoàn đã cân bằng số dư ($zero). Quyết toán hoàn tất thành công!"
     else
-        "✓ All members have reconciled with 0 VND balance. Settlement completed successfully!"
+        "✓ All members have reconciled with $zero balance. Settlement completed successfully!"
+}
 
 fun AppStrings.pdfColSender(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Người nộp bù" else "Sender / Payer"
@@ -839,8 +847,8 @@ fun AppStrings.pdfColSender(lang: AppLanguage) =
 fun AppStrings.pdfColReceiver(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Người nhận" else "Receiver"
 
-fun AppStrings.pdfColAmount(lang: AppLanguage) =
-    if (lang == AppLanguage.VI) "Số tiền (VND)" else "Amount (VND)"
+fun AppStrings.pdfColAmount(lang: AppLanguage, currency: String = "VND") =
+    if (lang == AppLanguage.VI) "Số tiền ($currency)" else "Amount ($currency)"
 
 fun AppStrings.pdfColAuditNote(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Nội dung đối soát" else "Audit Note"
@@ -906,8 +914,8 @@ fun AppStrings.pdfSecFundLedger(count: Int, lang: AppLanguage) =
 fun AppStrings.pdfColContributor(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Thành viên nộp quỹ" else "Contributor"
 
-fun AppStrings.pdfColContributedAmount(lang: AppLanguage) =
-    if (lang == AppLanguage.VI) "Số tiền nộp (VND)" else "Contributed Amount (VND)"
+fun AppStrings.pdfColContributedAmount(lang: AppLanguage, currency: String = "VND") =
+    if (lang == AppLanguage.VI) "Số tiền nộp ($currency)" else "Contributed Amount ($currency)"
 
 fun AppStrings.pdfColFundNote(lang: AppLanguage) =
     if (lang == AppLanguage.VI) "Ghi chú / Đợt nộp" else "Note / Installment"

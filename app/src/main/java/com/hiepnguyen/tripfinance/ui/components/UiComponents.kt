@@ -70,17 +70,15 @@ object NumberFormatUtils {
 
     fun formatCurrency(amount: Long, currency: String): String {
         val curr = currency.trim().uppercase(Locale.ROOT)
+        if (!SupportedCurrencies.isZeroDecimalCurrency(curr)) {
+            return formatCurrency(SupportedCurrencies.fromMinorUnits(amount, curr), currency)
+        }
         return when (curr) {
             "VND" -> "${formatter.format(amount)} đ"
-            "USD" -> "$${formatter.format(amount)}"
-            "EUR" -> "€${formatter.format(amount)}"
             "JPY" -> "¥${formatter.format(amount)}"
             "KRW" -> "₩${formatter.format(amount)}"
-            "GBP" -> "£${formatter.format(amount)}"
-            "SGD" -> "S$${formatter.format(amount)}"
             "THB" -> "${formatter.format(amount)} ฿"
             "CNY" -> "${formatter.format(amount)} ¥"
-            "AUD" -> "A$${formatter.format(amount)}"
             else -> "${formatter.format(amount)} $currency"
         }
     }

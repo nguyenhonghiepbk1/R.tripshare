@@ -323,7 +323,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 actorMemberId = actor.id,
                 actorName = actor.name,
                 action = "CREATE_EXPENSE",
-                description = "Tạo chi tiêu '${expense.title}': ${expense.convertedTotalAmount} VND (Người trả: $payerDesc)",
+                description = "Tạo chi tiêu '${expense.title}': ${com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(expense.convertedTotalAmount, trip.baseCurrency)} (Người trả: $payerDesc)",
                 before = null,
                 after = afterJson
             )
@@ -415,7 +415,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 actorMemberId = actor.id,
                 actorName = actor.name,
                 action = "UPDATE_EXPENSE",
-                description = "Cập nhật chi tiêu '${finalExpense.title}': ${finalExpense.convertedTotalAmount} VND",
+                description = "Cập nhật chi tiêu '${finalExpense.title}': ${com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(finalExpense.convertedTotalAmount, trip.baseCurrency)}",
                 before = beforeJson,
                 after = afterJson
             )
@@ -451,7 +451,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 actorMemberId = actor.id,
                 actorName = actor.name,
                 action = "DELETE_EXPENSE",
-                description = "Xóa chi tiêu '${expense.title}' (${expense.convertedTotalAmount} VND)",
+                description = "Xóa chi tiêu '${expense.title}' (${com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(expense.convertedTotalAmount, trip.baseCurrency)})",
                 before = beforeJson,
                 after = null
             )
@@ -479,7 +479,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 actorMemberId = actor.id,
                 actorName = actor.name,
                 action = "RESTORE_EXPENSE",
-                description = "Hoàn tác khôi phục chi tiêu '${expense.title}' (${expense.convertedTotalAmount} VND)",
+                description = "Hoàn tác khôi phục chi tiêu '${expense.title}' (${com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(expense.convertedTotalAmount, trip.baseCurrency)})",
                 before = null,
                 after = JSONObject().apply {
                     put("title", expense.title)
@@ -524,7 +524,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 actorMemberId = actor.id,
                 actorName = actor.name,
                 action = "CONTRIBUTE_FUND",
-                description = "$contributorName nộp quỹ ${contribution.convertedAmount} VND (Ghi nhận bởi ${actor.name})"
+                description = "$contributorName nộp quỹ ${com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(contribution.convertedAmount, trip.baseCurrency)} (Ghi nhận bởi ${actor.name})"
             )
         }
     }
@@ -546,7 +546,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 actorMemberId = actor.id,
                 actorName = actor.name,
                 action = "DELETE_FUND",
-                description = "Xóa khoản nộp quỹ của $contributorName (${contribution.convertedAmount} VND)"
+                description = "Xóa khoản nộp quỹ của $contributorName (${com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(contribution.convertedAmount, trip.baseCurrency)})"
             )
         }
     }
@@ -568,7 +568,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 actorMemberId = actor.id,
                 actorName = actor.name,
                 action = "UPDATE_RATE",
-                description = "Cập nhật tỷ giá 1 ${rate.currencyCode} = ${rate.rateToBase} VND"
+                description = "Cập nhật tỷ giá 1 ${rate.currencyCode} = ${rate.rateToBase} ${trip.baseCurrency}"
             )
         }
     }
@@ -617,7 +617,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
                 actorMemberId = actor.id,
                 actorName = actor.name,
                 action = "UPDATE_TRANSFER_STATUS",
-                description = "Cập nhật chuyển khoản ${transfer.fromMember.name} -> ${transfer.toMember.name} (${transfer.amount} VND): ${if (isCompleted) "Đã chuyển" else "Chưa chuyển"}"
+                description = "Cập nhật chuyển khoản ${transfer.fromMember.name} -> ${transfer.toMember.name} (${com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(transfer.amount, freshTrip.baseCurrency)}): ${if (isCompleted) "Đã chuyển" else "Chưa chuyển"}"
             )
         }
     }
@@ -671,7 +671,7 @@ class TripFinanceRepository(private val db: AppDatabase) {
             // Dung sai chênh lệch đối soát phải bằng 0 tuyệt đối (không cho phép lệch nhỏ tích lũy)
             if (!freshSummary.isBalanced || freshSummary.balanceDiscrepancy != 0L) {
                 throw IllegalStateException(
-                    "Không thể khóa sổ: Phát hiện chênh lệch đối soát (${freshSummary.balanceDiscrepancy} VND). Toàn bộ chi tiêu phải được phân bổ cân bằng tuyệt đối (chênh lệch = 0 đ)!"
+                    "Không thể khóa sổ: Phát hiện chênh lệch đối soát (${com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils.formatCurrency(freshSummary.balanceDiscrepancy, freshTrip.baseCurrency)}). Toàn bộ chi tiêu phải được phân bổ cân bằng tuyệt đối!"
                 )
             }
 

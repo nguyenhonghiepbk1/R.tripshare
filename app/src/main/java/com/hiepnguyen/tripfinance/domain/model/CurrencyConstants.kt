@@ -42,6 +42,10 @@ object SupportedCurrencies {
         return if (isZeroDecimalCurrency(code)) 0 else 2
     }
 
+    fun getMinorUnitScale(code: String): Long {
+        return if (isZeroDecimalCurrency(code)) 1L else 100L
+    }
+
     fun roundAmountForCurrency(amount: Double, currency: String): Double {
         if (!amount.isFinite() || amount.isNaN()) return 0.0
         val scale = getDecimalPlaces(currency)
@@ -49,6 +53,24 @@ object SupportedCurrencies {
             .setScale(scale, RoundingMode.HALF_UP)
             .toDouble()
         return if (rounded == 0.0) 0.0 else rounded
+    }
+
+    fun toMinorUnits(amount: Double, currency: String): Long {
+        if (!amount.isFinite() || amount.isNaN()) return 0L
+        val decimalPlaces = getDecimalPlaces(currency)
+        return try {
+            BigDecimal.valueOf(amount)
+                .setScale(decimalPlaces, RoundingMode.HALF_UP)
+                .movePointRight(decimalPlaces)
+                .longValueExact()
+        } catch (_: ArithmeticException) {
+            if (amount < 0.0) Long.MIN_VALUE else Long.MAX_VALUE
+        }
+    }
+
+    fun fromMinorUnits(minorUnits: Long, currency: String): Double {
+        val decimalPlaces = getDecimalPlaces(currency)
+        return BigDecimal.valueOf(minorUnits, decimalPlaces).toDouble()
     }
 
     fun getSymbol(code: String): String {
@@ -147,6 +169,9 @@ object DefaultExchangeRates {
 object FinancialLimits {
     // Giới hạn số tiền giao dịch tối đa: 100 tỷ VND (hoặc 100 tỷ đơn vị tiền tệ)
     const val MAX_TRANSACTION_AMOUNT = 100_000_000_000L
+
+    // Giới hạn quy đổi theo đơn vị nhỏ nhất (cents = *100 đối với tiền tệ 2 chữ số thập phân)
+    const val MAX_MINOR_TRANSACTION_AMOUNT = MAX_TRANSACTION_AMOUNT * 100L
 
     // Giới hạn tỷ giá tối đa
     const val MAX_EXCHANGE_RATE = 1_000_000_000.0
@@ -294,13 +319,8 @@ object FinancialInputValidator {
                     doubleVal = normalized.replace(".", "").replace(',', '.').toDoubleOrNull()
                 }
             } else if (commaCount == 1 && dotCount == 0) {
-                // 12,50 hoặc 1,500
-                val parts = normalized.split(',')
-                if (parts.size == 2 && parts[1].length == 3 && parts[0].length in 1..3) {
-                    doubleVal = parts.joinToString("").toDoubleOrNull()
-                } else {
-                    doubleVal = normalized.replace(',', '.').toDoubleOrNull()
-                }
+                // 12,50 hoặc 12,344 (nhất quán với dấu chấm đơn ở nhánh dưới)
+                doubleVal = normalized.replace(',', '.').toDoubleOrNull()
             } else if (dotCount == 1 && commaCount == 0) {
                 // 12.50
                 doubleVal = normalized.toDoubleOrNull()
@@ -374,6 +394,30 @@ object FinancialInputValidator {
     }
 
     fun convertToBase(amount: Double, rate: Double): Long = convertToVnd(amount, rate)
+
+    /**
+     * Quy đổi số tiền ngoại tệ sang đơn vị nhỏ nhất (minor units) của tiền tệ gốc của đoàn:
+     * - Với VND, THB, JPY, CNY, KRW: scale = 1 (đơn vị đồng, làm tròn đến 1).
+     * - Với USD, EUR, SGD, GBP, AUD...: scale = 100 (cents, làm tròn đến 0.01).
+     */
+    fun convertToBaseUnits(amount: Double, rate: Double, baseCurrency: String): Long {
+        if (!amount.isFinite() || !rate.isFinite() || amount.isNaN() || rate.isNaN() || amount <= 0.0 || rate <= 0.0) {
+            return 0L
+        }
+        val decimalPlaces = SupportedCurrencies.getDecimalPlaces(baseCurrency)
+        val scale = SupportedCurrencies.getMinorUnitScale(baseCurrency)
+        val maxMinorAmount = FinancialLimits.MAX_TRANSACTION_AMOUNT * scale
+        return try {
+            val product = BigDecimal.valueOf(amount).multiply(BigDecimal.valueOf(rate))
+            val minorUnits = product
+                .setScale(decimalPlaces, RoundingMode.HALF_UP)
+                .movePointRight(decimalPlaces)
+                .longValueExact()
+            minorUnits.coerceIn(0L, maxMinorAmount)
+        } catch (_: ArithmeticException) {
+            maxMinorAmount
+        }
+    }
 }
 
 /**

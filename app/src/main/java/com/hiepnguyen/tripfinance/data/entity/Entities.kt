@@ -116,7 +116,7 @@ data class ExpenseEntity(
             require(totalAmount % 1.0 == 0.0) { "Tiền VND không được có số thập phân ($totalAmount)" }
         }
         require(exchangeRate.isFinite() && !exchangeRate.isNaN() && exchangeRate > 0.0 && exchangeRate <= FinancialLimits.MAX_EXCHANGE_RATE) { "Exchange rate must be a valid positive number ($exchangeRate)" }
-        require(convertedTotalAmount >= 0L && convertedTotalAmount <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Converted total amount cannot be negative or exceed limit ($convertedTotalAmount)" }
+        require(convertedTotalAmount >= 0L && convertedTotalAmount <= FinancialLimits.MAX_MINOR_TRANSACTION_AMOUNT) { "Converted total amount cannot be negative or exceed limit ($convertedTotalAmount)" }
     }
 }
 
@@ -157,7 +157,7 @@ data class ExpenseSplitEntity(
     val percentage: Double? = null
 ) {
     init {
-        require(amount >= 0L && amount <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Split amount cannot be negative or exceed limit ($amount)" }
+        require(amount >= 0L && amount <= FinancialLimits.MAX_MINOR_TRANSACTION_AMOUNT) { "Split amount cannot be negative or exceed limit ($amount)" }
         if (percentage != null) {
             require(percentage.isFinite() && !percentage.isNaN() && percentage >= 0.0 && percentage <= 100.0) { "Split percentage must be between 0 and 100 ($percentage)" }
         }
@@ -205,9 +205,9 @@ data class FundContributionEntity(
     val recordedByMemberId: String
 ) {
     init {
-        require(amount >= 0L && amount <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Fund contribution amount cannot be negative or exceed limit ($amount)" }
+        require(amount >= 0L && amount <= FinancialLimits.MAX_MINOR_TRANSACTION_AMOUNT) { "Fund contribution amount cannot be negative or exceed limit ($amount)" }
         require(exchangeRate.isFinite() && !exchangeRate.isNaN() && exchangeRate > 0.0 && exchangeRate <= FinancialLimits.MAX_EXCHANGE_RATE) { "Exchange rate must be a valid positive number ($exchangeRate)" }
-        require(convertedAmount >= 0L && convertedAmount <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Converted fund amount cannot be negative or exceed limit ($convertedAmount)" }
+        require(convertedAmount >= 0L && convertedAmount <= FinancialLimits.MAX_MINOR_TRANSACTION_AMOUNT) { "Converted fund amount cannot be negative or exceed limit ($convertedAmount)" }
     }
 }
 
@@ -265,9 +265,9 @@ data class SettlementSnapshotEntity(
     val settlementJson: String // Full serialized audit snapshot
 ) {
     init {
-        require(totalExpenses >= 0L && totalExpenses <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Total expenses cannot be negative or exceed limit ($totalExpenses)" }
-        require(totalFundCollected >= 0L && totalFundCollected <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Total fund collected cannot be negative or exceed limit ($totalFundCollected)" }
-        require(totalFundSpent >= 0L && totalFundSpent <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Total fund spent cannot be negative or exceed limit ($totalFundSpent)" }
+        require(totalExpenses >= 0L && totalExpenses <= FinancialLimits.MAX_MINOR_TRANSACTION_AMOUNT) { "Total expenses cannot be negative or exceed limit ($totalExpenses)" }
+        require(totalFundCollected >= 0L && totalFundCollected <= FinancialLimits.MAX_MINOR_TRANSACTION_AMOUNT) { "Total fund collected cannot be negative or exceed limit ($totalFundCollected)" }
+        require(totalFundSpent >= 0L && totalFundSpent <= FinancialLimits.MAX_MINOR_TRANSACTION_AMOUNT) { "Total fund spent cannot be negative or exceed limit ($totalFundSpent)" }
     }
 }
 
@@ -325,9 +325,9 @@ data class SettlementTransferEntity(
     val updatedAt: Long = System.currentTimeMillis()
 ) {
     init {
-        require(amount >= 0L && amount <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Transfer amount cannot be negative or exceed limit ($amount)" }
+        require(amount >= 0L && amount <= FinancialLimits.MAX_MINOR_TRANSACTION_AMOUNT) { "Transfer amount cannot be negative or exceed limit ($amount)" }
         if (completedAmount != null) {
-            require(completedAmount >= 0L && completedAmount <= FinancialLimits.MAX_TRANSACTION_AMOUNT) { "Completed amount cannot be negative or exceed limit ($completedAmount)" }
+            require(completedAmount >= 0L && completedAmount <= FinancialLimits.MAX_MINOR_TRANSACTION_AMOUNT) { "Completed amount cannot be negative or exceed limit ($completedAmount)" }
         }
     }
 }

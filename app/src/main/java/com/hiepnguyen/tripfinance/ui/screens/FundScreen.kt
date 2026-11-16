@@ -34,6 +34,7 @@ import com.hiepnguyen.tripfinance.ui.locale.AppStrings
 import com.hiepnguyen.tripfinance.ui.locale.LocalAppLanguage
 import com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator
 import com.hiepnguyen.tripfinance.domain.model.AmountValidationResult
+import com.hiepnguyen.tripfinance.domain.model.SupportedCurrencies
 import com.hiepnguyen.tripfinance.ui.components.NumberFormatUtils
 import com.hiepnguyen.tripfinance.ui.theme.*
 import com.hiepnguyen.tripfinance.ui.viewmodel.UiState
@@ -343,7 +344,8 @@ fun AddFundContributionDialog(
     var note by remember { mutableStateOf(AppStrings.defaultRoundOneNote(lang)) }
 
     val amountValidation = FinancialInputValidator.parseAmount(amountText, baseCurrency)
-    val parsedAmount = (amountValidation as? AmountValidationResult.Success)?.amount?.toLong() ?: 0L
+    val parsedMajorAmount = (amountValidation as? AmountValidationResult.Success)?.amount ?: 0.0
+    val parsedAmount = SupportedCurrencies.toMinorUnits(parsedMajorAmount, baseCurrency)
     val isAmountValid = amountValidation is AmountValidationResult.Success && parsedAmount > 0L
     val isValid = selectedMemberId.isNotBlank() && isAmountValid
 
@@ -396,7 +398,10 @@ fun AddFundContributionDialog(
                         }
                     },
                     label = { Text(AppStrings.amountContributedLabel(baseCurrency, lang)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = if (SupportedCurrencies.isZeroDecimalCurrency(baseCurrency)) KeyboardType.Number else KeyboardType.Decimal,
+                        imeAction = ImeAction.Next
+                    ),
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("fund_amount_input")

@@ -27,7 +27,7 @@ import java.util.UUID
         AuditLogEntity::class,
         SettlementTransferEntity::class
     ],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -386,6 +386,89 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Tạm gỡ trigger chặn sửa khi đoàn đã khóa sổ để nâng cấp đơn vị tiền tệ (x100 minor units cho tiền tệ 2 chữ số thập phân)
+                db.execSQL("DROP TRIGGER IF EXISTS `trg_prevent_expense_update_when_settled`")
+                db.execSQL("DROP TRIGGER IF EXISTS `trg_prevent_split_update_when_settled`")
+                db.execSQL("DROP TRIGGER IF EXISTS `trg_prevent_fund_update_when_settled`")
+                db.execSQL("DROP TRIGGER IF EXISTS `trg_prevent_settlement_transfer_update_when_settled`")
+                db.execSQL("DROP TRIGGER IF EXISTS `trg_check_expense_update`")
+                db.execSQL("DROP TRIGGER IF EXISTS `trg_check_split_update`")
+                db.execSQL("DROP TRIGGER IF EXISTS `trg_check_fund_update`")
+                db.execSQL("DROP TRIGGER IF EXISTS `trg_check_settlement_transfer_update`")
+
+                val twoDecimalTripCondition = "`tripId` IN (SELECT `id` FROM `trips` WHERE UPPER(TRIM(`baseCurrency`)) NOT IN ('VND', 'THB', 'JPY', 'CNY', 'KRW'))"
+                db.execSQL("UPDATE `expenses` SET `convertedTotalAmount` = `convertedTotalAmount` * 100 WHERE $twoDecimalTripCondition")
+                db.execSQL("UPDATE `expense_splits` SET `amount` = `amount` * 100 WHERE $twoDecimalTripCondition")
+                db.execSQL("UPDATE `fund_contributions` SET `convertedAmount` = `convertedAmount` * 100 WHERE $twoDecimalTripCondition")
+                db.execSQL("UPDATE `fund_contributions` SET `amount` = `amount` * 100 WHERE UPPER(TRIM(`currency`)) NOT IN ('VND', 'THB', 'JPY', 'CNY', 'KRW')")
+                db.execSQL("UPDATE `settlement_transfers` SET `amount` = `amount` * 100 WHERE $twoDecimalTripCondition")
+                db.execSQL("UPDATE `settlement_transfers` SET `completedAmount` = `completedAmount` * 100 WHERE `completedAmount` IS NOT NULL AND $twoDecimalTripCondition")
+                db.execSQL("UPDATE `settlement_snapshots` SET `totalExpenses` = `totalExpenses` * 100, `totalFundCollected` = `totalFundCollected` * 100, `totalFundSpent` = `totalFundSpent` * 100, `remainingFund` = `remainingFund` * 100 WHERE $twoDecimalTripCondition")
+
+                // Khôi phục đầy đủ toàn bộ ràng buộc & trigger khóa sổ
+                createDatabaseCheckConstraints(db)
+            }
+        }
+
+        val MIGRATION_6_8 = object : Migration(6, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_6_7.migrate(db)
+                MIGRATION_7_8.migrate(db)
+            }
+        }
+
+        val MIGRATION_5_8 = object : Migration(5, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_5_6.migrate(db)
+                MIGRATION_6_7.migrate(db)
+                MIGRATION_7_8.migrate(db)
+            }
+        }
+
+        val MIGRATION_4_8 = object : Migration(4, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+                MIGRATION_6_7.migrate(db)
+                MIGRATION_7_8.migrate(db)
+            }
+        }
+
+        val MIGRATION_3_8 = object : Migration(3, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+                MIGRATION_6_7.migrate(db)
+                MIGRATION_7_8.migrate(db)
+            }
+        }
+
+        val MIGRATION_2_8 = object : Migration(2, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_2_3.migrate(db)
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+                MIGRATION_6_7.migrate(db)
+                MIGRATION_7_8.migrate(db)
+            }
+        }
+
+        val MIGRATION_1_8 = object : Migration(1, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                MIGRATION_1_2.migrate(db)
+                MIGRATION_2_3.migrate(db)
+                MIGRATION_3_4.migrate(db)
+                MIGRATION_4_5.migrate(db)
+                MIGRATION_5_6.migrate(db)
+                MIGRATION_6_7.migrate(db)
+                MIGRATION_7_8.migrate(db)
+            }
+        }
+
         @Synchronized
         fun resetDatabase(context: Context) {
             try {
@@ -458,7 +541,8 @@ abstract class AppDatabase : RoomDatabase() {
                 MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
                 MIGRATION_1_4, MIGRATION_2_4, MIGRATION_1_5, MIGRATION_2_5, MIGRATION_3_5,
                 MIGRATION_1_6, MIGRATION_2_6, MIGRATION_3_6, MIGRATION_4_6,
-                MIGRATION_6_7, MIGRATION_5_7, MIGRATION_4_7, MIGRATION_3_7, MIGRATION_2_7, MIGRATION_1_7
+                MIGRATION_6_7, MIGRATION_5_7, MIGRATION_4_7, MIGRATION_3_7, MIGRATION_2_7, MIGRATION_1_7,
+                MIGRATION_7_8, MIGRATION_6_8, MIGRATION_5_8, MIGRATION_4_8, MIGRATION_3_8, MIGRATION_2_8, MIGRATION_1_8
             )
 
             if (sqlCipherFactory != null) {

@@ -494,9 +494,9 @@ class ExampleRobolectricTest {
         sqlite.execSQL("INSERT INTO `expenses` VALUES('exp-v1', 'trip-v1', 'Chi tiêu v1', 'FOOD', 'MEMBER', 'member-v1', 50000, 'VND', 1.0, 50000, 'EQUAL', NULL, 'Ghi chú', 1000, 'member-v1', 1000, 1)")
         sqlite.close()
 
-        // Mở qua Room Database builder kèm migration 1_2, 2_3, 3_4, 4_5, 5_6, 6_7 (không có destructive fallback)
+        // Mở qua Room Database builder kèm migration 1_2 .. 7_8 (không có destructive fallback)
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration.db")
-            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4, AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4, AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8)
             .build()
 
         val migratedTrips = runBlocking { migratedDb.tripDao().getAllTripsOnce() }
@@ -607,9 +607,9 @@ class ExampleRobolectricTest {
         sqlite.execSQL("INSERT INTO `settlement_snapshots` VALUES('snap-old', 'trip-legacy', 2000, 500000, 600000, 100000, 'member-1', '{\"summary\":\"test\"}')")
         sqlite.close()
 
-        // Nâng cấp trực tiếp lên v7
+        // Nâng cấp trực tiếp lên v8
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_legacy_snapshot.db")
-            .addMigrations(AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4, AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7)
+            .addMigrations(AppDatabase.MIGRATION_2_3, AppDatabase.MIGRATION_3_4, AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8)
             .build()
 
         val snapshots = runBlocking { migratedDb.settlementDao().getAllSnapshotsOnce() }
@@ -1964,9 +1964,9 @@ class ExampleRobolectricTest {
         sqlite.execSQL("INSERT INTO `trip_members` VALUES('mem-user', 'trip-v4', 'usr-2', 'Thành Viên B', 'MEMBER', 1, 'Techcombank', '9876543210', 'THANH VIEN B', 1100)")
         sqlite.close()
 
-        // 2. Mở qua Room Database builder kèm MIGRATION_4_5, 5_6, 6_7 (không dùng fallbackToDestructiveMigration)
+        // 2. Mở qua Room Database builder kèm MIGRATION_4_5, 5_6, 6_7, 7_8 (không dùng fallbackToDestructiveMigration)
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration_4_5.db")
-            .addMigrations(AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7)
+            .addMigrations(AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8)
             .build()
 
         val members = runBlocking { migratedDb.tripMemberDao().getAllMembersOnce() }
@@ -2342,9 +2342,9 @@ class ExampleRobolectricTest {
         sqlite.execSQL("INSERT INTO `trip_members` VALUES('mem-v5-2', 'trip-v5', 'usr-2', 'Trần Thị B', 'MEMBER', 1, 1100)")
         sqlite.close()
 
-        // 2. Mở qua Room Database builder kèm MIGRATION_5_6, MIGRATION_6_7 (không dùng destructive migration)
+        // 2. Mở qua Room Database builder kèm MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8 (không dùng destructive migration)
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration_v5_v6.db")
-            .addMigrations(AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7)
+            .addMigrations(AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8)
             .build()
 
         // 3. Kiểm tra dữ liệu cũ không bị ảnh hưởng
@@ -2757,11 +2757,11 @@ class ExampleRobolectricTest {
         sqlite.execSQL("INSERT INTO `audit_logs` VALUES('log-1', 'trip-full-v4', 'mem-a', 'Nguyễn Thị A', 'CREATE_EXPENSE', 'Tạo khoản chi Hải sản Mỹ Khê', NULL, NULL, 1200)")
         sqlite.close()
 
-        // 2. Nâng cấp lên phiên bản mới nhất v7 qua Room
+        // 2. Nâng cấp lên phiên bản mới nhất v8 qua Room
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration_v4_all_entities.db")
             .addMigrations(
-                AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7,
-                AppDatabase.MIGRATION_4_6, AppDatabase.MIGRATION_4_7
+                AppDatabase.MIGRATION_4_5, AppDatabase.MIGRATION_5_6, AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8,
+                AppDatabase.MIGRATION_4_6, AppDatabase.MIGRATION_4_7, AppDatabase.MIGRATION_4_8
             )
             .build()
 
@@ -3187,9 +3187,9 @@ class ExampleRobolectricTest {
         sqlite.execSQL("INSERT INTO `settlement_transfers` VALUES('tr_mig_1', 'trip_mig', 'mem1', 'mem2', 500000, 'Ghi chú 1', 1, 2000)")
         sqlite.close()
 
-        // 2. Chạy MIGRATION_6_7 lên v7 qua Room builder
+        // 2. Chạy MIGRATION_6_7 + MIGRATION_7_8 lên v8 qua Room builder
         val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration_v6_v7.db")
-            .addMigrations(AppDatabase.MIGRATION_6_7)
+            .addMigrations(AppDatabase.MIGRATION_6_7, AppDatabase.MIGRATION_7_8)
             .build()
 
         // 3. Kiểm tra dữ liệu được bảo toàn và cột completedAmount tồn tại với giá trị mặc định NULL
@@ -3298,7 +3298,296 @@ class ExampleRobolectricTest {
 
         backupFile.delete()
     }
+
+    @Test
+    fun `testMigration_7_to_8_scalesTwoDecimalTripsIncludingSettledTripsAndPreservesZeroDecimalTrips`(): Unit = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        val dbFile = context.getDatabasePath("test_migration_v7_v8.db")
+        if (dbFile.exists()) dbFile.delete()
+
+        val sqlite = android.database.sqlite.SQLiteDatabase.openOrCreateDatabase(dbFile, null)
+        sqlite.version = 7
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `trips` (`id` TEXT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `joinCode` TEXT NOT NULL, `startDate` INTEGER NOT NULL, `endDate` INTEGER NOT NULL, `baseCurrency` TEXT NOT NULL, `isSettled` INTEGER NOT NULL, `settledAt` INTEGER, `createdAt` INTEGER NOT NULL, `version` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+        sqlite.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_trips_joinCode` ON `trips` (`joinCode`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `trip_members` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `userId` TEXT NOT NULL, `name` TEXT NOT NULL, `role` TEXT NOT NULL, `isActive` INTEGER NOT NULL, `joinedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_trip_members_tripId` ON `trip_members` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_trip_members_tripId_name` ON `trip_members` (`tripId`, `name`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `expenses` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `title` TEXT NOT NULL, `category` TEXT NOT NULL, `payerType` TEXT NOT NULL, `payerMemberId` TEXT, `totalAmount` REAL NOT NULL, `currency` TEXT NOT NULL, `exchangeRate` REAL NOT NULL, `convertedTotalAmount` INTEGER NOT NULL, `splitType` TEXT NOT NULL, `receiptImageUri` TEXT, `note` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `createdMemberId` TEXT NOT NULL, `updatedAt` INTEGER NOT NULL, `isSynced` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`payerMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`createdMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_tripId` ON `expenses` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_payerMemberId` ON `expenses` (`payerMemberId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expenses_createdMemberId` ON `expenses` (`createdMemberId`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `expense_splits` (`id` TEXT NOT NULL, `expenseId` TEXT NOT NULL, `tripId` TEXT NOT NULL, `memberId` TEXT NOT NULL, `amount` INTEGER NOT NULL, `percentage` REAL, PRIMARY KEY(`id`), FOREIGN KEY(`expenseId`) REFERENCES `expenses`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`memberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expense_splits_expenseId` ON `expense_splits` (`expenseId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expense_splits_tripId` ON `expense_splits` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_expense_splits_memberId` ON `expense_splits` (`memberId`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `fund_contributions` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `memberId` TEXT NOT NULL, `amount` INTEGER NOT NULL, `currency` TEXT NOT NULL, `exchangeRate` REAL NOT NULL, `convertedAmount` INTEGER NOT NULL, `note` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `recordedByMemberId` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`memberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT, FOREIGN KEY(`recordedByMemberId`) REFERENCES `trip_members`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_fund_contributions_tripId` ON `fund_contributions` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_fund_contributions_memberId` ON `fund_contributions` (`memberId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_fund_contributions_recordedByMemberId` ON `fund_contributions` (`recordedByMemberId`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `exchange_rates` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `currencyCode` TEXT NOT NULL, `rateToBase` REAL NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_exchange_rates_tripId` ON `exchange_rates` (`tripId`)")
+        sqlite.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_exchange_rates_tripId_currencyCode` ON `exchange_rates` (`tripId`, `currencyCode`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `settlement_snapshots` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `snapshotTitle` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `totalExpenses` INTEGER NOT NULL, `totalFundCollected` INTEGER NOT NULL, `totalFundSpent` INTEGER NOT NULL, `remainingFund` INTEGER NOT NULL, `settlementJson` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_settlement_snapshots_tripId` ON `settlement_snapshots` (`tripId`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `audit_logs` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `actorMemberId` TEXT NOT NULL, `actorName` TEXT NOT NULL, `action` TEXT NOT NULL, `description` TEXT NOT NULL, `detailBefore` TEXT, `detailAfter` TEXT, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_audit_logs_tripId` ON `audit_logs` (`tripId`)")
+        sqlite.execSQL("CREATE TABLE IF NOT EXISTS `settlement_transfers` (`id` TEXT NOT NULL, `tripId` TEXT NOT NULL, `fromMemberId` TEXT NOT NULL, `toMemberId` TEXT NOT NULL, `amount` INTEGER NOT NULL, `transferNote` TEXT NOT NULL, `isCompleted` INTEGER NOT NULL DEFAULT 0, `updatedAt` INTEGER NOT NULL, `completedAmount` INTEGER DEFAULT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tripId`) REFERENCES `trips`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_settlement_transfers_tripId` ON `settlement_transfers` (`tripId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_settlement_transfers_fromMemberId` ON `settlement_transfers` (`fromMemberId`)")
+        sqlite.execSQL("CREATE INDEX IF NOT EXISTS `index_settlement_transfers_toMemberId` ON `settlement_transfers` (`toMemberId`)")
+
+        // Mô phỏng DB v7 đã từng mở trước đó (đã có các trigger khóa sổ)
+        sqlite.execSQL("CREATE TRIGGER IF NOT EXISTS trg_prevent_expense_update_when_settled BEFORE UPDATE ON expenses BEGIN SELECT CASE WHEN (SELECT isSettled FROM trips WHERE id = OLD.tripId) = 1 THEN RAISE(ABORT, 'SETTLEMENT LOCKED') END; END;")
+        sqlite.execSQL("CREATE TRIGGER IF NOT EXISTS trg_prevent_split_update_when_settled BEFORE UPDATE ON expense_splits BEGIN SELECT CASE WHEN (SELECT isSettled FROM trips WHERE id = OLD.tripId) = 1 THEN RAISE(ABORT, 'SETTLEMENT LOCKED') END; END;")
+        sqlite.execSQL("CREATE TRIGGER IF NOT EXISTS trg_prevent_fund_update_when_settled BEFORE UPDATE ON fund_contributions BEGIN SELECT CASE WHEN (SELECT isSettled FROM trips WHERE id = OLD.tripId) = 1 THEN RAISE(ABORT, 'SETTLEMENT LOCKED') END; END;")
+        sqlite.execSQL("CREATE TRIGGER IF NOT EXISTS trg_prevent_settlement_transfer_update_when_settled BEFORE UPDATE ON settlement_transfers BEGIN SELECT CASE WHEN (SELECT isSettled FROM trips WHERE id = OLD.tripId) = 1 AND OLD.amount != NEW.amount THEN RAISE(ABORT, 'SETTLEMENT LOCKED') END; END;")
+
+        // Trip 1: USD đã khóa sổ (100 USD = 100 ở v7 -> phải thành 10000 cents ở v8)
+        sqlite.execSQL("INSERT INTO `trips` VALUES('t_usd', 'US Settled', '', 'USD01', 1000, 2000, 'USD', 1, 2000, 1000, 1)")
+        sqlite.execSQL("INSERT INTO `trip_members` VALUES('m_usd_1', 't_usd', 'u1', 'Alice', 'ADMIN', 1, 1000)")
+        sqlite.execSQL("INSERT INTO `trip_members` VALUES('m_usd_2', 't_usd', 'u2', 'Bob', 'MEMBER', 1, 1000)")
+        sqlite.execSQL("INSERT INTO `expenses` VALUES('e_usd', 't_usd', 'Hotel', 'HOTEL', 'MEMBER', 'm_usd_1', 100.0, 'USD', 1.0, 100, 'EQUAL', NULL, '', 1200, 'm_usd_1', 1200, 1)")
+        sqlite.execSQL("INSERT INTO `expense_splits` VALUES('s_usd_1', 'e_usd', 't_usd', 'm_usd_1', 50, NULL)")
+        sqlite.execSQL("INSERT INTO `expense_splits` VALUES('s_usd_2', 'e_usd', 't_usd', 'm_usd_2', 50, NULL)")
+        sqlite.execSQL("INSERT INTO `fund_contributions` VALUES('f_usd', 't_usd', 'm_usd_1', 200, 'USD', 1.0, 200, 'Fund', 1100, 'm_usd_1')")
+        sqlite.execSQL("INSERT INTO `settlement_transfers` VALUES('tr_usd', 't_usd', 'm_usd_2', 'm_usd_1', 50, 'USD01', 1, 2000, 50)")
+        sqlite.execSQL("INSERT INTO `settlement_snapshots` VALUES('sn_usd', 't_usd', 'Final', 2000, 100, 200, 0, 200, '{}')")
+
+        // Trip 2: THB (zero-decimal -> giữ nguyên ở v8)
+        sqlite.execSQL("INSERT INTO `trips` VALUES('t_thb', 'Bangkok', '', 'THB01', 1000, 2000, 'THB', 0, NULL, 1000, 1)")
+        sqlite.execSQL("INSERT INTO `trip_members` VALUES('m_thb_1', 't_thb', 'u3', 'Mai', 'ADMIN', 1, 1000)")
+        sqlite.execSQL("INSERT INTO `expenses` VALUES('e_thb', 't_thb', 'Pad Thai', 'FOOD', 'MEMBER', 'm_thb_1', 1500.0, 'THB', 1.0, 1500, 'EQUAL', NULL, '', 1200, 'm_thb_1', 1200, 1)")
+        sqlite.execSQL("INSERT INTO `expense_splits` VALUES('s_thb_1', 'e_thb', 't_thb', 'm_thb_1', 1500, NULL)")
+        sqlite.close()
+
+        val migratedDb = Room.databaseBuilder(context, AppDatabase::class.java, "test_migration_v7_v8.db")
+            .addMigrations(AppDatabase.MIGRATION_7_8)
+            .build()
+
+        // USD trip values scaled x100 even though isSettled = 1
+        assertEquals(10000L, migratedDb.expenseDao().getExpenseById("e_usd")?.convertedTotalAmount)
+        val usdSplits = migratedDb.expenseDao().getSplitsByExpenseOnce("e_usd")
+        assertTrue(usdSplits.all { it.amount == 5000L })
+        val usdFund = migratedDb.fundDao().getAllFundsOnce().first { it.id == "f_usd" }
+        assertEquals(20000L, usdFund.amount)
+        assertEquals(20000L, usdFund.convertedAmount)
+        val usdTr = migratedDb.settlementDao().getTransferById("tr_usd")!!
+        assertEquals(5000L, usdTr.amount)
+        assertEquals(5000L, usdTr.completedAmount)
+        val usdSnap = migratedDb.settlementDao().getAllSnapshotsOnce().first { it.id == "sn_usd" }
+        assertEquals(10000L, usdSnap.totalExpenses)
+        assertEquals(20000L, usdSnap.totalFundCollected)
+
+        // THB trip values preserved 1:1
+        assertEquals(1500L, migratedDb.expenseDao().getExpenseById("e_thb")?.convertedTotalAmount)
+        assertEquals(1500L, migratedDb.expenseDao().getSplitsByExpenseOnce("e_thb").first().amount)
+
+        // Foreign keys intact
+        migratedDb.openHelper.readableDatabase.query("PRAGMA foreign_key_check").use { c ->
+            assertEquals(0, c.count)
+        }
+
+        // Settled trigger still blocks updating transfer amount after migration
+        assertThrows(android.database.sqlite.SQLiteConstraintException::class.java) {
+            migratedDb.openHelper.writableDatabase.execSQL(
+                "UPDATE `settlement_transfers` SET `amount` = 9999 WHERE `id` = 'tr_usd'"
+            )
+        }
+
+        migratedDb.close()
+        dbFile.delete()
+    }
+
+    @Test
+    fun `testEndToEnd_UsdEqualSplit_MaxDiffOneCent_AndFinalizeSettlement`(): Unit = runBlocking {
+        val tripId = repository.createTrip(
+            title = "New York Trip",
+            description = "USD Precision",
+            joinCode = "NYUSD1",
+            startDate = 1000L,
+            endDate = 2000L,
+            adminName = "Alice",
+            baseCurrency = "USD"
+        )
+        val alice = repository.getMembers(tripId).first().first()
+        val bobId = repository.addMember(tripId, "Bob", "MEMBER", alice)
+        val charlieId = repository.addMember(tripId, "Charlie", "MEMBER", alice)
+        val allMembers = repository.getMembers(tripId).first()
+
+        // $10.00 = 1000 minor units split equally among 3 members -> 334, 333, 333 (diff = $0.01 = 1L)
+        val minorTotal = com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator.convertToBaseUnits(10.00, 1.0, "USD")
+        assertEquals(1000L, minorTotal)
+        val splitMap = com.hiepnguyen.tripfinance.domain.engine.SplitCalculator.calculateEqualSplit(
+            minorTotal,
+            listOf(alice.id, bobId, charlieId)
+        ).toMap()
+        assertEquals(1000L, splitMap.values.sum())
+        assertEquals(1L, (splitMap.values.maxOrNull() ?: 0L) - (splitMap.values.minOrNull() ?: 0L))
+
+        val expId = UUID.randomUUID().toString()
+        val expense = ExpenseEntity(
+            id = expId,
+            tripId = tripId,
+            title = "Coffee & Bagels",
+            category = "FOOD",
+            payerType = "MEMBER",
+            payerMemberId = alice.id,
+            totalAmount = 10.00,
+            currency = "USD",
+            exchangeRate = 1.0,
+            convertedTotalAmount = minorTotal,
+            splitType = "EQUAL",
+            createdMemberId = alice.id
+        )
+        val splits = splitMap.map { (mId, amt) ->
+            ExpenseSplitEntity(UUID.randomUUID().toString(), expId, tripId, mId, amt)
+        }
+        repository.addExpenseWithSplits(expense, splits, alice)
+
+        val (summary, statuses) = repository.calculateFinancialSummaryAndStatuses(
+            members = allMembers,
+            expenses = listOf(expense),
+            splits = splits,
+            fundContributions = emptyList()
+        )
+        assertEquals(0L, summary.balanceDiscrepancy)
+        assertTrue(summary.isBalanced)
+
+        val result = com.hiepnguyen.tripfinance.domain.engine.SettlementEngine.computeSettlementWithStatus(
+            memberStatuses = statuses,
+            tripJoinCode = "NYUSD1",
+            remainingFund = summary.remainingFund,
+            baseCurrency = "USD"
+        )
+        assertNull(result.reconciliationError)
+        assertEquals(2, result.transfers.size)
+        assertEquals(listOf(333L, 333L), result.transfers.map { it.amount })
+
+        val trip = db.tripDao().getTripByIdOnce(tripId)!!
+        val snapshot = repository.finalizeSettlement(trip, "Final USD", summary, "{}", alice)
+        assertNotNull(snapshot)
+        val transfers = db.settlementDao().getTransfersByTripOnce(tripId)
+        assertEquals(2, transfers.size)
+        val firstDomainTransfer = result.transfers.first()
+        repository.setTransferCompleted(tripId, firstDomainTransfer, true, alice)
+        val updated = db.settlementDao().getTransferById(firstDomainTransfer.id)
+        assertTrue(updated?.isCompleted == true)
+        assertEquals(333L, updated?.completedAmount)
+    }
+
+    @Test
+    fun `testEndToEnd_ThbZeroDecimalEqualSplit_MaxDiffOneUnit`(): Unit = runBlocking {
+        val tripId = repository.createTrip(
+            title = "Bangkok Food Tour",
+            description = "THB Precision",
+            joinCode = "BKK7",
+            startDate = 1000L,
+            endDate = 2000L,
+            adminName = "Member 1",
+            baseCurrency = "THB"
+        )
+        val admin = repository.getMembers(tripId).first().first()
+        val memberIds = mutableListOf(admin.id)
+        for (i in 2..7) {
+            memberIds.add(repository.addMember(tripId, "Member $i", "MEMBER", admin))
+        }
+
+        // 1000 THB split equally across 7 members -> 143 x 6 + 142 x 1 (max - min == 1 THB)
+        val minorTotal = com.hiepnguyen.tripfinance.domain.model.FinancialInputValidator.convertToBaseUnits(1000.0, 1.0, "THB")
+        assertEquals(1000L, minorTotal)
+        val splitMap = com.hiepnguyen.tripfinance.domain.engine.SplitCalculator.calculateEqualSplit(minorTotal, memberIds).toMap()
+        assertEquals(1000L, splitMap.values.sum())
+        assertEquals(1L, splitMap.values.maxOrNull()!! - splitMap.values.minOrNull()!!)
+        assertEquals(6, splitMap.values.count { it == 143L })
+        assertEquals(1, splitMap.values.count { it == 142L })
+    }
+
+    @Test
+    fun `testLegacyBackupV7_TwoDecimalUsdTrip_ScalesMinorUnitsOnRestore`(): Unit = runBlocking {
+        val backupV7Json = """
+        {
+          "metadata": {
+            "appName": "TripFinance",
+            "backupVersion": 1,
+            "schemaVersion": 7,
+            "createdAt": 1700000000000,
+            "totalTrips": 1,
+            "totalMembers": 2,
+            "totalExpenses": 1,
+            "totalSplits": 2,
+            "totalFunds": 1,
+            "totalTransfers": 1
+          },
+          "trips": [
+            {
+              "id": "trip_usd_v7",
+              "title": "London v7",
+              "description": "Legacy v7 USD backup",
+              "joinCode": "USDV7",
+              "startDate": 1000,
+              "endDate": 2000,
+              "baseCurrency": "USD",
+              "isSettled": true,
+              "settledAt": 2000,
+              "createdAt": 1000,
+              "version": 1
+            }
+          ],
+          "members": [
+            { "id": "m_u1", "tripId": "trip_usd_v7", "userId": "u1", "name": "Alice", "role": "ADMIN", "isActive": true, "joinedAt": 1000 },
+            { "id": "m_u2", "tripId": "trip_usd_v7", "userId": "u2", "name": "Bob", "role": "MEMBER", "isActive": true, "joinedAt": 1000 }
+          ],
+          "expenses": [
+            {
+              "id": "exp_u1",
+              "tripId": "trip_usd_v7",
+              "title": "Cab",
+              "category": "TRANSPORT",
+              "payerType": "MEMBER",
+              "payerMemberId": "m_u1",
+              "totalAmount": 100.0,
+              "currency": "USD",
+              "exchangeRate": 1.0,
+              "convertedTotalAmount": 100,
+              "splitType": "EQUAL",
+              "note": "",
+              "timestamp": 1200,
+              "createdMemberId": "m_u1",
+              "updatedAt": 1200,
+              "isSynced": true
+            }
+          ],
+          "splits": [
+            { "id": "sp_u1", "expenseId": "exp_u1", "tripId": "trip_usd_v7", "memberId": "m_u1", "amount": 50 },
+            { "id": "sp_u2", "expenseId": "exp_u1", "tripId": "trip_usd_v7", "memberId": "m_u2", "amount": 50 }
+          ],
+          "fundContributions": [
+            { "id": "fn_u1", "tripId": "trip_usd_v7", "memberId": "m_u2", "amount": 200, "currency": "USD", "exchangeRate": 1.0, "convertedAmount": 200, "note": "", "timestamp": 1100, "recordedByMemberId": "m_u1" }
+          ],
+          "settlementTransfers": [
+            { "id": "tr_u1", "tripId": "trip_usd_v7", "fromMemberId": "m_u2", "toMemberId": "m_u1", "amount": 50, "transferNote": "USDV7", "isCompleted": true, "completedAmount": 50, "updatedAt": 2000 }
+          ]
+        }
+        """.trimIndent()
+
+        val parseResult = com.hiepnguyen.tripfinance.data.backup.BackupRestoreManager.parseAndValidateBackup(backupV7Json)
+        assertTrue("Legacy v7 USD backup must parse and upgrade to v8: ${parseResult.exceptionOrNull()?.message}", parseResult.isSuccess)
+        val parsed = parseResult.getOrThrow()
+        assertEquals(8, parsed.metadata.schemaVersion)
+        assertEquals(10000L, parsed.expenses.first().convertedTotalAmount)
+        assertTrue(parsed.splits.all { it.amount == 5000L })
+        assertEquals(20000L, parsed.fundContributions.first().amount)
+        assertEquals(20000L, parsed.fundContributions.first().convertedAmount)
+        assertEquals(5000L, parsed.settlementTransfers.first().amount)
+        assertEquals(5000L, parsed.settlementTransfers.first().completedAmount)
+
+        val restoreRes = com.hiepnguyen.tripfinance.data.backup.BackupRestoreManager.restoreFromBackupData(db, parsed, clearExisting = false)
+        assertTrue("Restore must succeed: ${restoreRes.exceptionOrNull()?.message}", restoreRes.isSuccess)
+        assertEquals(10000L, db.expenseDao().getExpenseById("exp_u1")?.convertedTotalAmount)
+        assertEquals(5000L, db.settlementDao().getTransferById("tr_u1")?.completedAmount)
+    }
 }
+
 
 
 

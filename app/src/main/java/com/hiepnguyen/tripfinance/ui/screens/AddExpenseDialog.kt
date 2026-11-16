@@ -197,12 +197,20 @@ fun AddExpenseDialog(
     }
 
     // Custom amounts state
-    val memberCustomAmounts = remember(members, initialSplits) {
+    val memberCustomAmounts = remember(members, initialSplits, baseCurrency) {
         mutableStateMapOf<String, String>().apply {
+            val isZeroDec = SupportedCurrencies.isZeroDecimalCurrency(baseCurrency)
             if (initialSplits.isNotEmpty()) {
                 members.forEach { m ->
                     val sp = initialSplits.find { it.memberId == m.id }
-                    put(m.id, sp?.amount?.toString() ?: "0")
+                    val formatted = if (sp == null || sp.amount == 0L) {
+                        "0"
+                    } else if (isZeroDec) {
+                        sp.amount.toString()
+                    } else {
+                        BigDecimal.valueOf(sp.amount, 2).stripTrailingZeros().toPlainString()
+                    }
+                    put(m.id, formatted)
                 }
             } else {
                 members.forEach { put(it.id, "0") }
@@ -230,13 +238,14 @@ fun AddExpenseDialog(
     val isRateValid = rateValidation is RateValidationResult.Success
 
     val convertedTotalVnd = if (isAmountValid && isRateValid) {
-        FinancialInputValidator.convertToVnd(parsedAmount, parsedRate)
+        FinancialInputValidator.convertToBaseUnits(parsedAmount, parsedRate, baseCurrency)
     } else 0L
 
     // Compute live splits based on selected splitType
     val calculatedSplits: List<Pair<String, Long>> = remember(
         convertedTotalVnd,
         splitType,
+        baseCurrency,
         selectedParticipantIds.toMap(),
         memberRatios.toMap(),
         memberCustomAmounts.toMap()
@@ -263,7 +272,15 @@ fun AddExpenseDialog(
                 }
                 "CUSTOM_AMOUNT" -> {
                     members.map { m ->
-                        val amt = memberCustomAmounts[m.id]?.toLongOrNull() ?: 0L
+                        val raw = memberCustomAmounts[m.id]?.trim().orEmpty()
+                        val amt = if (raw.isEmpty() || raw == "0" || raw == "0.0" || raw == "0.00") {
+                            0L
+                        } else {
+                            when (val parsed = FinancialInputValidator.parseAmount(raw, baseCurrency)) {
+                                is AmountValidationResult.Success -> SupportedCurrencies.toMinorUnits(parsed.amount, baseCurrency)
+                                is AmountValidationResult.Error -> 0L
+                            }
+                        }
                         m.id to amt
                     }
                 }
@@ -1160,10 +1177,21 @@ fun AddExpenseDialog(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(m.name, fontSize = 13.sp, modifier = Modifier.weight(1.2f))
+                                        val isZeroDecCustom = SupportedCurrencies.isZeroDecimalCurrency(baseCurrency)
                                         OutlinedTextField(
                                             value = memberCustomAmounts[m.id] ?: "0",
-                                            onValueChange = { if (it.all { c -> c.isDigit() }) memberCustomAmounts[m.id] = it },
-                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                            onValueChange = { input ->
+                                                val allowed = if (isZeroDecCustom) {
+                                                    input.all { c -> c.isDigit() }
+                                                } else {
+                                                    input.all { c -> c.isDigit() || c == '.' || c == ',' }
+                                                }
+                                                if (allowed) memberCustomAmounts[m.id] = input
+                                            },
+                                            placeholder = { Text(if (isZeroDecCustom) "0" else "0.00") },
+                                            keyboardOptions = KeyboardOptions(
+                                                keyboardType = if (isZeroDecCustom) KeyboardType.Number else KeyboardType.Decimal
+                                            ),
                                             modifier = Modifier
                                                 .width(140.dp)
                                                 .height(50.dp)

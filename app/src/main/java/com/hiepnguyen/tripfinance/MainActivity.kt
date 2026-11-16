@@ -246,8 +246,7 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
                                                     fontSize = if (isVeryNarrow) 10.5.sp else 11.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     maxLines = 1,
-                                                    softWrap = false,
-                                                    overflow = TextOverflow.Clip,
+                                                    overflow = TextOverflow.Ellipsis,
                                                     color = if (lang == AppLanguage.VI) EmeraldOnPrimaryContainer else Color(0xFF5B21B6)
                                                 )
                                             }
