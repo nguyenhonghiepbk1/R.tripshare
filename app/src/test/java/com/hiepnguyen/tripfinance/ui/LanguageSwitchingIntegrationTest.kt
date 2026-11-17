@@ -272,6 +272,9 @@ class LanguageSwitchingIntegrationTest {
         val layout = results.firstOrNull()
             ?: throw AssertionError("No TextLayoutResult available for '$label'")
         assertEquals("Expected 1 line for '$label', got ${layout.lineCount}", 1, layout.lineCount)
-        assertFalse("Expected no width overflow for '$label'", layout.didOverflowWidth)
+        assertFalse(
+            "Expected no width overflow for '$label' (size=${layout.size}, multiParagraphWidth=${layout.multiParagraph.width}, lineRight=${layout.getLineRight(0)})",
+            layout.didOverflowWidth
+        )
     }
 }

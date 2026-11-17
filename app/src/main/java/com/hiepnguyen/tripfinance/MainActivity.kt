@@ -231,13 +231,13 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
                                             color = if (lang == AppLanguage.VI) EmeraldPrimaryContainer else Color(0xFFEDE9FE),
                                             border = BorderStroke(1.dp, if (lang == AppLanguage.VI) EmeraldPrimary else Color(0xFF7C3AED)),
                                             modifier = Modifier
-                                                .height(28.dp)
+                                                .heightIn(min = 28.dp)
                                                 .testTag("toggle_language_top_button")
                                         ) {
                                             Row(
                                                 modifier = Modifier.padding(
                                                     horizontal = if (isVeryNarrow) 6.dp else 8.dp,
-                                                    vertical = 3.dp
+                                                    vertical = 4.dp
                                                 ),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
@@ -246,8 +246,10 @@ fun TripFinanceApp(viewModel: TripFinanceViewModel) {
                                                     fontSize = if (isVeryNarrow) 10.5.sp else 11.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                    color = if (lang == AppLanguage.VI) EmeraldOnPrimaryContainer else Color(0xFF5B21B6)
+                                                    softWrap = false,
+                                                    overflow = TextOverflow.Clip,
+                                                    color = if (lang == AppLanguage.VI) EmeraldOnPrimaryContainer else Color(0xFF5B21B6),
+                                                    modifier = Modifier.width(IntrinsicSize.Max)
                                                 )
                                             }
                                         }
