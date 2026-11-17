@@ -1,7 +1,7 @@
 # CHÍNH SÁCH QUYỀN RIÊNG TƯ / PRIVACY POLICY - TRIPFINANCE
 
 *Ngày có hiệu lực: 02 tháng 11 năm 2026*  
-*Phiên bản: 20.0 (Mã gói ứng dụng: `com.hiepnguyen.tripfinance.oddnis`)*
+*Phiên bản: 25.0 (Mã gói ứng dụng: `com.hiepnguyen.tripfinance.oddnis`)*
 
 ---
 
